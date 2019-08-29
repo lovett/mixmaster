@@ -1,6 +1,5 @@
 #!/usr/bin/env perl6
 
-use lib 'modules';
 use JSON::Fast;
 use Config::INI;
 
@@ -43,7 +42,7 @@ unless (%config{$repository}:exists) {
 }
 
 my @matchedRefs = %config{$repository}.pairs.grep: {
-    "refs/{$_.key}".starts-with($ref)
+    .key.starts-with($ref)
 };
 
 unless (@matchedRefs) {
@@ -60,8 +59,9 @@ my ($matchedRef, $buildCommand) = @matchedRefs.first.kv;
 
 spurt "INBOX/{(roll 12, 'a'..'z').join}.ini", qq:to/END/;
 [job]
-checkout_url = {%json<repository><ssh_url>}
+repository = $repository
 ref = $ref
+checkout_url = {%json<repository><ssh_url>}
 commit = {%json<after>}
 build_command = $buildCommand
 view_url = {%json<compare_url>}

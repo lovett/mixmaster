@@ -1,0 +1,10 @@
+[Unit]
+Description=Mixmaster Filesystem Watcher
+
+[Path]
+DirectoryNotEmpty=/home/%u/Documents/mixmaster/INBOX
+MakeDirectory=true
+DirectoryMode=0700
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,7 @@
+[Unit]
+Description=Mixmaster Filesystem Service
+
+[Service]
+Environment=PERL6LIB=inst#modules
+WorkingDirectory=/home/%u/Documents/mixmaster
+ExecStart=/home/%u/Documents/mixmaster/bin/mixmaster.p6
