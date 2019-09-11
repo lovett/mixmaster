@@ -2,13 +2,46 @@
 
 use Config::INI;
 
-constant ACTIVE_FOLDER = 'ACTIVE';
+constant INPROGRESS_FOLDER = 'INPROGRESS';
 constant INBOX_FOLDER = 'INBOX';
 constant BUILDS_FOLDER = 'BUILDS';
 
+sub run($buildRoot, $command, $log) {
+    indir($buildRoot, {
+        react {
+            with Proc::Async.new(«$command») {
+                whenever .stdout.lines {
+                    $log.say('OUT ', $_);
+                }
 
-sub checkout($workspace, $repository, $ref) {
-    say "Checkout $repository $ref";
+                whenever .stderr {
+                    $log.say('ERR ', $_);
+                }
+
+                whenever .start {
+                    done;
+                }
+            }
+        }
+    });
+}
+
+sub checkoutCommand($buildRoot, %pairs) {
+    my $command;
+
+    if (%pairs<scm>.lc eq "git") {
+        $command = "git clone {%pairs<repositoryUrl>} --quiet --depth 1 --branch {%pairs<target>} .";
+
+        if ($buildRoot.add(".git").d) {
+            $command = "git pull";
+        }
+    }
+
+    return $command;
+}
+
+sub build($buildRoot, %pairs, $log) {
+    say "Invoking {%pairs<build_command>}";
 }
 
 multi sub MAIN() {
@@ -25,60 +58,47 @@ multi sub MAIN() {
 }
 
 multi sub MAIN($inboxJob) {
+    say "Processing $inboxJob";
+
     my %job = Config::INI::parse_file($inboxJob.path);
 
-    unless ACTIVE_FOLDER.IO.d {
-        mkdir(ACTIVE_FOLDER);
+    my $workspace = BUILDS_FOLDER.IO.add(%job<job><repositoryName>);
+
+    my $archive = $workspace.add('ARCHIVE');
+    unless ($archive.IO.d) {
+        mkdir($archive);
     }
 
-    my $workspace = BUILDS_FOLDER.IO.add(%job<job><repository>);
-    my $buildRoot = $workspace.add(%job<job><ref>);
-
+    my $buildRoot = $workspace.add(%job<job><target>);
     unless ($buildRoot.IO.d) {
         mkdir($buildRoot);
     }
 
-    my $activeJob = ACTIVE_FOLDER.IO.add($inboxJob.basename);
-    rename($inboxJob, $activeJob);
+    my $archivedJob = $archive.add($inboxJob.basename);
+    rename($inboxJob, $archivedJob);
 
-    my $log = ACTIVE_FOLDER.IO.add(($activeJob.extension: 'out').basename).open(:w);
+    unless INPROGRESS_FOLDER.IO.d {
+        mkdir(INPROGRESS_FOLDER);
+    }
 
-    say "Build {$activeJob.basename} begins (%job<job><build_command>)";
+    my $progressSymlink = INPROGRESS_FOLDER.IO.add($archivedJob.basename);
+    symlink($archivedJob, $progressSymlink);
 
-    checkout($buildRoot, %job<job><checkout_url>, %job<job><ref>);
+    my $log = $archive.add(($archivedJob.extension: 'out').basename).open(:w);
 
-    indir($buildRoot, {
-        react {
-            with Proc::Async.new(«%job<job><build_command>») {
-                whenever .stdout.lines {
-                    $log.say('OUT ', $_);
-                }
+    say "Build {$archivedJob.basename} begins";
 
-                whenever .stderr {
-                    $log.say('ERR ', $_);
-                }
+    my $checkoutCommand = checkoutCommand($buildRoot, %job<job>);
 
-                whenever .start {
-                    spurt $activeJob, :append, qq:to/END/;
+    run($buildRoot, $checkoutCommand, $log);
 
-                    [build]
-                    builroot = {$buildRoot}
-                    exitcode = {.exitcode}
-                    END
-
-                    done;
-                }
-            }
-        }
-    });
-
-    say "Build {$activeJob.basename} finished";
+    say "Build {$archivedJob.basename} finished";
 
     CATCH {
         default {
-            say "Build {$activeJob.basename} fizzled";
+            say "Build {$archivedJob.basename} fizzled";
 
-            spurt $activeJob, :append, qq:to/END/;
+            spurt $archivedJob, :append, qq:to/END/;
 
             [build]
             message = {.message}
@@ -88,15 +108,6 @@ multi sub MAIN($inboxJob) {
     }
 
     LEAVE {
-        my $archive = $workspace.add('ARCHIVE');
-        unless ($archive.d) {
-            mkdir($archive);
-        }
-
-        my $archivedJob = $archive.add($activeJob.basename);
-        my $archivedLog = $archive.add($log);
-
-        rename($activeJob, $archivedJob);
-        rename($log, $archivedLog);
+        unlink($progressSymlink);
     }
 }

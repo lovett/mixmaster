@@ -19,4 +19,4 @@ test:
 
 clean:
 	rm -f INBOX/*
-	rm -rf ACTIVE BUILDS
+	rm -rf INPROGRESS BUILDS
