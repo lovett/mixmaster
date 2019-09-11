@@ -34,37 +34,38 @@ sub MAIN() {
 
     my %json = from-json $body.decode;
 
-    my $repository = %json<repository><full_name>;
+    my $repositoryName = %json<repository><full_name>;
 
-    my $ref = %json<ref>;
+    my $repositoryTarget = %json<ref>.subst("refs/heads/", "", :nth(1));
 
-    unless (%refMap{$repository}:exists) {
+    unless (%refMap{$repositoryName}:exists) {
         put "HTTP/1.1 422 Unknown repository\r\n";
         exit;
     }
 
-    my @matchedRefs = %refMap{$repository}.pairs.grep: {
-        .key.starts-with($ref)
+    my @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
+        .key.starts-with($repositoryTarget)
     };
 
-    unless (@matchedRefs) {
-        put "HTTP/1.1 422 Unknown ref\r\n";
+    unless (@matchedTargets) {
+        put "HTTP/1.1 422 Unknown target\r\n";
         exit;
     }
 
-    if (@matchedRefs.elems > 1) {
-        put "HTTP/1.1 422 Multiple matches for this ref\r\n";
+    if (@matchedTargets.elems > 1) {
+        put "HTTP/1.1 422 Multiple matches for this target\r\n";
         exit;
     }
 
-    my ($matchedRef, $buildCommand) = @matchedRefs.first.kv;
+    my ($matchedTarget, $buildCommand) = @matchedTargets.first.kv;
 
     spurt "INBOX/{(roll 12, 'a'..'z').join}.ini", qq:to/END/;
     [job]
-    repository = $repository
-    ref = $ref
-    checkout_url = {%json<repository><ssh_url>}
+    scm = git
+    repositoryName = $repositoryName
+    repositoryUrl = {%json<repository><ssh_url>}
     commit = {%json<after>}
+    target = $matchedTarget
     build_command = $buildCommand
     view_url = {%json<compare_url>}
     END
