@@ -6,16 +6,35 @@ constant INPROGRESS_FOLDER = 'INPROGRESS';
 constant INBOX_FOLDER = 'INBOX';
 constant BUILDS_FOLDER = 'BUILDS';
 
-sub run($buildRoot, $command, $log) {
+my $logSymlink;
+my $logHandle;
+
+INIT {
+    unless INPROGRESS_FOLDER.IO.d {
+        mkdir(INPROGRESS_FOLDER);
+    }
+}
+
+signal(SIGTERM).tap: {
+    log($logHandle, 'X', 'Killed by SIGTERM');
+    unlink($logSymlink);
+    try close $logHandle;
+}
+
+sub log($handle, $prefix, $message) {
+    try $handle.say("{DateTime.now.hh-mm-ss} {$prefix} $message");
+}
+
+sub doCommand($buildRoot, $command, $logHandle) {
     indir($buildRoot, {
         react {
             with Proc::Async.new(«$command») {
                 whenever .stdout.lines {
-                    $log.say('OUT ', $_);
+                    log($logHandle, 'O', $_);
                 }
 
                 whenever .stderr {
-                    $log.say('ERR ', $_);
+                    log($logHandle, '!', $_);
                 }
 
                 whenever .start {
@@ -26,27 +45,20 @@ sub run($buildRoot, $command, $log) {
     });
 }
 
-sub checkoutCommand($buildRoot, %pairs) {
-    my $command;
+sub gitRecipe($buildRoot, %pairs) {
+    my @commands;
 
-    if (%pairs<scm>.lc eq "git") {
-        $command = "git clone {%pairs<repositoryUrl>} --quiet --depth 1 --branch {%pairs<target>} .";
-
-        if ($buildRoot.add(".git").d) {
-            $command = "git pull";
-        }
+    unless ($buildRoot.add('.git').d) {
+        @commands.push: "git clone {%pairs<repositoryUrl>} --quiet --branch {%pairs<target>} .";
     }
 
-    return $command;
-}
+    @commands.push: "git checkout --quiet {%pairs<commit>}";
+    @commands.push: "echo Invoking {%pairs<build_command>}";
 
-sub build($buildRoot, %pairs, $log) {
-    say "Invoking {%pairs<build_command>}";
+    return @commands;
 }
 
 multi sub MAIN() {
-    say 'Scanning the inbox for jobs';
-
     my @jobs = dir(INBOX_FOLDER, test => /'.' ini $/).sort: { .changed };;
 
     unless (@jobs) {
@@ -57,57 +69,57 @@ multi sub MAIN() {
     MAIN(@jobs.first);
 }
 
-multi sub MAIN($inboxJob) {
-    say "Processing $inboxJob";
-
-    my %job = Config::INI::parse_file($inboxJob.path);
+multi sub MAIN($jobFile) {
+    my %job = Config::INI::parse_file($jobFile.path);
 
     my $workspace = BUILDS_FOLDER.IO.add(%job<job><repositoryName>);
 
     my $archive = $workspace.add('ARCHIVE');
+
+    my $buildRoot = $workspace.add(%job<job><target>);
+
+    my $archiveFile = $archive.add($jobFile.basename);
+
+    my $logFile = $archive.add(($jobFile.extension: 'log').basename);
+
     unless ($archive.IO.d) {
         mkdir($archive);
     }
 
-    my $buildRoot = $workspace.add(%job<job><target>);
     unless ($buildRoot.IO.d) {
         mkdir($buildRoot);
     }
 
-    my $archivedJob = $archive.add($inboxJob.basename);
-    rename($inboxJob, $archivedJob);
+    $logSymlink = INPROGRESS_FOLDER.IO.add($logFile.basename);
 
-    unless INPROGRESS_FOLDER.IO.d {
-        mkdir(INPROGRESS_FOLDER);
+    $logHandle = $logFile.open(:w);
+
+    $jobFile.rename($archiveFile);
+
+    log($logHandle, '#', 'Build start');
+
+    $logFile.symlink($logSymlink);
+
+    my @buildRecipe;
+    given %job<job><scm>.lc {
+        when "git" { @buildRecipe = gitRecipe($buildRoot, %job<job>) }
     }
 
-    my $progressSymlink = INPROGRESS_FOLDER.IO.add($archivedJob.basename);
-    symlink($archivedJob, $progressSymlink);
-
-    my $log = $archive.add(($archivedJob.extension: 'out').basename).open(:w);
-
-    say "Build {$archivedJob.basename} begins";
-
-    my $checkoutCommand = checkoutCommand($buildRoot, %job<job>);
-
-    run($buildRoot, $checkoutCommand, $log);
-
-    say "Build {$archivedJob.basename} finished";
+    for @buildRecipe {
+        log($logHandle, '$', $_);
+        doCommand($buildRoot, $_, $logHandle);
+    }
 
     CATCH {
         default {
-            say "Build {$archivedJob.basename} fizzled";
-
-            spurt $archivedJob, :append, qq:to/END/;
-
-            [build]
-            message = {.message}
-            exitcode = -1
-            END
+            log($logHandle, '#', "Build {$jobFile.basename} failed");
+            log($logHandle, '#', .message);
         }
     }
 
     LEAVE {
-        unlink($progressSymlink);
+        unlink($logSymlink);
+        log($logHandle, '#', 'Build finished');
+        try close $logHandle;
     }
 }
