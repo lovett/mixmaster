@@ -20,3 +20,6 @@ test:
 clean:
 	rm -f INBOX/*
 	rm -rf INPROGRESS BUILDS
+
+journalgrep:
+	journalctl --since now -f | grep mixmaster.p6

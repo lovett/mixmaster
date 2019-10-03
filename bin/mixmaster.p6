@@ -21,6 +21,17 @@ signal(SIGTERM).tap: {
     try close $logHandle;
 }
 
+# Log a message to the systemd journal.
+#
+# This is for tracking job status. Build-specific information should
+# be writen to a job-specific log file via log().
+sub journal($prefix, $message) {
+    say("[{$prefix}] $message");
+}
+
+# Log a message to a job-specific log file.
+#
+# This is the job-centric counterpart to journal().
 sub log($handle, $prefix, $message) {
     try $handle.say("{DateTime.now.hh-mm-ss} {$prefix} $message");
 }
@@ -53,7 +64,7 @@ sub gitRecipe($buildRoot, %pairs) {
     }
 
     @commands.push: "git checkout --quiet {%pairs<commit>}";
-    @commands.push: "echo Invoking {%pairs<build_command>}";
+    @commands.push: %pairs<build_command>;
 
     return @commands;
 }
@@ -70,6 +81,9 @@ multi sub MAIN() {
 }
 
 multi sub MAIN($jobFile) {
+    my $jobName = $jobFile.basename;
+
+
     my %job = Config::INI::parse_file($jobFile.path);
 
     my $workspace = BUILDS_FOLDER.IO.add(%job<job><repositoryName>);
@@ -78,7 +92,7 @@ multi sub MAIN($jobFile) {
 
     my $buildRoot = $workspace.add(%job<job><target>);
 
-    my $archiveFile = $archive.add($jobFile.basename);
+    my $archiveFile = $archive.add($jobName);
 
     my $logFile = $archive.add(($jobFile.extension: 'log').basename);
 
@@ -94,8 +108,10 @@ multi sub MAIN($jobFile) {
 
     $logHandle = $logFile.open(:w);
 
+
     $jobFile.rename($archiveFile);
 
+    journal($jobName, "Starting build, logging to {$logHandle.path}");
     log($logHandle, '#', 'Build start');
 
     $logFile.symlink($logSymlink);
@@ -112,12 +128,14 @@ multi sub MAIN($jobFile) {
 
     CATCH {
         default {
+            journal($jobName, 'Build failed');
             log($logHandle, '#', "Build {$jobFile.basename} failed");
             log($logHandle, '#', .message);
         }
     }
 
     LEAVE {
+        journal($jobName, 'Finished');
         unlink($logSymlink);
         log($logHandle, '#', 'Build finished');
         try close $logHandle;
