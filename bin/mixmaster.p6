@@ -81,9 +81,6 @@ multi sub MAIN() {
 }
 
 multi sub MAIN($jobFile) {
-    my $jobName = $jobFile.basename;
-
-
     my %job = Config::INI::parse_file($jobFile.path);
 
     my $workspace = BUILDS_FOLDER.IO.add(%job<job><repositoryName>);
@@ -92,9 +89,7 @@ multi sub MAIN($jobFile) {
 
     my $buildRoot = $workspace.add(%job<job><target>);
 
-    my $archiveFile = $archive.add($jobName);
-
-    my $logFile = $archive.add(($jobFile.extension: 'log').basename);
+    my $logFile = $archive.add($jobFile.basename);
 
     unless ($archive.IO.d) {
         mkdir($archive);
@@ -106,12 +101,11 @@ multi sub MAIN($jobFile) {
 
     $logSymlink = INPROGRESS_FOLDER.IO.add($logFile.basename);
 
-    $logHandle = $logFile.open(:w);
+    $jobFile.rename($logFile);
 
+    $logHandle = $logFile.open(:a);
 
-    $jobFile.rename($archiveFile);
-
-    journal($jobName, "Starting build, logging to {$logHandle.path}");
+    journal($logFile.basename, "Starting build, logging to {$logFile.path}");
     log($logHandle, '#', 'Build start');
 
     $logFile.symlink($logSymlink);
@@ -121,6 +115,8 @@ multi sub MAIN($jobFile) {
         when "git" { @buildRecipe = gitRecipe($buildRoot, %job<job>) }
     }
 
+    log($logHandle, '', "\n\n[log]\n---");
+
     for @buildRecipe {
         log($logHandle, '$', $_);
         doCommand($buildRoot, $_, $logHandle);
@@ -128,16 +124,15 @@ multi sub MAIN($jobFile) {
 
     CATCH {
         default {
-            journal($jobName, 'Build failed');
+            journal($logFile.basename, 'Build failed');
             log($logHandle, '#', "Build {$jobFile.basename} failed");
             log($logHandle, '#', .message);
         }
     }
 
     LEAVE {
-        journal($jobName, 'Finished');
+        journal($logFile.basename, 'Finished');
         unlink($logSymlink);
-        log($logHandle, '#', 'Build finished');
         try close $logHandle;
     }
 }
