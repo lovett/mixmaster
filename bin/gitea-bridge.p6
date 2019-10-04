@@ -3,16 +3,16 @@
 use JSON::Fast;
 use Config::INI;
 
-constant REFMAP_PATH = 'refs.ini';
+our Str constant REFMAP_PATH = 'refs.ini';
 
 sub MAIN() {
-    my %headers;
+    my Str %headers{Str};
 
-    my %refMap = Config::INI::parse_file(REFMAP_PATH);
+    my Str %refMap{Str} = Config::INI::parse_file(REFMAP_PATH);
 
     for lines() {
         unless %headers<method>:exists {
-            my ($method, $uri, $version) = $_.split(' ', 3);
+            my (Str $method, Str $uri, Str $version) = $_.split(' ', 3);
             %headers.append('method', $method);
             %headers.append('uri', $uri);
             %headers.append('version', $version);
@@ -20,7 +20,7 @@ sub MAIN() {
         }
 
         if ($_.contains(':')) {
-            my ($key, $value) = $_.split(':', 2);
+            my (Str $key, Str $value) = $_.split(':', 2);
             %headers{$key.lc.trim} = val($value);
             next;
         }
@@ -30,20 +30,20 @@ sub MAIN() {
         }
     }
 
-    my $body = $*IN.read(%headers<content-length>);
+    my Str $body = $*IN.read(%headers<content-length>);
 
-    my %json = from-json $body.decode;
+    my Str %json{Str} = from-json $body.decode;
 
-    my $repositoryName = %json<repository><full_name>;
+    my Str $repositoryName = %json<repository><full_name>;
 
-    my $repositoryTarget = %json<ref>.subst("refs/heads/", "", :nth(1));
+    my Str $repositoryTarget = %json<ref>.subst("refs/heads/", "", :nth(1));
 
     unless (%refMap{$repositoryName}:exists) {
         put "HTTP/1.1 422 Unknown repository\r\n";
         exit;
     }
 
-    my @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
+    my Str @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
         .key.starts-with($repositoryTarget)
     };
 
@@ -57,7 +57,7 @@ sub MAIN() {
         exit;
     }
 
-    my ($matchedTarget, $buildCommand) = @matchedTargets.first.kv;
+    my (Str $matchedTarget, Str $buildCommand) = @matchedTargets.first.kv;
 
     spurt "INBOX/{(roll 12, 'a'..'z').join}.ini", qq:to/END/;
     [job]

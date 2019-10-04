@@ -23,3 +23,7 @@ clean:
 
 journalgrep:
 	journalctl --since now -f | grep mixmaster.p6
+
+check:
+	perl6 -I $(PERL6LIB) -c bin/gitea-bridge.p6
+	perl6 -I $(PERL6LIB) -c bin/mixmaster.p6
