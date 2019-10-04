@@ -90,14 +90,14 @@ multi sub MAIN($jobFile) {
 
     my $workspace = BUILDS_FOLDER.IO.add(%job<job><repositoryName>);
 
-    my $archive = $workspace.add('ARCHIVE');
+    my $jobArchive = $workspace.add('JOBS');
 
     my $buildRoot = $workspace.add(%job<job><target>);
 
-    my $logFile = $archive.add($jobFile.basename);
+    my $logFile = $jobArchive.add($jobFile.basename);
 
-    unless ($archive.IO.d) {
-        mkdir($archive);
+    unless ($jobArchive.IO.d) {
+        mkdir($jobArchive);
     }
 
     unless ($buildRoot.IO.d) {
@@ -113,7 +113,7 @@ multi sub MAIN($jobFile) {
     log($logHandle, '', "\n\n[log]");
 
     log($logHandle, '#', 'Build started');
-    journal($logFile.basename, "Starting build {$logFile.path}");
+    journal($logFile.basename, "Starting {$logFile.path}");
 
     $logFile.symlink($logSymlink);
 
@@ -128,6 +128,7 @@ multi sub MAIN($jobFile) {
         doCommand($buildRoot, $_, $logHandle);
     }
 
+    log($logHandle, '#', 'Build finished');
     journal($logFile.basename, 'Build finished');
 
     CATCH {
