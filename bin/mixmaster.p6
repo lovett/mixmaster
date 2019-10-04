@@ -41,16 +41,21 @@ sub doCommand($buildRoot, $command, $logHandle) {
         react {
             with Proc::Async.new(«$command») {
                 whenever .stdout.lines {
-                    log($logHandle, 'O', $_);
+                    log($logHandle, 'O', $_.trim);
                 }
 
                 whenever .stderr {
-                    log($logHandle, '!', $_);
+                    log($logHandle, '!', $_.trim);
                 }
 
                 whenever .start {
+                    if (.exitcode !== 0) {
+                        die "command exited non-zero ({.exitcode})";
+                    }
+
                     done;
                 }
+
             }
         }
     });
@@ -105,8 +110,10 @@ multi sub MAIN($jobFile) {
 
     $logHandle = $logFile.open(:a);
 
-    journal($logFile.basename, "Starting build, logging to {$logFile.path}");
-    log($logHandle, '#', 'Build start');
+    log($logHandle, '', "\n\n[log]");
+
+    log($logHandle, '#', 'Build started');
+    journal($logFile.basename, "Starting build {$logFile.path}");
 
     $logFile.symlink($logSymlink);
 
@@ -115,23 +122,22 @@ multi sub MAIN($jobFile) {
         when "git" { @buildRecipe = gitRecipe($buildRoot, %job<job>) }
     }
 
-    log($logHandle, '', "\n\n[log]\n---");
 
     for @buildRecipe {
         log($logHandle, '$', $_);
         doCommand($buildRoot, $_, $logHandle);
     }
 
+    journal($logFile.basename, 'Build finished');
+
     CATCH {
         default {
+            log($logHandle, '#', "Build failed: {.payload}");
             journal($logFile.basename, 'Build failed');
-            log($logHandle, '#', "Build {$jobFile.basename} failed");
-            log($logHandle, '#', .message);
         }
     }
 
     LEAVE {
-        journal($logFile.basename, 'Finished');
         unlink($logSymlink);
         try close $logHandle;
     }
