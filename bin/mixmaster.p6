@@ -33,7 +33,8 @@ sub journal($prefix, $message) {
 #
 # This is the job-centric counterpart to journal().
 sub log($handle, $prefix, $message) {
-    try $handle.say("{DateTime.now.hh-mm-ss} {$prefix} $message");
+    try $handle.say("{DateTime.now.hh-mm-ss} {$prefix} $_")
+    for $message.split("\n");
 }
 
 sub doCommand($buildRoot, $command, $logHandle) {
