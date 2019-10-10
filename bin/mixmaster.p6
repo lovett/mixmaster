@@ -2,15 +2,15 @@
 
 use Config::INI;
 
-our Str constant INPROGRESS_FOLDER = 'INPROGRESS';
-our Str constant INBOX_FOLDER = 'INBOX';
-our Str constant BUILDS_FOLDER = 'BUILDS';
+our IO::Path constant INPROGRESS_FOLDER = IO::Path.new('INPROGRESS');
+our IO::Path constant INBOX_FOLDER = IO::Path.new('INBOX');
+our IO::Path constant BUILDS_FOLDER = IO::Path.new('BUILDS');
 
 my IO::Path $logSymlink;
 my IO::Handle $logHandle;
 
 INIT {
-    unless INPROGRESS_FOLDER.IO.d {
+    unless INPROGRESS_FOLDER.d {
         mkdir(INPROGRESS_FOLDER);
     }
 }
@@ -62,7 +62,7 @@ sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
     });
 }
 
-sub gitRecipe(IO::Path $buildRoot, Str %pairs) {
+sub gitRecipe(IO::Path $buildRoot, %pairs) {
     my Str @commands;
 
     unless ($buildRoot.add('.git').d) {
@@ -86,10 +86,10 @@ multi sub MAIN() {
     MAIN(@jobs.first);
 }
 
-multi sub MAIN($jobFile) {
-    my Str %job{Str} = Config::INI::parse_file($jobFile.path);
+multi sub MAIN(IO::Path $jobFile) {
+    my Hash %job{Str} = Config::INI::parse_file($jobFile.path);
 
-    my IO::Path $workspace = BUILDS_FOLDER.IO.add(%job<job><repositoryName>);
+    my IO::Path $workspace = BUILDS_FOLDER.add(%job<job><repositoryName>);
 
     my IO::Path $jobArchive = $workspace.add('JOBS');
 
@@ -97,21 +97,22 @@ multi sub MAIN($jobFile) {
 
     my IO::Path $logFile = $jobArchive.add($jobFile.basename);
 
-    unless ($jobArchive.IO.d) {
+    unless ($jobArchive.d) {
         mkdir($jobArchive);
     }
 
-    unless ($buildRoot.IO.d) {
+    unless ($buildRoot.d) {
         mkdir($buildRoot);
     }
 
-    $logSymlink = INPROGRESS_FOLDER.IO.add($logFile.basename);
+    my IO::Path $logSymlink = INPROGRESS_FOLDER.add($logFile.basename).IO;
 
     $jobFile.rename($logFile);
 
     $logHandle = $logFile.open(:a);
 
-    log($logHandle, '', "\n\n[log]");
+    # The backspace (\b) compensates for the logging prefix and keeps the heading aligned.
+    log($logHandle, '', "\n\n\b[log]");
 
     log($logHandle, '#', 'Build started');
     journal($logFile.basename, "Starting {$logFile.path}");
@@ -133,6 +134,10 @@ multi sub MAIN($jobFile) {
     journal($logFile.basename, 'Build finished');
 
     CATCH {
+        when X::PhaserExceptions {
+            say "Phaser exception: ", $_;
+        }
+
         default {
             log($logHandle, '#', "Build failed: {.payload}");
             journal($logFile.basename, 'Build failed');
