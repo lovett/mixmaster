@@ -8,7 +8,7 @@ our Str constant REFMAP_PATH = 'refs.ini';
 sub MAIN() {
     my Str %headers{Str};
 
-    my Str %refMap{Str} = Config::INI::parse_file(REFMAP_PATH);
+    my Hash %refMap{Str} = Config::INI::parse_file(REFMAP_PATH);
 
     for lines() {
         unless %headers<method>:exists {
@@ -30,9 +30,9 @@ sub MAIN() {
         }
     }
 
-    my Str $body = $*IN.read(%headers<content-length>);
+    my Buf $body = $*IN.read(%headers<content-length>);
 
-    my Str %json{Str} = from-json $body.decode;
+    my %json{Str} = from-json $body.decode;
 
     my Str $repositoryName = %json<repository><full_name>;
 
@@ -43,7 +43,7 @@ sub MAIN() {
         exit;
     }
 
-    my Str @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
+    my Pair @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
         .key.starts-with($repositoryTarget)
     };
 
