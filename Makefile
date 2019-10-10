@@ -18,7 +18,7 @@ clean:
 	rm -rf INPROGRESS BUILDS
 
 journalgrep:
-	journalctl --since now -f | grep mixmaster.p6
+	journalctl --since now -f | grep mixmaster
 
 check:
 	perl6 -I $(PERL6LIB) -c bin/gitea-bridge.p6
