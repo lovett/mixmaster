@@ -9,6 +9,8 @@ our IO::Path constant BUILDS_FOLDER = IO::Path.new('BUILDS');
 my IO::Path $logSymlink;
 my IO::Handle $logHandle;
 
+enum JobState <job-start job-end job-fail>;
+
 INIT {
     unless INPROGRESS_FOLDER.d {
         mkdir(INPROGRESS_FOLDER);
@@ -16,25 +18,46 @@ INIT {
 }
 
 signal(SIGTERM).tap: {
-    log($logHandle, 'X', 'Killed by SIGTERM');
+    log-to-file('X', 'Killed by SIGTERM');
     unlink($logSymlink);
     try close $logHandle;
 }
 
-# Log a message to the systemd journal.
+# Write a message to the systemd journal.
 #
 # This is for tracking job status. Build-specific information should
 # be writen to a job-specific log file via log().
-sub journal(Str $prefix, Str $message) {
+sub log-to-journal(Str $prefix, Str $message) {
     say("[{$prefix}] $message");
 }
 
-# Log a message to a job-specific log file.
+# Write a message to a job-specific log file.
 #
-# This is the job-centric counterpart to journal().
-sub log(IO::Handle $handle, Str $prefix, Str $message) {
-    try $handle.say("{DateTime.now.hh-mm-ss} {$prefix} $_")
+# This is the job-centric counterpart to log-to-journal().
+sub log-to-file(Str $prefix, Str $message) {
+    try $logHandle.say("{DateTime.now.hh-mm-ss} {$prefix} $_")
     for $message.split("\n");
+}
+
+# Dispatcher for tracking job progress in local logs and external proceesses.
+sub broadcast(JobState $state, %job, Str $message?) {
+    given $state {
+        when job-start {
+            log-to-file('#', 'Build started');
+            log-to-journal($logHandle.path.basename, "Starting {$logHandle.path}");
+        }
+
+        when job-end {
+            my $success = 'Build finished';
+            log-to-file('#', $success);
+            log-to-journal($logHandle.path.basename, $success);
+        }
+
+        when job-fail {
+            log-to-file('#', "Build failed: {$message}");
+            log-to-journal($logHandle.path.basename, 'Build failed');
+        }
+    }
 }
 
 sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
@@ -42,11 +65,11 @@ sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
         react {
             with Proc::Async.new(«$command») {
                 whenever .stdout.lines {
-                    log($logHandle, 'O', $_.trim);
+                    log-to-file('O', $_.trim);
                 }
 
                 whenever .stderr {
-                    log($logHandle, '!', $_.trim);
+                    log-to-file('!', $_.trim);
                 }
 
                 whenever .start {
@@ -110,12 +133,9 @@ multi sub MAIN(IO::Path $jobFile) {
     $jobFile.rename($logFile);
 
     $logHandle = $logFile.open(:a);
+    $logHandle.say("\n\n[log]");
 
-    # The backspace (\b) compensates for the logging prefix and keeps the heading aligned.
-    log($logHandle, '', "\n\n\b[log]");
-
-    log($logHandle, '#', 'Build started');
-    journal($logFile.basename, "Starting {$logFile.path}");
+    broadcast(job-start, %job);
 
     $logFile.symlink($logSymlink);
 
@@ -126,12 +146,11 @@ multi sub MAIN(IO::Path $jobFile) {
 
 
     for @buildRecipe {
-        log($logHandle, '$', $_);
+        log-to-file('$', $_);
         doCommand($buildRoot, $_, $logHandle);
     }
 
-    log($logHandle, '#', 'Build finished');
-    journal($logFile.basename, 'Build finished');
+    broadcast(job-end, %job);
 
     CATCH {
         when X::PhaserExceptions {
@@ -139,8 +158,7 @@ multi sub MAIN(IO::Path $jobFile) {
         }
 
         default {
-            log($logHandle, '#', "Build failed: {.payload}");
-            journal($logFile.basename, 'Build failed');
+            broadcast(job-fail, %job, .payload);
         }
     }
 
