@@ -1,5 +1,5 @@
 [Unit]
-Description=Mixmaster Filesystem Watcher
+Description=Mixmaster inbox path watcher
 
 [Path]
 DirectoryNotEmpty=/home/%u/Documents/mixmaster/INBOX
