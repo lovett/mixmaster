@@ -4,6 +4,7 @@ PERL6LIB := inst\#modules
 install: systemd-enable
 	zef -to=$(PERL6LIB) install JSON::Fast
 	zef -to=$(PERL6LIB) install Config::INI
+	zef -to=$(PERL6LIB) install Email::Simple;
 
 uninstall: systemd-disable
 

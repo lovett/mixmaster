@@ -1,5 +1,7 @@
 #!/usr/bin/env perl6
 
+use lib 'lib';
+
 use Config::INI;
 
 our IO::Path constant INPROGRESS_FOLDER = IO::Path.new('INPROGRESS');
@@ -41,21 +43,38 @@ sub log-to-file(Str $prefix, Str $message) {
 
 # Dispatcher for tracking job progress in local logs and external proceesses.
 sub broadcast(JobState $state, %job, Str $message?) {
+    my $email-recipient = %*ENV<MIXMASTER_BROADCAST_EMAIL>;
+
     given $state {
         when job-start {
             log-to-file('#', 'Build started');
             log-to-journal($logHandle.path.basename, "Starting {$logHandle.path}");
+
+            if ($email-recipient) {
+                use Broadcast::Email;
+                mail-job-start($email-recipient, %job);
+            }
         }
 
         when job-end {
             my $success = 'Build finished';
             log-to-file('#', $success);
             log-to-journal($logHandle.path.basename, $success);
+
+            if ($email-recipient) {
+                use Broadcast::Email;
+                mail-job-end($email-recipient, %job);
+            }
         }
 
         when job-fail {
             log-to-file('#', "Build failed: {$message}");
             log-to-journal($logHandle.path.basename, 'Build failed');
+
+            if ($email-recipient) {
+                use Broadcast::Email;
+                mail-job-fail($email-recipient, %job, $message);
+            }
         }
     }
 }
@@ -153,10 +172,6 @@ multi sub MAIN(IO::Path $jobFile) {
     broadcast(job-end, %job);
 
     CATCH {
-        when X::PhaserExceptions {
-            say "Phaser exception: ", $_;
-        }
-
         default {
             broadcast(job-fail, %job, .payload);
         }

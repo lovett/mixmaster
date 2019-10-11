@@ -4,3 +4,5 @@ BUILDS
 modules
 samples
 refs.ini
+environment
+.precomp
