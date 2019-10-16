@@ -39,6 +39,7 @@ sub log-to-journal(Str $prefix, Str $message) {
 sub log-to-file(Str $prefix, Str $message) {
     try $logHandle.say("{DateTime.now.hh-mm-ss} {$prefix} $_")
     for $message.split("\n");
+    $logHandle.flush();
 }
 
 # Dispatcher for tracking job progress in local logs and external proceesses.
@@ -73,7 +74,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
 
             if ($email-recipient) {
                 use Broadcast::Email;
-                mail-job-fail($email-recipient, %job, $message);
+                mail-job-fail($email-recipient, %job, $logHandle.path);
             }
         }
     }

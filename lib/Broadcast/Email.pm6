@@ -23,10 +23,13 @@ sub mail-job-end(Str $recipient, %job) is export {
     send($recipient, $subject, $body);
 }
 
-sub mail-job-fail(Str $recipient, %job) is export {
+sub mail-job-fail(Str $recipient, %job, IO::Path $logFile) is export {
     my $repositoryName = %job<job><repositoryName>;
     my $subject = "Error building {$repositoryName}";
-    my $body = "Mixmaster was unable to build {$repositoryName}";
+
+    my $body = "Mixmaster was unable to build {$repositoryName}\n\n";
+    $body ~= slurp $logFile;
+
     send($recipient, $subject, $body);
 }
 
