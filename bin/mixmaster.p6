@@ -137,7 +137,7 @@ multi sub MAIN(IO::Path $jobFile) {
 
     my IO::Path $buildRoot = $workspace.add(%job<job><target>);
 
-    my IO::Path $logFile = $jobArchive.add($jobFile.basename);
+    my IO::Path $logFile = $jobArchive.add(($jobFile.extension: 'log').basename);
 
     unless ($jobArchive.d) {
         mkdir($jobArchive);
