@@ -1,0 +1,9 @@
+[Unit]
+Description=Mixmaster Service Bridge for building on demand
+
+[Service]
+StandardInput=socket
+StandardError=journal
+Environment=PERL6LIB=inst#modules
+WorkingDirectory=/home/%u/Documents/mixmaster
+ExecStart=/home/%u/Documents/mixmaster/bin/ondemand-bridge.p6

@@ -14,6 +14,9 @@ reload:
 test:
 	curl -v --header "Content-Type: application/json" --data @samples/new-build.json 'http://127.0.0.1:8585'
 
+test-ondemand:
+	curl -v --header "Content-Type: application/json" --data @samples/ondemand.json 'http://127.0.0.1:8586'
+
 clean:
 	rm -f INBOX/*
 	rm -rf INPROGRESS BUILDS
@@ -30,11 +33,17 @@ systemd-enable:
 	ln -sf $(PWD)/systemd/mixmaster-inbox-watcher.service ${SYSTEMD_USER_DIR}
 	ln -sf $(PWD)/systemd/mixmaster-gitea-bridge@.service ${SYSTEMD_USER_DIR}
 	ln -sf $(PWD)/systemd/mixmaster-gitea-bridge.socket ${SYSTEMD_USER_DIR}
+	ln -sf $(PWD)/systemd/mixmaster-ondemand-bridge@.service ${SYSTEMD_USER_DIR}
+	ln -sf $(PWD)/systemd/mixmaster-ondemand-bridge.socket ${SYSTEMD_USER_DIR}
+
 	systemctl --user --now enable mixmaster-inbox-watcher.path
 	systemctl --user --now enable mixmaster-gitea-bridge.socket
+	systemctl --user --now enable mixmaster-ondemand-bridge.socket
 
 systemd-disable:
 	-systemctl --user --now --quiet disable mixmaster-inbox-watcher.path
 	-systemctl --user --now --quiet disable mixmaster-gitea-bridge.socket
+	-systemctl --user --now --quiet disable mixmaster-ondemand-bridge.socket
 	rm -f ${SYSTEMD_USER_DIR}/mixmaster-inbox-watcher.service
 	rm -f ${SYSTEMD_USER_DIR}/systemd/mixmaster-gitea-bridge@.service
+	rm -f ${SYSTEMD_USER_DIR}/systemd/mixmaster-ondemand-bridge@.service

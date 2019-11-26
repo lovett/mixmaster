@@ -8,9 +8,9 @@ use Bridge;
 our Str constant REFMAP_PATH = 'refs.ini';
 
 sub MAIN() {
-    my Hash %refMap{Str} = Config::INI::parse_file(REFMAP_PATH);
-
     my Str %headers{Str};
+
+    my Hash %refMap{Str} = Config::INI::parse_file(REFMAP_PATH);
 
     for lines() {
         parse-headers($_, &%headers);
@@ -22,9 +22,14 @@ sub MAIN() {
 
     my %json{Str} = parse-json-body(%headers<content-length>);
 
-    my Str $repositoryName = %json<repository><full_name>;
+    for <scm repositoryUrl repositoryName commit branch> {
+        unless (%json{$_}) {
+            send-error-response("$_ not specified");
+            exit;
+        }
+    }
 
-    my Str $repositoryTarget = %json<ref>.subst("refs/heads/", "", :nth(1));
+    my Str $repositoryName = %json<repositoryName>;
 
     unless (%refMap{$repositoryName}:exists) {
         send-error-response("Unknown repository");
@@ -32,7 +37,7 @@ sub MAIN() {
     }
 
     my Pair @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
-        .key.starts-with($repositoryTarget)
+        .key.starts-with(%json<branch>)
     };
 
     unless (@matchedTargets) {
@@ -51,13 +56,12 @@ sub MAIN() {
 
     spurt "INBOX/{$jobFileName}", qq:to/END/;
     [job]
-    scm = git
+    scm = {%json<scm>}
     repositoryName = $repositoryName
-    repositoryUrl = {%json<repository><ssh_url>}
-    commit = {%json<after>}
+    repositoryUrl = {%json<repositoryUrl>}
+    commit = {%json<commit>}
     target = $matchedTarget
     build_command = $buildCommand
-    view_url = {%json<compare_url>}
     END
 
     send-success-response();
