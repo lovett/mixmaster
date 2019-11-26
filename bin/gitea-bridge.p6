@@ -59,7 +59,14 @@ sub MAIN() {
 
     my (Str $matchedTarget, Str $buildCommand) = @matchedTargets.first.kv;
 
-    spurt "INBOX/{(roll 12, 'a'..'z').join}.ini", qq:to/END/;
+    my $jobFileName = DateTime.now(
+        formatter => sub ($self) {
+            sprintf "%04d%02d%02d-%02d%02d%02d.ini",
+            .year, .month, .day, .hour, .minute, .whole-second given $self;
+        }
+    );
+
+    spurt "INBOX/{$jobFileName}", qq:to/END/;
     [job]
     scm = git
     repositoryName = $repositoryName
