@@ -132,11 +132,17 @@ multi sub MAIN() {
 multi sub MAIN(IO::Path $jobFile) {
     my Hash %job{Str} = Config::INI::parse_file($jobFile.path);
 
-    my IO::Path $workspace = BUILDS_FOLDER.add(%job<job><repositoryName>);
+    my $fsFriendlyRepositoryName = %job<job><repositoryName>.lc;
+    $fsFriendlyRepositoryName ~~ s :g s/\W/-/;
+
+    my $fsFriendlyTarget = %job<job><target>.lc;
+    $fsFriendlyTarget ~~ s :g s/\W/-/;
+
+    my IO::Path $workspace = BUILDS_FOLDER.add($fsFriendlyRepositoryName);
 
     my IO::Path $jobArchive = $workspace.add('JOBS');
 
-    my IO::Path $buildRoot = $workspace.add(%job<job><target>);
+    my IO::Path $buildRoot = $workspace.add($fsFriendlyTarget);
 
     my IO::Path $logFile = $jobArchive.add(($jobFile.extension: 'log').basename);
 
