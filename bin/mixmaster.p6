@@ -21,8 +21,9 @@ INIT {
 
 signal(SIGTERM).tap: {
     log-to-file('X', 'Killed by SIGTERM');
-    unlink($logSymlink);
+    try unlink($logSymlink);
     try close $logHandle;
+    exit;
 }
 
 # Write a message to the systemd journal.
@@ -148,11 +149,12 @@ multi sub MAIN(IO::Path $jobFile) {
         mkdir($buildRoot);
     }
 
-    my IO::Path $logSymlink = INPROGRESS_FOLDER.add($logFile.basename).IO;
+    $logSymlink = INPROGRESS_FOLDER.add($logFile.basename).IO;
 
     $jobFile.rename($logFile);
 
     $logHandle = $logFile.open(:a);
+    $logHandle.say("pid = {$*PID}");
     $logHandle.say("\n\n[log]");
 
     broadcast(job-start, %job);
@@ -163,7 +165,6 @@ multi sub MAIN(IO::Path $jobFile) {
     given %job<job><scm>.lc {
         when "git" { @buildRecipe = gitRecipe($buildRoot, %job<job>) }
     }
-
 
     for @buildRecipe {
         log-to-file('$', $_);
@@ -179,7 +180,7 @@ multi sub MAIN(IO::Path $jobFile) {
     }
 
     LEAVE {
-        unlink($logSymlink);
+        try unlink($logSymlink);
         try close $logHandle;
     }
 }
