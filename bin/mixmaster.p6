@@ -109,7 +109,7 @@ sub gitRecipe(IO::Path $buildRoot, %pairs) {
     my Str @commands;
 
     unless ($buildRoot.add('.git').d) {
-        @commands.push: "git clone {%pairs<repositoryUrl>} --quiet --branch {%pairs<target>} .";
+        @commands.push: "git clone {%pairs<repositoryUrl>} --quiet --branch {%pairs<branch>} .";
     }
 
     @commands.push: "git checkout --quiet {%pairs<commit>}";
@@ -135,14 +135,14 @@ multi sub MAIN(IO::Path $jobFile) {
     my $fsFriendlyRepositoryName = %job<job><repositoryName>.lc;
     $fsFriendlyRepositoryName ~~ s :g s/\W/-/;
 
-    my $fsFriendlyTarget = %job<job><target>.lc;
-    $fsFriendlyTarget ~~ s :g s/\W/-/;
+    my $fsFriendlyBranch = %job<job><branch>.lc;
+    $fsFriendlyBranch ~~ s :g s/\W/-/;
 
     my IO::Path $workspace = BUILDS_FOLDER.add($fsFriendlyRepositoryName);
 
     my IO::Path $jobArchive = $workspace.add('JOBS');
 
-    my IO::Path $buildRoot = $workspace.add($fsFriendlyTarget);
+    my IO::Path $buildRoot = $workspace.add($fsFriendlyBranch);
 
     my IO::Path $logFile = $jobArchive.add(($jobFile.extension: 'log').basename);
 

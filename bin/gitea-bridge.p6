@@ -24,28 +24,28 @@ sub MAIN() {
 
     my Str $repositoryName = %json<repository><full_name>;
 
-    my Str $repositoryTarget = %json<ref>.subst("refs/heads/", "", :nth(1));
+    my Str $repositoryBranch = %json<ref>.subst("refs/heads/", "", :nth(1));
 
     unless (%refMap{$repositoryName}:exists) {
         send-error-response("Unknown repository");
         exit;
     }
 
-    my Pair @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
-        .key.starts-with($repositoryTarget)
+    my Pair @matchedBranchs = %refMap{$repositoryName}.pairs.grep: {
+        .key.starts-with($repositoryBranch)
     };
 
-    unless (@matchedTargets) {
-        send-error-response("Unknown target");
+    unless (@matchedBranchs) {
+        send-error-response("Unknown branch");
         exit;
     }
 
-    if (@matchedTargets.elems > 1) {
-        send-error-response("Multiple matches for this target");
+    if (@matchedBranchs.elems > 1) {
+        send-error-response("Multiple matches for this branch");
         exit;
     }
 
-    my (Str $matchedTarget, Str $buildCommand) = @matchedTargets.first.kv;
+    my (Str $matchedBranch, Str $buildCommand) = @matchedBranchs.first.kv;
 
     my $jobFileName = generate-job-file-name();
 
@@ -55,7 +55,7 @@ sub MAIN() {
     repositoryName = $repositoryName
     repositoryUrl = {%json<repository><ssh_url>}
     commit = {%json<after>}
-    target = $matchedTarget
+    branch = $matchedBranch
     build_command = $buildCommand
     view_url = {%json<compare_url>}
     END

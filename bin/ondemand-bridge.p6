@@ -36,21 +36,21 @@ sub MAIN() {
         exit;
     }
 
-    my Pair @matchedTargets = %refMap{$repositoryName}.pairs.grep: {
+    my Pair @matchedBranches = %refMap{$repositoryName}.pairs.grep: {
         .key.starts-with(%json<branch>)
     };
 
-    unless (@matchedTargets) {
-        send-error-response("Unknown target");
+    unless (@matchedBranches) {
+        send-error-response("Unknown branch");
         exit;
     }
 
-    if (@matchedTargets.elems > 1) {
-        send-error-response("Multiple matches for this target");
+    if (@matchedBranches.elems > 1) {
+        send-error-response("Multiple matches for this branch");
         exit;
     }
 
-    my (Str $matchedTarget, Str $buildCommand) = @matchedTargets.first.kv;
+    my (Str $matchedBranch, Str $buildCommand) = @matchedBranchs.first.kv;
 
     my $jobFileName = generate-job-file-name();
 
@@ -60,7 +60,7 @@ sub MAIN() {
     repositoryName = $repositoryName
     repositoryUrl = {%json<repositoryUrl>}
     commit = {%json<commit>}
-    target = $matchedTarget
+    branch = $matchedBranch
     build_command = $buildCommand
     END
 
