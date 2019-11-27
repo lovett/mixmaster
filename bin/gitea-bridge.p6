@@ -56,8 +56,8 @@ sub MAIN() {
     repositoryUrl = {%json<repository><ssh_url>}
     commit = {%json<after>}
     branch = $matchedBranch
-    build_command = $buildCommand
-    view_url = {%json<compare_url>}
+    buildCommand = $buildCommand
+    viewUrl = {%json<compare_url>}
     END
 
     send-success-response();

@@ -113,7 +113,7 @@ sub gitRecipe(IO::Path $buildRoot, %pairs) {
     }
 
     @commands.push: "git checkout --quiet {%pairs<commit>}";
-    @commands.push: %pairs<build_command>;
+    @commands.push: %pairs<buildCommand>;
 
     return @commands;
 }

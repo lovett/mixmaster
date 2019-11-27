@@ -9,8 +9,8 @@ sub mail-job-start(Str $recipient, %job) is export {
     my $subject = "Starting build for {$repositoryName}";
     my $body = "Mixmaster has started a build for {$repositoryName}";
 
-    if (%job<job><view_url>) {
-        $body ~= "\n\n{%job<job><view_url>}";
+    if (%job<job><viewUrl>) {
+        $body ~= "\n\n{%job<job><viewUrl>}";
     }
 
     send($recipient, $subject, $body);

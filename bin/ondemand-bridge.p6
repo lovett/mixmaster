@@ -61,7 +61,8 @@ sub MAIN() {
     repositoryUrl = {%json<repositoryUrl>}
     commit = {%json<commit>}
     branch = $matchedBranch
-    build_command = $buildCommand
+    buildCommand = $buildCommand
+    viewUrl = {%json<viewUrl>}
     END
 
     send-success-response();
