@@ -83,24 +83,23 @@ sub broadcast(JobState $state, %job, Str $message?) {
 
 sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
     indir($buildRoot, {
+        my $proc = Proc::Async.new(«$command»);
+
         react {
-            with Proc::Async.new(«$command») {
-                whenever .stdout.lines {
-                    log-to-file('O', $_.trim);
+            whenever $proc.stdout.lines {
+                log-to-file('O', $_.trim);
+            }
+
+            whenever $proc.stderr {
+                log-to-file('!', $_.trim);
+            }
+
+            whenever $proc.start {
+                if (.exitcode !== 0) {
+                    die "command exited non-zero ({.exitcode})";
                 }
 
-                whenever .stderr {
-                    log-to-file('!', $_.trim);
-                }
-
-                whenever .start {
-                    if (.exitcode !== 0) {
-                        die "command exited non-zero ({.exitcode})";
-                    }
-
-                    done;
-                }
-
+                done;
             }
         }
     });
