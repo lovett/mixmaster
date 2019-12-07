@@ -1,5 +1,5 @@
 [Unit]
-Description=Mixmaster Socket Bridge for Gitea
+Description=Mixmaster Socket Bridge
 
 [Socket]
 ListenStream=8585

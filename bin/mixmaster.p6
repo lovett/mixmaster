@@ -133,10 +133,10 @@ multi sub MAIN(IO::Path $jobFile) {
     my Hash %job{Str} = Config::INI::parse_file($jobFile.path);
 
     my $fsFriendlyRepositoryName = %job<job><repositoryName>.lc;
-    $fsFriendlyRepositoryName ~~ s :g s/\W/-/;
+    $fsFriendlyRepositoryName ~~ s:global/\W/-/;
 
     my $fsFriendlyBranch = %job<job><branch>.lc;
-    $fsFriendlyBranch ~~ s :g s/\W/-/;
+    $fsFriendlyBranch ~~ s:global/\W/-/;
 
     my IO::Path $workspace = BUILDS_FOLDER.add($fsFriendlyRepositoryName);
 

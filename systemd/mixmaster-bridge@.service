@@ -6,4 +6,4 @@ StandardInput=socket
 StandardError=journal
 Environment=PERL6LIB=inst#modules
 WorkingDirectory=/home/%u/Documents/mixmaster
-ExecStart=/home/%u/Documents/mixmaster/bin/gitea-bridge.p6
+ExecStart=/home/%u/Documents/mixmaster/bin/bridge.p6
