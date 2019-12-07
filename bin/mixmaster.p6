@@ -115,6 +115,10 @@ sub gitRecipe(IO::Path $buildRoot, %pairs) {
     @commands.push: "git checkout --quiet {%pairs<commit>}";
     @commands.push: %pairs<buildCommand>;
 
+    if (%*ENV<MIXMASTER_ENVIRONMENT> ~~ "dev") {
+        return ("echo $_" for @commands);
+    }
+
     return @commands;
 }
 
