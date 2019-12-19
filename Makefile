@@ -1,14 +1,13 @@
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
-PERL6LIB := inst\#modules
 
 # Install the application on the production host via Ansible
 install:
 	ansible-playbook ansible/install.yml
 
 setup:
-	zef -to=$(PERL6LIB) install JSON::Fast
-	zef -to=$(PERL6LIB) install Config::INI
-	zef -to=$(PERL6LIB) install Email::Simple;
+	zef install JSON::Fast
+	zef install Config::INI
+	zef install Email::Simple;
 
 reload:
 	systemctl --user daemon-reload
@@ -27,8 +26,8 @@ journalgrep:
 	journalctl --since now -f | grep mixmaster
 
 check:
-	perl6 -I $(PERL6LIB) -c bin/bridge.p6
-	perl6 -I $(PERL6LIB) -c bin/mixmaster.p6
+	perl6 -c bin/mmbridge.p6
+	perl6 -c bin/mmbuild.p6
 
 # Set up systemd services for use during development.
 systemd-enable:
