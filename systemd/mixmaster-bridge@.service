@@ -1,9 +1,0 @@
-[Unit]
-Description=Mixmaster Service Bridge for Gitea
-
-[Service]
-StandardInput=socket
-StandardError=journal
-Environment=PERL6LIB=inst#modules
-WorkingDirectory=/home/%u/Documents/mixmaster
-ExecStart=/home/%u/Documents/mixmaster/bin/bridge.p6

@@ -1,8 +1,0 @@
-[Unit]
-Description=Mixmaster inbox path service
-
-[Service]
-Environment=PERL6LIB=inst#modules
-EnvironmentFile=/home/%u/Documents/mixmaster/environment
-WorkingDirectory=/home/%u/Documents/mixmaster
-ExecStart=/home/%u/Documents/mixmaster/bin/mixmaster.p6

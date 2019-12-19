@@ -1,12 +1,14 @@
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
 PERL6LIB := inst\#modules
 
-install: systemd-enable
+# Install the application on the production host via Ansible
+install:
+	ansible-playbook ansible/install.yml
+
+setup:
 	zef -to=$(PERL6LIB) install JSON::Fast
 	zef -to=$(PERL6LIB) install Config::INI
 	zef -to=$(PERL6LIB) install Email::Simple;
-
-uninstall: systemd-disable
 
 reload:
 	systemctl --user daemon-reload
@@ -28,17 +30,19 @@ check:
 	perl6 -I $(PERL6LIB) -c bin/bridge.p6
 	perl6 -I $(PERL6LIB) -c bin/mixmaster.p6
 
+# Set up systemd services for use during development.
 systemd-enable:
-	ln -sf $(PWD)/systemd/mixmaster-inbox-watcher.path ${SYSTEMD_USER_DIR}
-	ln -sf $(PWD)/systemd/mixmaster-inbox-watcher.service ${SYSTEMD_USER_DIR}
-	ln -sf $(PWD)/systemd/mixmaster-bridge@.service ${SYSTEMD_USER_DIR}
-	ln -sf $(PWD)/systemd/mixmaster-bridge.socket ${SYSTEMD_USER_DIR}
+	ln -sf $(PWD)/services/mixmaster-inbox-watcher.path ${SYSTEMD_USER_DIR}
+	ln -sf $(PWD)/services/mixmaster-inbox-watcher.service ${SYSTEMD_USER_DIR}
+	ln -sf $(PWD)/services/mixmaster-bridge.service ${SYSTEMD_USER_DIR}
+	ln -sf $(PWD)/services/mixmaster-bridge.socket ${SYSTEMD_USER_DIR}
 
 	systemctl --user --now enable mixmaster-inbox-watcher.path
 	systemctl --user --now enable mixmaster-bridge.socket
 
+# Remove systemd services used during development.
 systemd-disable:
 	-systemctl --user --now --quiet disable mixmaster-inbox-watcher.path
 	-systemctl --user --now --quiet disable mixmaster-bridge.socket
 	rm -f ${SYSTEMD_USER_DIR}/mixmaster-inbox-watcher.service
-	rm -f ${SYSTEMD_USER_DIR}/systemd/mixmaster-bridge@.service
+	rm -f ${SYSTEMD_USER_DIR}/mixmaster-bridge.service

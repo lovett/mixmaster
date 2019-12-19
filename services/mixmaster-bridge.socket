@@ -1,5 +1,5 @@
 [Unit]
-Description=Mixmaster Socket Bridge
+Description=Mixmaster Bridge Socket
 
 [Socket]
 ListenStream=8585
