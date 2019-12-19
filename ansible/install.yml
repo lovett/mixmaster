@@ -22,11 +22,10 @@
         state: directory
         recurse: yes
       loop:
-        - "~/builds"
+        - "~/Builds"
+        - "~/Builds/INBOX"
         - "~/.local/bin"
         - "~/.local/src"
-      tags:
-        - firstrun
 
     - name: Download Rakudo Star tarball
       become: yes
@@ -93,7 +92,7 @@
       tags:
         - firstrun
 
-    - name: Install application files
+    - name: Install application scripts
       become: yes
       copy:
         src: "{{ item }}"
@@ -104,6 +103,26 @@
       loop:
         - "../bin/mmbridge.p6"
         - "../bin/mmbuild.p6"
+
+    - name: Install application libraries
+      become: yes
+      copy:
+        src: "{{ item }}"
+        dest: "/home/{{ application_user }}/.local/lib"
+        owner: "{{ application_user }}"
+        group: "{{ application_user }}"
+        mode: "0600"
+      loop:
+        - "../lib/Broadcast"
+
+    - name: Set SELinux type
+      become: yes
+      become_user: "{{ application_user }}"
+      file:
+        path: "~/.local/bin"
+        state: directory
+        recurse: yes
+        setype: bin_t
 
     - name: Install systemd services
       become: yes

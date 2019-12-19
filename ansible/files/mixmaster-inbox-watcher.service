@@ -5,7 +5,7 @@ Description=Mixmaster inbox path service
 User=mixmaster
 Group=mixmaster
 WorkingDirectory=/home/mixmaster
-ExecStart=/home/mixmaster/.local/bin/mmbuild.p6
+ExecStart=/home/mixmaster/.local/bin/perl6 /home/mixmaster/.local/bin/mmbuild.p6
 
 # Local Variables:
 # mode: conf

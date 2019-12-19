@@ -7,7 +7,7 @@ Group=mixmaster
 StandardInput=socket
 StandardError=journal
 WorkingDirectory=/home/mixmaster
-ExecStart=/home/mixmaster/.local/bin/mmbridge.p6
+ExecStart=/home/mixmaster/.local/bin/perl6 /home/mixmaster/.local/bin/mmbridge.p6
 
 # Local Variables:
 # mode: conf

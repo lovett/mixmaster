@@ -1,5 +1,6 @@
 #!/usr/bin/env perl6
 
+use lib '.local/lib';
 use lib 'lib';
 
 use Config::INI;
@@ -50,9 +51,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', 'Build started');
             log-to-journal($logHandle.path.basename, "Starting {$logHandle.path}");
 
-            if ($email-recipient) {
+            if (%job<job><mailto>) {
                 use Broadcast::Email;
-                mail-job-start($email-recipient, %job);
+                mail-job-start(%job<job><mailto>, %job);
             }
         }
 
@@ -61,9 +62,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', $success);
             log-to-journal($logHandle.path.basename, $success);
 
-            if (%job<mailto>) {
+            if (%job<job><mailto>) {
                 use Broadcast::Email;
-                mail-job-end(%job<mailto>, %job);
+                mail-job-end(%job<job><mailto>, %job);
             }
         }
 
@@ -71,9 +72,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', "Build failed: {$message}");
             log-to-journal($logHandle.path.basename, 'Build failed');
 
-            if (%job<mailto>) {
+            if (%job<job><mailto>) {
                 use Broadcast::Email;
-                mail-job-fail(%job<mailto>, %job, $logHandle.path);
+                mail-job-fail(%job<job><mailto>, %job, $logHandle.path);
             }
         }
     }

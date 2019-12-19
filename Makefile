@@ -14,12 +14,12 @@ setup:
 	zef install Config::INI
 	zef install Email::Simple;
 
-# Simulate a Gitea request.
+# Simulate a Gitea request without using systemd.
 test-gitea: clean
 	./bin/mmbridge.p6 < samples/gitea.http
 	cat Builds/INBOX/*
 
-# Simulate an adh-hoc request.
+# Simulate an adh-hoc request without using systemd.
 test-adhoc: clean
 	./bin/mmbridge.p6 < samples/adhoc.http
 	cat Builds/INBOX/*
