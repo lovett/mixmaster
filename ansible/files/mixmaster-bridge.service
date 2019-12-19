@@ -1,0 +1,15 @@
+[Unit]
+Description=Mixmaster Bridge Service
+
+[Service]
+User=mixmaster
+Group=mixmaster
+StandardInput=socket
+StandardError=journal
+Environment=PERL6LIB=inst#/home/mixmaster/modules
+WorkingDirectory=/home/mixmaster/builds
+ExecStart=/home/mixmaster/bin/mmbridge.p6
+
+# Local Variables:
+# mode: conf
+# End:

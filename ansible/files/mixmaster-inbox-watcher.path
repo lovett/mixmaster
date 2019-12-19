@@ -8,3 +8,7 @@ DirectoryMode=0700
 
 [Install]
 WantedBy=multi-user.target
+
+# Local Variables:
+# mode: conf
+# End:

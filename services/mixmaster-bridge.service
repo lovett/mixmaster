@@ -1,9 +1,0 @@
-[Unit]
-Description=Mixmaster Bridge Service
-
-[Service]
-StandardInput=socket
-StandardError=journal
-Environment=PERL6LIB=inst#modules
-WorkingDirectory=/home/%u/builds
-ExecStart=/home/%u/builds/bin/mmbridge.p6

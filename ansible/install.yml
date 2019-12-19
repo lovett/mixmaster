@@ -1,0 +1,76 @@
+---
+- hosts: mixmaster
+  vars:
+    application_name: mixmaster
+    application_user: "{{ application_name }}"
+    rakudo_basename: rakudo-star-2019.03
+  tasks:
+    - name: Create application user
+      become: yes
+      user:
+        state=present
+        name="{{ application_user }}"
+
+    - name: Create user directories
+      become: yes
+      become_user: "{{ application_user }}"
+      file:
+        path: "{{ item }}"
+        state: directory
+        recurse: yes
+      loop:
+        - "~/bin"
+        - "~/builds"
+        - "~/local/src"
+
+    - name: Download Rakudo Star tarball
+      become: yes
+      become_user: "{{ application_user }}"
+      unarchive:
+        src: "https://rakudo.perl6.org/downloads/star/{{ rakudo_basename }}.tar.gz"
+        dest: "~/local/src"
+        creates: "~/local/src/{{ rakudo_basename }}"
+        remote_src: yes
+
+    - name: Build Raku
+      become: yes
+      become_user: "{{ application_user }}"
+      command: perl Configure.pl --gen-moar --make-install --prefix ~/local/rakudo
+      args:
+          chdir: "~/local/src/{{ rakudo_basename }}"
+          creates: "~/local/rakudo"
+
+    - name: Install application files
+      become: yes
+      copy:
+        src: "{{ item }}"
+        dest: "/home/{{ application_user }}/bin"
+        owner: "{{ application_user }}"
+        group: "{{ application_user }}"
+      loop:
+        - "../bin/mmbridge.p6"
+        - "../bin/mmbuild.p6"
+
+    - name: Install systemd services
+      become: yes
+      copy:
+        src: "{{ item }}"
+        dest: "/etc/systemd/system"
+      loop:
+        - "files/mixmaster-bridge.service"
+        - "files/mixmaster-bridge.socket"
+        - "files/mixmaster-inbox-watcher.path"
+        - "files/mixmaster-inbox-watcher.service"
+      notify: reload-systemd
+
+  handlers:
+    - name: reload-systemd
+      become: yes
+      systemd:
+        daemon_reload: yes
+        state: restarted
+        enabled: yes
+        name: "{{ item }}"
+      loop:
+        - "mixmaster-inbox-watcher.path"
+        - "mixmaster-bridge.socket"
