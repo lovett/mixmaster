@@ -1,9 +1,14 @@
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
 
-# Install the application on the production host via Ansible
+# Deploy the application on the production host via Ansible.
 install:
 	ansible-playbook ansible/install.yml
 
+# Redeploy the application on the production host via Ansible.
+upgrade:
+	ansible-playbook --skip-tags firstrun ansible/install.yml
+
+# Install third-party packages in the development environment.
 setup:
 	zef install JSON::Fast
 	zef install Config::INI
@@ -25,6 +30,7 @@ clean:
 journalgrep:
 	journalctl --since now -f | grep mixmaster
 
+# Perform linting of bin scripts.
 check:
 	perl6 -c bin/mmbridge.p6
 	perl6 -c bin/mmbuild.p6

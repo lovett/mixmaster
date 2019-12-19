@@ -4,12 +4,15 @@
     application_name: mixmaster
     application_user: "{{ application_name }}"
     rakudo_basename: rakudo-star-2019.03
+    zef_version: "0.8.2"
   tasks:
     - name: Create application user
       become: yes
       user:
         state=present
         name="{{ application_user }}"
+      tags:
+        - firstrun
 
     - name: Create user directories
       become: yes
@@ -19,34 +22,85 @@
         state: directory
         recurse: yes
       loop:
-        - "~/bin"
         - "~/builds"
-        - "~/local/src"
+        - "~/.local/bin"
+        - "~/.local/src"
+      tags:
+        - firstrun
 
     - name: Download Rakudo Star tarball
       become: yes
       become_user: "{{ application_user }}"
       unarchive:
         src: "https://rakudo.perl6.org/downloads/star/{{ rakudo_basename }}.tar.gz"
-        dest: "~/local/src"
-        creates: "~/local/src/{{ rakudo_basename }}"
+        dest: "~/.local/src"
+        creates: "~/.local/src/{{ rakudo_basename }}"
         remote_src: yes
+      tags:
+        - firstrun
+
+    - name: Download zef
+      become: yes
+      become_user: "{{ application_user }}"
+      unarchive:
+        src: "https://github.com/ugexe/zef/archive/v{{ zef_version }}.tar.gz"
+        dest: "~/.local/src"
+        creates: "~/.local/src/zef-{{ zef_version }}"
+        remote_src: yes
+      tags:
+        - firstrun
 
     - name: Build Raku
       become: yes
       become_user: "{{ application_user }}"
-      command: perl Configure.pl --gen-moar --make-install --prefix ~/local/rakudo
+      command: perl Configure.pl --gen-moar --make-install --prefix ~/.local
       args:
-          chdir: "~/local/src/{{ rakudo_basename }}"
-          creates: "~/local/rakudo"
+          chdir: "~/.local/src/{{ rakudo_basename }}"
+          creates: "~/.local/bin/perl6"
+      tags:
+        - firstrun
+
+    - name: Build zef
+      become: yes
+      become_user: "{{ application_user }}"
+      command: "~/.local/bin/perl6 -I. bin/zef install ."
+      args:
+        chdir: "~/.local/src/zef-{{ zef_version }}"
+        creates: "~/.local/share/perl6/site/bin/zef"
+      tags:
+        - firstrun
+
+    - name: Symlink zef executable
+      become: yes
+      become_user: "{{ application_user }}"
+      file:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        state: link
+      loop:
+        - {src: "~/.local/share/perl6/site/bin/zef", dest: "~/.local/bin/zef"}
+      tags:
+        - firstrun
+
+    - name: Install zef packages
+      become: yes
+      become_user: "{{ application_user }}"
+      command: "~/.local/bin/perl6 ~/.local/bin/zef install {{ item }}"
+      loop:
+        - "JSON::Fast"
+        - "Config::INI"
+        - "Email::Simple"
+      tags:
+        - firstrun
 
     - name: Install application files
       become: yes
       copy:
         src: "{{ item }}"
-        dest: "/home/{{ application_user }}/bin"
+        dest: "/home/{{ application_user }}/.local/bin"
         owner: "{{ application_user }}"
         group: "{{ application_user }}"
+        mode: "0700"
       loop:
         - "../bin/mmbridge.p6"
         - "../bin/mmbuild.p6"
