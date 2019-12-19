@@ -2,7 +2,7 @@
 Description=Mixmaster inbox path watcher
 
 [Path]
-DirectoryNotEmpty=/home/%u/builds/INBOX
+DirectoryNotEmpty=/home/mixmaster/Builds/INBOX
 MakeDirectory=true
 DirectoryMode=0700
 

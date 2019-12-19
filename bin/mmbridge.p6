@@ -1,11 +1,10 @@
 #!/usr/bin/env perl6
 
+use lib '.local/lib';
 use lib 'lib';
 
 use Config::INI;
 use JSON::Fast;
-
-our Str constant REFMAP_PATH = 'refs.ini';
 
 sub generate-job-file-name() {
     DateTime.now(
@@ -32,7 +31,7 @@ sub send-error-response(Str $message) {
 }
 
 sub MAIN() {
-    my Hash %refMap{Str} = Config::INI::parse_file(REFMAP_PATH);
+    my Hash %refMap{Str} = Config::INI::parse_file("mixmaster.ini");
 
     my Str %headers{Str};
 
@@ -112,7 +111,7 @@ sub MAIN() {
 
     my $jobFileName = generate-job-file-name();
 
-    spurt "INBOX/{$jobFileName}", qq:to/END/;
+    spurt "./Builds/INBOX/{$jobFileName}", qq:to/END/;
     [job]
     scm = git
     repositoryName = $repositoryName
