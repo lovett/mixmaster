@@ -4,9 +4,9 @@ use lib 'lib';
 
 use Config::INI;
 
-our IO::Path constant INPROGRESS_FOLDER = IO::Path.new('INPROGRESS');
-our IO::Path constant INBOX_FOLDER = IO::Path.new('INBOX');
-our IO::Path constant BUILDS_FOLDER = IO::Path.new('BUILDS');
+our IO::Path constant BUILDS_FOLDER = IO::Path.new('Builds');
+our IO::Path constant INPROGRESS_FOLDER = IO::Path.new('Builds/INPROGRESS');
+our IO::Path constant INBOX_FOLDER = IO::Path.new('Builds/INBOX');
 
 my IO::Path $logSymlink;
 my IO::Handle $logHandle;
@@ -113,7 +113,7 @@ sub gitRecipe(IO::Path $buildRoot, %pairs) {
     @commands.push: "git checkout --quiet {%pairs<commit>}";
     @commands.push: %pairs<buildCommand>;
 
-    if (%*ENV<MIXMASTER_ENVIRONMENT> ~~ "dev") {
+    if (%pairs<mode> ~~ "dryrun") {
         return ("echo $_" for @commands);
     }
 

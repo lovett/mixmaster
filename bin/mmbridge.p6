@@ -120,7 +120,8 @@ sub MAIN() {
     branch = $matchedBranch
     buildCommand = $buildCommand
     viewUrl = $viewUrl
-    mailto = {%config<mixmaster><mailto> or ''}
+    mailto = {%config<_><mailto> or ''}
+    mode = {%config<_><mode> or 'normal'}
     END
 
     send-success-response();

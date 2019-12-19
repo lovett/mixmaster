@@ -14,14 +14,15 @@ setup:
 	zef install Config::INI
 	zef install Email::Simple;
 
-reload:
-	systemctl --user daemon-reload
-
-test-gitea:
+# Simulate a Gitea request.
+test-gitea: clean
 	./bin/mmbridge.p6 < samples/gitea.http
+	cat Builds/INBOX/*
 
-test-adhoc:
+# Simulate an adh-hoc request.
+test-adhoc: clean
 	./bin/mmbridge.p6 < samples/adhoc.http
+	cat Builds/INBOX/*
 
 # Reset the Builds directory to a pristine state.
 clean:
