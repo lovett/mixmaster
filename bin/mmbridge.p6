@@ -31,7 +31,7 @@ sub send-error-response(Str $message) {
 }
 
 sub MAIN() {
-    my Hash %refMap{Str} = Config::INI::parse_file("mixmaster.ini");
+    my Hash %config{Str} = Config::INI::parse_file("mixmaster.ini");
 
     my Str %headers{Str};
 
@@ -88,12 +88,12 @@ sub MAIN() {
         $viewUrl = %json<viewUrl>;
     }
 
-    unless (%refMap{$repositoryName}:exists) {
+    unless (%config{$repositoryName}:exists) {
         send-error-response("Unknown repository");
         exit;
     }
 
-    my Pair @matchedBranchs = %refMap{$repositoryName}.pairs.grep: {
+    my Pair @matchedBranchs = %config{$repositoryName}.pairs.grep: {
         .key.starts-with($repositoryBranch)
     };
 
@@ -113,13 +113,14 @@ sub MAIN() {
 
     spurt "./Builds/INBOX/{$jobFileName}", qq:to/END/;
     [job]
-    scm = git
+    scm = $scm
     repositoryName = $repositoryName
     repositoryUrl = $repositoryUrl
     commit = $commit
     branch = $matchedBranch
     buildCommand = $buildCommand
     viewUrl = $viewUrl
+    mailto = {%config<mixmaster><mailto> or ''}
     END
 
     send-success-response();

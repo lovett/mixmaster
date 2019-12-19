@@ -45,8 +45,6 @@ sub log-to-file(Str $prefix, Str $message) {
 
 # Dispatcher for tracking job progress in local logs and external proceesses.
 sub broadcast(JobState $state, %job, Str $message?) {
-    my $email-recipient = %*ENV<MIXMASTER_BROADCAST_EMAIL>;
-
     given $state {
         when job-start {
             log-to-file('#', 'Build started');
@@ -63,9 +61,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', $success);
             log-to-journal($logHandle.path.basename, $success);
 
-            if ($email-recipient) {
+            if (%job<mailto>) {
                 use Broadcast::Email;
-                mail-job-end($email-recipient, %job);
+                mail-job-end(%job<mailto>, %job);
             }
         }
 
@@ -73,9 +71,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', "Build failed: {$message}");
             log-to-journal($logHandle.path.basename, 'Build failed');
 
-            if ($email-recipient) {
+            if (%job<mailto>) {
                 use Broadcast::Email;
-                mail-job-fail($email-recipient, %job, $logHandle.path);
+                mail-job-fail(%job<mailto>, %job, $logHandle.path);
             }
         }
     }
