@@ -111,7 +111,7 @@
         src: "{{ item }}"
         dest: "/etc/systemd/system"
       loop:
-        - "files/mixmaster-bridge.service"
+        - "files/mixmaster-bridge@.service"
         - "files/mixmaster-bridge.socket"
         - "files/mixmaster-inbox-watcher.path"
         - "files/mixmaster-inbox-watcher.service"
