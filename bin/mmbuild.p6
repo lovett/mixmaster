@@ -51,9 +51,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', 'Build started');
             log-to-journal($logHandle.path.basename, "Starting {$logHandle.path}");
 
-            if (%job<job><mailto>) {
+            if (%job<mailto>) {
                 use Broadcast::Email;
-                mail-job-start(%job<job><mailto>, %job);
+                mail-job-start(%job<mailto>, %job);
             }
         }
 
@@ -62,9 +62,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', $success);
             log-to-journal($logHandle.path.basename, $success);
 
-            if (%job<job><mailto>) {
+            if (%job<mailto>) {
                 use Broadcast::Email;
-                mail-job-end(%job<job><mailto>, %job);
+                mail-job-end(%job<mailto>, %job);
             }
         }
 
@@ -72,9 +72,9 @@ sub broadcast(JobState $state, %job, Str $message?) {
             log-to-file('#', "Build failed: {$message}");
             log-to-journal($logHandle.path.basename, 'Build failed');
 
-            if (%job<job><mailto>) {
+            if (%job<mailto>) {
                 use Broadcast::Email;
-                mail-job-fail(%job<job><mailto>, %job, $logHandle.path);
+                mail-job-fail(%job<mailto>, %job, $logHandle.path);
             }
         }
     }
@@ -135,10 +135,18 @@ multi sub MAIN() {
 multi sub MAIN(IO::Path $jobFile) {
     my Hash %job{Str} = Config::INI::parse_file($jobFile.path);
 
-    my $fsFriendlyRepositoryName = %job<job><repositoryName>.lc;
+    unless (%job<job>:exists) {
+        try unlink($jobFile);
+        say "No job details in {$jobFile.basename}. File deleted.";
+        return;
+    }
+
+    %job = %job<job>;
+
+    my $fsFriendlyRepositoryName = %job<repositoryName>.lc;
     $fsFriendlyRepositoryName ~~ s:global/\W/-/;
 
-    my $fsFriendlyBranch = %job<job><branch>.lc;
+    my $fsFriendlyBranch = %job<branch>.lc;
     $fsFriendlyBranch ~~ s:global/\W/-/;
 
     my IO::Path $workspace = BUILDS_FOLDER.add($fsFriendlyRepositoryName);
@@ -170,8 +178,8 @@ multi sub MAIN(IO::Path $jobFile) {
     $logFile.symlink($logSymlink);
 
     my Str @buildRecipe;
-    given %job<job><scm>.lc {
-        when "git" { @buildRecipe = gitRecipe($buildRoot, %job<job>) }
+    given %job<scm>.lc {
+        when "git" { @buildRecipe = gitRecipe($buildRoot, %job) }
     }
 
     for @buildRecipe {
