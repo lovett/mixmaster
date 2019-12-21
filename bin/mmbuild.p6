@@ -6,23 +6,14 @@ use lib 'lib';
 use Config::INI;
 
 our IO::Path constant BUILDS_FOLDER = IO::Path.new('Builds');
-our IO::Path constant INPROGRESS_FOLDER = IO::Path.new('Builds/INPROGRESS');
 our IO::Path constant INBOX_FOLDER = IO::Path.new('Builds/INBOX');
 
-my IO::Path $logSymlink;
 my IO::Handle $logHandle;
 
 enum JobState <job-start job-end job-fail>;
 
-INIT {
-    unless INPROGRESS_FOLDER.d {
-        mkdir(INPROGRESS_FOLDER);
-    }
-}
-
 signal(SIGTERM).tap: {
     log-to-file('X', 'Killed by SIGTERM');
-    try unlink($logSymlink);
     try close $logHandle;
     exit;
 }
@@ -165,8 +156,6 @@ multi sub MAIN(IO::Path $jobFile) {
         mkdir($buildRoot);
     }
 
-    $logSymlink = INPROGRESS_FOLDER.add($logFile.basename).IO;
-
     $jobFile.rename($logFile);
 
     $logHandle = $logFile.open(:a);
@@ -174,8 +163,6 @@ multi sub MAIN(IO::Path $jobFile) {
     $logHandle.say("\n\n[log]");
 
     broadcast(job-start, %job);
-
-    $logFile.symlink($logSymlink);
 
     my Str @buildRecipe;
     given %job<scm>.lc {
@@ -196,7 +183,6 @@ multi sub MAIN(IO::Path $jobFile) {
     }
 
     LEAVE {
-        try unlink($logSymlink);
         try close $logHandle;
     }
 }
