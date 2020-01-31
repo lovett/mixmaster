@@ -1,10 +1,11 @@
-#!/usr/bin/env perl6
+#!/usr/bin/env rakudo
 
-use lib '.local/lib';
+use lib '/usr/local/share/mixmaster/lib';
 use lib 'lib';
 
 use Config::INI;
 
+our Str constant SCRIPT_VERSION = "2020.01.31";
 our IO::Path constant BUILDS_FOLDER = IO::Path.new('Builds');
 our IO::Path constant INBOX_FOLDER = IO::Path.new('Builds/INBOX');
 
@@ -112,7 +113,12 @@ sub gitRecipe(IO::Path $buildRoot, %pairs) {
     return @commands;
 }
 
-multi sub MAIN() {
+multi sub MAIN(Bool :$version) {
+    if ($version) {
+        say SCRIPT_VERSION;
+        exit;
+    }
+
     my IO::Path @jobs = dir(INBOX_FOLDER, test => /'.' ini $/).sort: { .changed };;
 
     unless (@jobs) {

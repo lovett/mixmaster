@@ -1,10 +1,12 @@
-#!/usr/bin/env perl6
+#!/usr/bin/env rakudo
 
-use lib '.local/lib';
+use lib '/usr/local/share/mixmaster/lib';
 use lib 'lib';
 
 use Config::INI;
 use JSON::Fast;
+
+our Str constant SCRIPT_VERSION = "2020.01.31";
 
 sub generate-job-file-name() {
     DateTime.now(
@@ -30,7 +32,12 @@ sub send-error-response(Str $message) {
     put "Connection: close\r\n";
 }
 
-sub MAIN() {
+sub MAIN(Bool :$version) {
+    if ($version) {
+        say SCRIPT_VERSION;
+        exit;
+    }
+
     my Hash %config{Str} = Config::INI::parse_file("mixmaster.ini");
 
     my Str %headers{Str};
