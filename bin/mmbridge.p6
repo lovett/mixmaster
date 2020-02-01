@@ -6,7 +6,9 @@ use lib 'lib';
 use Config::INI;
 use JSON::Fast;
 
-our Str constant SCRIPT_VERSION = "2020.01.31";
+our Str constant SCRIPT_VERSION = "2020.02.01";
+
+our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
 sub generate-job-file-name() {
     DateTime.now(
@@ -18,7 +20,7 @@ sub generate-job-file-name() {
 }
 
 sub send-success-response() {
-    put "HTTP/1.1 204 No Content\r\n";
+    put "HTTP/1.1 200 OK\r\n";
     put "Connection: close\r\n";
 }
 
@@ -32,13 +34,20 @@ sub send-error-response(Str $message) {
     put "Connection: close\r\n";
 }
 
-sub MAIN(Bool :$version) {
+sub MAIN(
+    Bool :$version  #= Display version information.
+) {
     if ($version) {
         say SCRIPT_VERSION;
         exit;
     }
 
-    my Hash %config{Str} = Config::INI::parse_file("mixmaster.ini");
+    unless (CONFIG.f) {
+        send-error-response("Configuration file not found.");
+        exit;
+    }
+
+    my Hash %config{Str} = Config::INI::parse_file(Str(CONFIG));
 
     my Str %headers{Str};
 
@@ -118,7 +127,7 @@ sub MAIN(Bool :$version) {
 
     my $jobFileName = generate-job-file-name();
 
-    spurt "./Builds/INBOX/{$jobFileName}", qq:to/END/;
+    spurt "{%config<_><spool>}/{$jobFileName}", qq:to/END/;
     [job]
     scm = $scm
     repositoryName = $repositoryName
