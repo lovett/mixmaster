@@ -6,8 +6,8 @@ use lib 'lib';
 use Config::INI;
 
 our Str constant SCRIPT_VERSION = "2020.01.31";
-our IO::Path constant BUILDS_FOLDER = IO::Path.new('Builds');
-our IO::Path constant INBOX_FOLDER = IO::Path.new('Builds/INBOX');
+
+our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
 my IO::Handle $logHandle;
 
@@ -33,7 +33,7 @@ sub log-to-journal(Str $prefix, Str $message) {
 sub log-to-file(Str $prefix, Str $message) {
     try $logHandle.say("{DateTime.now.hh-mm-ss} {$prefix} $_")
     for $message.split("\n");
-    $logHandle.flush();
+    try $logHandle.flush();
 }
 
 # Dispatcher for tracking job progress in local logs and external proceesses.
@@ -41,7 +41,8 @@ sub broadcast(JobState $state, %job, Str $message?) {
     given $state {
         when job-start {
             log-to-file('#', 'Build started');
-            log-to-journal($logHandle.path.basename, "Starting {$logHandle.path}");
+
+            log-to-journal(%job<path>.basename, 'Build started');
 
             if (%job<mailto>) {
                 use Broadcast::Email;
@@ -52,7 +53,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
         when job-end {
             my $success = 'Build finished';
             log-to-file('#', $success);
-            log-to-journal($logHandle.path.basename, $success);
+            log-to-journal(%job<path>.basename, $success);
 
             if (%job<mailto>) {
                 use Broadcast::Email;
@@ -62,11 +63,11 @@ sub broadcast(JobState $state, %job, Str $message?) {
 
         when job-fail {
             log-to-file('#', "Build failed: {$message}");
-            log-to-journal($logHandle.path.basename, 'Build failed');
+            log-to-journal(%job<path>.basename, 'Build failed.');
 
             if (%job<mailto>) {
                 use Broadcast::Email;
-                mail-job-fail(%job<mailto>, %job, $logHandle.path);
+                mail-job-fail(%job<mailto>, %job);
             }
         }
     }
@@ -87,7 +88,7 @@ sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
 
             whenever $proc.start {
                 if (.exitcode !== 0) {
-                    die "command exited non-zero ({.exitcode})";
+                    die "Command exited non-zero ({.exitcode})";
                 }
 
                 done;
@@ -100,7 +101,7 @@ sub gitRecipe(IO::Path $buildRoot, %pairs) {
     my Str @commands;
 
     unless ($buildRoot.add('.git').d) {
-        @commands.push: "git clone {%pairs<repositoryUrl>} --quiet --branch {%pairs<branch>} .";
+        @commands.push: "git clone --quiet --branch {%pairs<branch>} {%pairs<repositoryUrl>} .";
     }
 
     @commands.push: "git checkout --quiet {%pairs<commit>}";
@@ -119,7 +120,9 @@ multi sub MAIN(Bool :$version) {
         exit;
     }
 
-    my IO::Path @jobs = dir(INBOX_FOLDER, test => /'.' ini $/).sort: { .changed };;
+    my %config{Str} = Config::INI::parse_file(Str(CONFIG));
+
+    my IO::Path @jobs = dir(%config<_><spool>, test => /'.' ini $/).sort: { .changed };
 
     unless (@jobs) {
         say 'No jobs found.';
@@ -130,7 +133,9 @@ multi sub MAIN(Bool :$version) {
 }
 
 multi sub MAIN(IO::Path $jobFile) {
-    my Hash %job{Str} = Config::INI::parse_file($jobFile.path);
+    my %config{Str} = Config::INI::parse_file(Str(CONFIG));
+
+    my %job{Str} = Config::INI::parse_file($jobFile.path);
 
     unless (%job<job>:exists) {
         try unlink($jobFile);
@@ -139,6 +144,7 @@ multi sub MAIN(IO::Path $jobFile) {
     }
 
     %job = %job<job>;
+    %job<path> = $jobFile.IO;
 
     my $fsFriendlyRepositoryName = %job<repositoryName>.lc;
     $fsFriendlyRepositoryName ~~ s:global/\W/-/;
@@ -146,7 +152,8 @@ multi sub MAIN(IO::Path $jobFile) {
     my $fsFriendlyBranch = %job<branch>.lc;
     $fsFriendlyBranch ~~ s:global/\W/-/;
 
-    my IO::Path $workspace = BUILDS_FOLDER.add($fsFriendlyRepositoryName);
+
+    my IO::Path $workspace = %config<_><buildRoot>.IO.add($fsFriendlyRepositoryName);
 
     my IO::Path $jobArchive = $workspace.add('JOBS');
 
@@ -162,11 +169,13 @@ multi sub MAIN(IO::Path $jobFile) {
         mkdir($buildRoot);
     }
 
-    $jobFile.rename($logFile);
+    $jobFile.move($logFile);
+    %job<path> = $logFile.IO;
 
     $logHandle = $logFile.open(:a);
     $logHandle.say("pid = {$*PID}");
     $logHandle.say("\n\n[log]");
+    say $logHandle.^name;
 
     broadcast(job-start, %job);
 
@@ -183,8 +192,12 @@ multi sub MAIN(IO::Path $jobFile) {
     broadcast(job-end, %job);
 
     CATCH {
-        default {
+        when X::AdHoc {
             broadcast(job-fail, %job, .payload);
+        }
+
+        default {
+            broadcast(job-fail, %job, .Str);
         }
     }
 
