@@ -18,12 +18,20 @@ sub createBuildRoot(IO::Path $path) {
     }
 }
 
-sub createConfigurationFile(IO::Path $path, IO::Path $spool, Str $email) {
-    spurt $path, qq:to/END/;
+sub createConfigurationFile(
+    IO::Path $configPath,
+    IO::Path $buildRoot,
+    IO::Path $spool,
+    Str $email
+) {
+    spurt $configPath, qq:to/END/;
     ; This is the configuration file for mixmaster. It maps project repositories
     ; to build commands and defines application settings.
 
     [_]
+
+    ; The filesystem path to the directory that will store builds.
+    buildRoot = {$buildRoot}
 
     ; The filesystem path to the directory that stores incoming build requests.
     ; The mmbridge script will write files here, and the systemd path service
@@ -47,7 +55,7 @@ sub createConfigurationFile(IO::Path $path, IO::Path $spool, Str $email) {
 
     END
 
-    say "Populated {$path} with  default configuration."
+    say "Populated {$configPath} with  default configuration."
 }
 
 sub createSystemdServices(IO::Path $root, IO::Path $buildRoot) {
@@ -123,7 +131,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot) {
     Description=Mixmaster inbox path service
 
     [Service]
-    WorkingDirectory=/home/mixmaster
+    WorkingDirectory={$buildRoot}
     ExecStart=/usr/bin/rakudo /usr/local/bin/mmbuild.p6
 
     # Local Variables:
@@ -217,7 +225,7 @@ multi sub MAIN(
     }
 
     if (@tasks.contains("configurationFile")) {
-        createConfigurationFile($configPath, $resolvedSpool, $email);
+        createConfigurationFile($configPath, $resolvedBuildRoot, $resolvedSpool, $email);
     }
 
     if (@tasks.contains("systemdServices")) {
