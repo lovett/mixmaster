@@ -2,89 +2,21 @@
 - hosts: mixmaster
   vars:
     application_name: mixmaster
-    application_user: "{{ application_name }}"
-    rakudo_basename: rakudo-star-2019.03
-    zef_version: "0.8.2"
   tasks:
-    - name: Create application user
+    - name: Install system packages as root
       become: yes
-      user:
-        state=present
-        name="{{ application_user }}"
+      dnf:
+        name:
+          - rakudo
+          - rakudo-zef
+        state: present
+        update_cache: no
       tags:
         - firstrun
 
-    - name: Create user directories
+    - name: Install application packages as root
       become: yes
-      become_user: "{{ application_user }}"
-      file:
-        path: "{{ item }}"
-        state: directory
-        recurse: yes
-      loop:
-        - "~/Builds"
-        - "~/Builds/INBOX"
-        - "~/.local/bin"
-        - "~/.local/src"
-
-    - name: Download Rakudo Star tarball
-      become: yes
-      become_user: "{{ application_user }}"
-      unarchive:
-        src: "https://rakudo.perl6.org/downloads/star/{{ rakudo_basename }}.tar.gz"
-        dest: "~/.local/src"
-        creates: "~/.local/src/{{ rakudo_basename }}"
-        remote_src: yes
-      tags:
-        - firstrun
-
-    - name: Download zef
-      become: yes
-      become_user: "{{ application_user }}"
-      unarchive:
-        src: "https://github.com/ugexe/zef/archive/v{{ zef_version }}.tar.gz"
-        dest: "~/.local/src"
-        creates: "~/.local/src/zef-{{ zef_version }}"
-        remote_src: yes
-      tags:
-        - firstrun
-
-    - name: Build Raku
-      become: yes
-      become_user: "{{ application_user }}"
-      command: perl Configure.pl --gen-moar --make-install --prefix ~/.local
-      args:
-          chdir: "~/.local/src/{{ rakudo_basename }}"
-          creates: "~/.local/bin/perl6"
-      tags:
-        - firstrun
-
-    - name: Build zef
-      become: yes
-      become_user: "{{ application_user }}"
-      command: "~/.local/bin/perl6 -I. bin/zef install ."
-      args:
-        chdir: "~/.local/src/zef-{{ zef_version }}"
-        creates: "~/.local/share/perl6/site/bin/zef"
-      tags:
-        - firstrun
-
-    - name: Symlink zef executable
-      become: yes
-      become_user: "{{ application_user }}"
-      file:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
-        state: link
-      loop:
-        - {src: "~/.local/share/perl6/site/bin/zef", dest: "~/.local/bin/zef"}
-      tags:
-        - firstrun
-
-    - name: Install zef packages
-      become: yes
-      become_user: "{{ application_user }}"
-      command: "~/.local/bin/perl6 ~/.local/bin/zef install {{ item }}"
+      command: "zef install {{ item }}"
       loop:
         - "JSON::Fast"
         - "Config::INI"
@@ -92,58 +24,27 @@
       tags:
         - firstrun
 
-    - name: Install application scripts
+    - name: Install application libraries as root
       become: yes
       copy:
         src: "{{ item }}"
-        dest: "/home/{{ application_user }}/.local/bin"
-        owner: "{{ application_user }}"
-        group: "{{ application_user }}"
-        mode: "0700"
-      loop:
-        - "../bin/mmbridge.p6"
-        - "../bin/mmbuild.p6"
-
-    - name: Install application libraries
-      become: yes
-      copy:
-        src: "{{ item }}"
-        dest: "/home/{{ application_user }}/.local/lib"
-        owner: "{{ application_user }}"
-        group: "{{ application_user }}"
-        mode: "0600"
+        dest: "/usr/local/share/{{ application_name }}/lib"
+        owner: "root"
+        group: "root"
+        mode: "0644"
       loop:
         - "../lib/Broadcast"
 
-    - name: Set SELinux type
-      become: yes
-      become_user: "{{ application_user }}"
-      file:
-        path: "~/.local/bin"
-        state: directory
-        recurse: yes
-        setype: bin_t
-
-    - name: Install systemd services
+    - name: Install application scripts as root
       become: yes
       copy:
         src: "{{ item }}"
-        dest: "/etc/systemd/system"
+        dest: "/usr/local/bin"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+        setype: bin_t
       loop:
-        - "files/mixmaster-bridge@.service"
-        - "files/mixmaster-bridge.socket"
-        - "files/mixmaster-inbox-watcher.path"
-        - "files/mixmaster-inbox-watcher.service"
-      notify: reload-systemd
-
-  handlers:
-    - name: reload-systemd
-      become: yes
-      systemd:
-        daemon_reload: yes
-        state: restarted
-        enabled: yes
-        name: "{{ item }}"
-      loop:
-        - "mixmaster-inbox-watcher.path"
-        - "mixmaster-bridge.socket"
+        - "../bin/mmbridge.p6"
+        - "../bin/mmbuild.p6"
+        - "../bin/mmsetup.p6"
