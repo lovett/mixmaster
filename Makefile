@@ -27,6 +27,9 @@ test-default: clean
 test-freestyle: clean
 	./bin/mmbridge.p6 < samples/freestyle.http
 
+test-get:
+	./bin/mmbridge.p6 < samples/get.http
+
 # Reset the Builds directory to a pristine state.
 clean:
 	rm -rf ~/Builds/INBOX/*

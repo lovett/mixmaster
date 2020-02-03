@@ -20,56 +20,23 @@ sub generate-job-file-name() {
 }
 
 sub send-success-response() {
-    put "HTTP/1.1 200 OK\r\n";
-    put "Connection: close\r\n";
+    print "HTTP/1.1 200 OK\r\n";
+    print "Connection: close\r\n";
 }
 
 sub send-failure-response() {
-    put "HTTP/1.0 400 Bad Request\r\n";
-    put "Connection: close\r\n";
+    print "HTTP/1.0 400 Bad Request\r\n";
+    print "Connection: close\r\n";
 }
 
 sub send-error-response(Str $message) {
-    put "HTTP/1.1 422 {$message}\r\n";
-    put "Connection: close\r\n";
+    print "HTTP/1.1 422 {$message}\r\n";
+    print "Connection: close\r\n";
 }
 
-sub MAIN(
-    Bool :$version  #= Display version information.
-) {
-    if ($version) {
-        say SCRIPT_VERSION;
-        exit;
-    }
-
-    unless (CONFIG.f) {
-        send-error-response("Configuration file not found.");
-        exit;
-    }
-
+sub accept-job(Buf $body, Str $endpoint) {
     my Hash %config{Str} = Config::INI::parse_file(Str(CONFIG));
 
-    my Str %headers{Str};
-
-    for lines() {
-        unless %headers<method>:exists {
-            my (Str $method, Str $uri, Str $version) = $_.split(' ', 3);
-            %headers.append('method', $method);
-            %headers.append('uri', $uri);
-            %headers.append('version', $version);
-        }
-
-        if ($_.contains(':')) {
-            my (Str $key, Str $value) = $_.split(':', 2);
-            %headers{$key.lc.trim} = val($value);
-        }
-
-        unless ($_.trim) {
-            last;
-        }
-    }
-
-    my Buf $body = $*IN.read(%headers<content-length>);
     my %json{Str} = from-json $body.decode;
 
     my Str $scm = "";
@@ -79,13 +46,13 @@ sub MAIN(
     my Str $commit = "";
     my Str $viewUrl = "";
 
-    if (%headers<uri> eq "/freestyle") {
-        $scm = "freestyle";
-        $project = %json<project>;
-        $target = %json<target>;
-    }
+    given $endpoint {
+        when "/freestyle" {
+            $scm = "freestyle";
+            $project = %json<project>;
+            $target = %json<target>;
+        }
 
-    given %headers<uri> {
         when "/gitea" {
             $scm = "git";
             $repositoryUrl = %json<repository><ssh_url>;
@@ -94,6 +61,7 @@ sub MAIN(
             $commit = %json<after>;
             $viewUrl = %json<compare_url>;
         }
+
 
         when "/" {
             for <scm repositoryUrl project commit target> {
@@ -109,6 +77,12 @@ sub MAIN(
             $target = %json<target>;
             $commit = %json<commit>;
             $viewUrl = %json<viewUrl>;
+        }
+
+        default {
+            print "HTTP/1.1 404 Not Found\r\n";
+            print "Connection: close\r\n";
+            exit;
         }
     }
 
@@ -152,5 +126,51 @@ sub MAIN(
 
     CATCH {
         send-failure-response();
+    }
+}
+
+sub MAIN(
+    Bool :$version  #= Display version information.
+) {
+    if ($version) {
+        say SCRIPT_VERSION;
+        exit;
+    }
+
+    unless (CONFIG.f) {
+        send-error-response("Configuration file not found.");
+        exit;
+    }
+
+    my Str %headers{Str};
+
+    for lines() {
+        unless %headers<method>:exists {
+            my (Str $method, Str $uri, Str $version) = $_.split(' ', 3);
+            %headers.append('method', $method);
+            %headers.append('uri', $uri);
+            %headers.append('version', $version);
+        }
+
+        if ($_.contains(':')) {
+            my (Str $key, Str $value) = $_.split(':', 2);
+            %headers{$key.lc.trim} = val($value);
+        }
+
+        unless ($_.trim) {
+            last;
+        }
+    }
+
+    given %headers<method>.uc {
+        when "POST" or "PUT" {
+            my Buf $body = $*IN.read(%headers<content-length>);
+            accept-job($body, %headers<uri>);
+        }
+
+        default {
+            print "HTTP/1.1 405 Method Not Allowed\r\n";
+            print "Connection: close\r\n";
+        }
     }
 }
