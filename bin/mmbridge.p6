@@ -75,14 +75,14 @@ sub MAIN(
     my Str $scm = "";
     my Str $repositoryUrl = "";
     my Str $project = "";
-    my Str $repositoryBranch = "";
+    my Str $target = "";
     my Str $commit = "";
     my Str $viewUrl = "";
 
     if (%headers<uri> eq "/freestyle") {
         $scm = "freestyle";
         $project = %json<project>;
-        $repositoryBranch = %json<target>;
+        $target = %json<target>;
     }
 
     given %headers<uri> {
@@ -90,13 +90,13 @@ sub MAIN(
             $scm = "git";
             $repositoryUrl = %json<repository><ssh_url>;
             $project = %json<repository><full_name>;
-            $repositoryBranch = %json<ref>.subst("refs/heads/", "", :nth(1));
+            $target = %json<ref>.subst("refs/heads/", "", :nth(1));
             $commit = %json<after>;
             $viewUrl = %json<compare_url>;
         }
 
         when "/" {
-            for <scm repositoryUrl project commit branch> {
+            for <scm repositoryUrl project commit target> {
                 unless (%json{$_}) {
                     send-error-response("$_ not specified");
                     exit;
@@ -106,7 +106,7 @@ sub MAIN(
             $scm = %json<scm>;
             $repositoryUrl = %json<repositoryUrl>;
             $project = %json<project>;
-            $repositoryBranch = %json<branch>;
+            $target = %json<target>;
             $commit = %json<commit>;
             $viewUrl = %json<viewUrl>;
         }
@@ -117,21 +117,21 @@ sub MAIN(
         exit;
     }
 
-    my Pair @matchedBranchs = %config{$project}.pairs.grep: {
-        .key.starts-with($repositoryBranch)
+    my Pair @matchedTargets = %config{$project}.pairs.grep: {
+        .key.starts-with($target)
     };
 
-    unless (@matchedBranchs) {
+    unless (@matchedTargets) {
         send-error-response("Unknown branch");
         exit;
     }
 
-    if (@matchedBranchs.elems > 1) {
-        send-error-response("Multiple matches for this branch");
+    if (@matchedTargets.elems > 1) {
+        send-error-response("Multiple matches for this target");
         exit;
     }
 
-    my (Str $matchedBranch, Str $buildCommand) = @matchedBranchs.first.kv;
+    my (Str $matchedTarget, Str $buildCommand) = @matchedTargets.first.kv;
 
     my $jobFileName = generate-job-file-name();
 
@@ -141,7 +141,7 @@ sub MAIN(
     project = $project
     repositoryUrl = $repositoryUrl
     commit = $commit
-    branch = $matchedBranch
+    target = $matchedTarget
     buildCommand = $buildCommand
     viewUrl = $viewUrl
     mailto = {%config<_><mailto> or ''}

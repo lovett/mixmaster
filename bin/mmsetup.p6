@@ -45,10 +45,10 @@ sub createConfigurationFile(
     ; The email address to send notifications of build progress.
     mailto = {$email}
 
-    ; Example configuration for a project with two buildable branches.
+    ; Example configuration for a project with two buildable targets (branches).
     ;
-    ; The production branch is built by invoking the command "make deploy".
-    ; The staging branch is built by invoking "make deploy-to-stage".
+    ; The production target is built by invoking the command "make deploy".
+    ; The staging target is built by invoking "make deploy-to-stage".
     [example-org/example-repo]
     production = make deploy
     staging = make deploy-to-staging
