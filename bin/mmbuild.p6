@@ -5,7 +5,7 @@ use lib 'lib';
 
 use Config::INI;
 
-our Str constant SCRIPT_VERSION = "2020.01.31";
+our Str constant SCRIPT_VERSION = "2020.02.02";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
@@ -42,7 +42,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
         when job-start {
             log-to-file('#', 'Build started');
 
-            log-to-journal(%job<path>.basename, 'Build started');
+            log-to-journal(%job<id>, 'Build started');
 
             if (%job<mailto>) {
                 use Broadcast::Email;
@@ -53,7 +53,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
         when job-end {
             my $success = 'Build finished';
             log-to-file('#', $success);
-            log-to-journal(%job<path>.basename, $success);
+            log-to-journal(%job<id>, $success);
 
             if (%job<mailto>) {
                 use Broadcast::Email;
@@ -63,7 +63,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
 
         when job-fail {
             log-to-file('#', "Build failed: {$message}");
-            log-to-journal(%job<path>.basename, 'Build failed.');
+            log-to-journal(%job<id>, 'Build failed.');
 
             if (%job<mailto>) {
                 use Broadcast::Email;
@@ -139,12 +139,13 @@ multi sub MAIN(IO::Path $jobFile) {
 
     unless (%job<job>:exists) {
         try unlink($jobFile);
-        say "No job details in {$jobFile.basename}. File deleted.";
+        say "Deleting {$jobFile} because it is malformed.";
         return;
     }
 
     %job = %job<job>;
     %job<path> = $jobFile.IO;
+    %job<id> = $jobFile.IO.basename;
 
     my $fsFriendlyRepositoryName = %job<repositoryName>.lc;
     $fsFriendlyRepositoryName ~~ s:global/\W/-/;

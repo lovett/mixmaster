@@ -5,40 +5,42 @@ use Email::Simple;
 our Str constant PREFIX = '[mixmaster]';
 
 sub mail-job-start(Str $recipient, %job) is export {
-    my $repositoryName = %job<repositoryName>;
-    my $subject = "Starting build for {$repositoryName}";
-    my $body = "Mixmaster has started a build for {$repositoryName}";
+    my Str $repositoryName = %job<repositoryName>;
+    my Str $subject = "{PREFIX} Building {$repositoryName}";
+    my Str $body = "Mixmaster has started building the {%job<branch>} branch.";
 
     if (%job<viewUrl>) {
         $body ~= "\n\n{%job<viewUrl>}";
     }
 
+    $body ~= "\n\nAnother message will be sent when the build has finished.";
+
     send($recipient, $subject, $body);
 }
 
 sub mail-job-end(Str $recipient, %job) is export {
-    my $repositoryName = %job<repositoryName>;
-    my $subject = "Finished building {$repositoryName}";
-    my $body = "Mixmaster has finished building {$repositoryName}";
+    my Str $repositoryName = %job<repositoryName>;
+    my Str $subject = "Re: {PREFIX} Building {$repositoryName}";
+    my Str $body = "Mixmaster has finished building the {%job<branch>} branch.";
+
     send($recipient, $subject, $body);
 }
 
 sub mail-job-fail(Str $recipient, %job) is export {
-    my $repositoryName = %job<repositoryName>;
-    my $subject = "Error building {$repositoryName}";
-
-    my $body = "Mixmaster was unable to build {$repositoryName}\n\n";
+    my Str $repositoryName = %job<repositoryName>;
+    my Str $subject = "Re: {PREFIX} Building {$repositoryName}";
+    my Str $body = "Mixmaster was unable to build the {%job<branch>} branch.\n\n";
 
     $body ~= slurp %job<path>;
 
     send($recipient, $subject, $body);
 }
 
-sub send($recipient, $subject, $body) {
+sub send(Str $recipient, Str $subject, Str $body) {
     my $message = Email::Simple.create(
         :header[
                  ['To', $recipient],
-                 ['Subject', "{PREFIX} $subject"],
+                 ['Subject', $subject]
              ],
         :body($body)
     );
