@@ -85,29 +85,31 @@ sub MAIN(
         $repositoryBranch = %json<target>;
     }
 
-    if (%headers<uri> eq "/gitea") {
-        $scm = "git";
-        $repositoryUrl = %json<repository><ssh_url>;
-        $repositoryName = %json<repository><full_name>;
-        $repositoryBranch = %json<ref>.subst("refs/heads/", "", :nth(1));
-        $commit = %json<after>;
-        $viewUrl = %json<compare_url>;
-    }
-
-    if (%headers<uri> eq "/adhoc") {
-        for <scm repositoryUrl repositoryName commit branch> {
-            unless (%json{$_}) {
-                send-error-response("$_ not specified");
-                exit;
-            }
+    given %headers<uri> {
+        when "/gitea" {
+            $scm = "git";
+            $repositoryUrl = %json<repository><ssh_url>;
+            $repositoryName = %json<repository><full_name>;
+            $repositoryBranch = %json<ref>.subst("refs/heads/", "", :nth(1));
+            $commit = %json<after>;
+            $viewUrl = %json<compare_url>;
         }
 
-        $scm = %json<scm>;
-        $repositoryUrl = %json<repositoryUrl>;
-        $repositoryName = %json<repositoryName>;
-        $repositoryBranch = %json<branch>;
-        $commit = %json<commit>;
-        $viewUrl = %json<viewUrl>;
+        when "/" {
+            for <scm repositoryUrl repositoryName commit branch> {
+                unless (%json{$_}) {
+                    send-error-response("$_ not specified");
+                    exit;
+                }
+            }
+
+            $scm = %json<scm>;
+            $repositoryUrl = %json<repositoryUrl>;
+            $repositoryName = %json<repositoryName>;
+            $repositoryBranch = %json<branch>;
+            $commit = %json<commit>;
+            $viewUrl = %json<viewUrl>;
+        }
     }
 
     unless (%config{$repositoryName}:exists) {

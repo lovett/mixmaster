@@ -19,9 +19,9 @@ test-gitea: clean
 	./bin/mmbridge.p6 < samples/gitea.http
 	cat Builds/INBOX/*
 
-# Simulate an adh-hoc request without using systemd.
-test-adhoc: clean
-	./bin/mmbridge.p6 < samples/adhoc.http
+# Simulate a default request without using systemd.
+test-default: clean
+	./bin/mmbridge.p6 < samples/default.http
 
 # Simulate a freestyle request without using systemd.
 test-freestyle: clean
