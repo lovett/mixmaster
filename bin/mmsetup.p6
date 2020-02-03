@@ -45,13 +45,13 @@ sub createConfigurationFile(
     ; The email address to send notifications of build progress.
     mailto = {$email}
 
-    ; Example project configuration for a repository with two buildable branches.
+    ; Example configuration for a project with two buildable branches.
+    ;
     ; The production branch is built by invoking the command "make deploy".
-    ; The build command for the hello-world branch is "echo Hello World"
-    ; There should be one such section in this file per buildable repository.
+    ; The staging branch is built by invoking "make deploy-to-stage".
     [example-org/example-repo]
     production = make deploy
-    hello-world = echo Hello world
+    staging = make deploy-to-staging
 
     END
 

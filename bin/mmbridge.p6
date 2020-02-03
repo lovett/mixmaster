@@ -6,7 +6,7 @@ use lib 'lib';
 use Config::INI;
 use JSON::Fast;
 
-our Str constant SCRIPT_VERSION = "2020.02.01";
+our Str constant SCRIPT_VERSION = "2020.02.03";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
@@ -74,14 +74,14 @@ sub MAIN(
 
     my Str $scm = "";
     my Str $repositoryUrl = "";
-    my Str $repositoryName = "";
+    my Str $project = "";
     my Str $repositoryBranch = "";
     my Str $commit = "";
     my Str $viewUrl = "";
 
     if (%headers<uri> eq "/freestyle") {
         $scm = "freestyle";
-        $repositoryName = %json<project>;
+        $project = %json<project>;
         $repositoryBranch = %json<target>;
     }
 
@@ -89,14 +89,14 @@ sub MAIN(
         when "/gitea" {
             $scm = "git";
             $repositoryUrl = %json<repository><ssh_url>;
-            $repositoryName = %json<repository><full_name>;
+            $project = %json<repository><full_name>;
             $repositoryBranch = %json<ref>.subst("refs/heads/", "", :nth(1));
             $commit = %json<after>;
             $viewUrl = %json<compare_url>;
         }
 
         when "/" {
-            for <scm repositoryUrl repositoryName commit branch> {
+            for <scm repositoryUrl project commit branch> {
                 unless (%json{$_}) {
                     send-error-response("$_ not specified");
                     exit;
@@ -105,19 +105,19 @@ sub MAIN(
 
             $scm = %json<scm>;
             $repositoryUrl = %json<repositoryUrl>;
-            $repositoryName = %json<repositoryName>;
+            $project = %json<project>;
             $repositoryBranch = %json<branch>;
             $commit = %json<commit>;
             $viewUrl = %json<viewUrl>;
         }
     }
 
-    unless (%config{$repositoryName}:exists) {
-        send-error-response("Unknown repository");
+    unless (%config{$project}:exists) {
+        send-error-response("Unknown project");
         exit;
     }
 
-    my Pair @matchedBranchs = %config{$repositoryName}.pairs.grep: {
+    my Pair @matchedBranchs = %config{$project}.pairs.grep: {
         .key.starts-with($repositoryBranch)
     };
 
@@ -138,7 +138,7 @@ sub MAIN(
     spurt "{%config<_><spool>}/{$jobFileName}", qq:to/END/;
     [job]
     scm = $scm
-    repositoryName = $repositoryName
+    project = $project
     repositoryUrl = $repositoryUrl
     commit = $commit
     branch = $matchedBranch

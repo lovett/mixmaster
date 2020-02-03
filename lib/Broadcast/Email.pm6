@@ -5,9 +5,9 @@ use Email::Simple;
 our Str constant PREFIX = '[mixmaster]';
 
 sub mail-job-start(Str $recipient, %job) is export {
-    my Str $repositoryName = %job<repositoryName>;
-    my Str $subject = "{PREFIX} Building {$repositoryName}";
-    my Str $body = "Mixmaster has started building the {%job<branch>} branch.";
+    my Str $project = %job<project>;
+    my Str $subject = "{PREFIX} Building {$project}";
+    my Str $body = "Mixmaster has started building the {%job<branch>} branch of {$project}.";
 
     if (%job<viewUrl>) {
         $body ~= "\n\n{%job<viewUrl>}";
@@ -19,17 +19,17 @@ sub mail-job-start(Str $recipient, %job) is export {
 }
 
 sub mail-job-end(Str $recipient, %job) is export {
-    my Str $repositoryName = %job<repositoryName>;
-    my Str $subject = "Re: {PREFIX} Building {$repositoryName}";
-    my Str $body = "Mixmaster has finished building the {%job<branch>} branch.";
+    my Str $project = %job<project>;
+    my Str $subject = "Re: {PREFIX} Building {$project}";
+    my Str $body = "Mixmaster has finished building the {%job<branch>} branch of {$project}.";
 
     send($recipient, $subject, $body);
 }
 
 sub mail-job-fail(Str $recipient, %job) is export {
-    my Str $repositoryName = %job<repositoryName>;
-    my Str $subject = "Re: {PREFIX} Building {$repositoryName}";
-    my Str $body = "Mixmaster was unable to build the {%job<branch>} branch.\n\n";
+    my Str $project = %job<project>;
+    my Str $subject = "Re: {PREFIX} Building {$project}";
+    my Str $body = "Mixmaster was unable to build the {%job<branch>} branch of {$project}.\n\n";
 
     $body ~= slurp %job<path>;
 

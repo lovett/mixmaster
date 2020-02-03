@@ -5,7 +5,7 @@ use lib 'lib';
 
 use Config::INI;
 
-our Str constant SCRIPT_VERSION = "2020.02.02";
+our Str constant SCRIPT_VERSION = "2020.02.03";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
@@ -159,7 +159,7 @@ multi sub MAIN(IO::Path $jobFile) {
     %job<path> = $jobFile.IO;
     %job<id> = $jobFile.IO.basename;
 
-    my $fsFriendlyRepositoryName = %job<repositoryName>.lc;
+    my $fsFriendlyRepositoryName = %job<project>.lc;
     $fsFriendlyRepositoryName ~~ s:global/\W/-/;
 
     my $fsFriendlyBranch = %job<branch>.lc;
