@@ -22,12 +22,15 @@ test-gitea: clean
 # Simulate an adh-hoc request without using systemd.
 test-adhoc: clean
 	./bin/mmbridge.p6 < samples/adhoc.http
-	cat Builds/INBOX/*
+
+# Simulate a freestyle request without using systemd.
+test-freestyle: clean
+	./bin/mmbridge.p6 < samples/freestyle.http
 
 # Reset the Builds directory to a pristine state.
 clean:
-	rm -rf Builds/INBOX/*
-	rm -rf Builds/[a-z]*
+	rm -rf ~/Builds/INBOX/*
+	rm -rf ~/Builds/[a-z]*
 
 # Perform linting of bin scripts.
 check:

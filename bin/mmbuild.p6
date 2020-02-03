@@ -97,17 +97,29 @@ sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
     });
 }
 
-sub gitRecipe(IO::Path $buildRoot, %pairs) {
+sub gitRecipe(IO::Path $buildRoot, %job) {
     my Str @commands;
 
     unless ($buildRoot.add('.git').d) {
-        @commands.push: "git clone --quiet --branch {%pairs<branch>} {%pairs<repositoryUrl>} .";
+        @commands.push: "git clone --quiet --branch {%job<branch>} {%job<repositoryUrl>} .";
     }
 
-    @commands.push: "git checkout --quiet {%pairs<commit>}";
-    @commands.push: %pairs<buildCommand>;
+    @commands.push: "git checkout --quiet {%job<commit>}";
+    @commands.push: %job<buildCommand>;
 
-    if (%pairs<mode> ~~ "dryrun") {
+    if (%job<mode> ~~ "dryrun") {
+        return ("echo $_" for @commands);
+    }
+
+    return @commands;
+}
+
+sub freestyleRecipe(IO::Path $buildRoot, %job) {
+    my Str @commands;
+
+    @commands.push: %job<buildCommand>;
+
+    if (%job<mode> ~~ "dryrun") {
         return ("echo $_" for @commands);
     }
 
@@ -176,13 +188,13 @@ multi sub MAIN(IO::Path $jobFile) {
     $logHandle = $logFile.open(:a);
     $logHandle.say("pid = {$*PID}");
     $logHandle.say("\n\n[log]");
-    say $logHandle.^name;
 
     broadcast(job-start, %job);
 
     my Str @buildRecipe;
     given %job<scm>.lc {
         when "git" { @buildRecipe = gitRecipe($buildRoot, %job) }
+        when "freestyle" { @buildRecipe = freestyleRecipe($buildRoot, %job) }
     }
 
     for @buildRecipe {

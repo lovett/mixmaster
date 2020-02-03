@@ -79,6 +79,12 @@ sub MAIN(
     my Str $commit = "";
     my Str $viewUrl = "";
 
+    if (%headers<uri> eq "/freestyle") {
+        $scm = "freestyle";
+        $repositoryName = %json<project>;
+        $repositoryBranch = %json<target>;
+    }
+
     if (%headers<uri> eq "/gitea") {
         $scm = "git";
         $repositoryUrl = %json<repository><ssh_url>;
