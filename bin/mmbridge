@@ -84,7 +84,6 @@ sub accept-job(Buf $body, Str $endpoint) {
             $viewUrl = %json<compare_url>;
         }
 
-
         when "/" {
             for <scm repositoryUrl project commit target> {
                 unless (%json{$_}) {
@@ -188,6 +187,25 @@ sub MAIN(
         when "POST" or "PUT" {
             my Buf $body = $*IN.read(%headers<content-length>);
             accept-job($body, %headers<uri>);
+        }
+
+        when "GET" {
+            given %headers<uri>  {
+                when "/version" {
+                    print "HTTP/1.1 200 OK\r\n";
+                    print "Content-Length: {SCRIPT_VERSION.chars}\r\n";
+                    print "Content-Type: text/plain; charset=utf-8\r\n";
+                    print "\r\n\r\n";
+                    print "{SCRIPT_VERSION}";
+                    exit;
+                }
+
+                default {
+                    print "HTTP/1.1 404 Not Found\r\n";
+                    print "Connection: close\r\n";
+                    exit;
+                }
+            }
         }
 
         default {

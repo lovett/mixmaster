@@ -8,8 +8,6 @@ upgrade:
 
 # Establish a development environment.
 setup:
-	mkdir -p Builds/INBOX
-	touch mixmaster.ini
 	zef install JSON::Fast
 	zef install Config::INI
 	zef install Email::Simple;
@@ -29,6 +27,9 @@ test-freestyle: clean
 
 test-get:
 	./bin/mmbridge < samples/get.http
+
+test-version:
+	./bin/mmbridge < samples/version.http
 
 # Reset the Builds directory to a pristine state.
 clean:
