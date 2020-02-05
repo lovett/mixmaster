@@ -1,9 +1,25 @@
 #!/usr/bin/env rakudo
 
-# This is the setup script for mixmaster, responsible for setting up
-# expected directory paths and configuration.
+=begin pod
 
-our Str constant SCRIPT_VERSION = "2020.02.01";
+This is the setup script for mixmaster. It's responsible for
+populating:
+
+=item The application configuration file in C<~/.config>
+
+=item The directory whwere builds occur, defaulting to C<~/Builds>
+
+=item A per-user systemd socket service in C<~/.config/systemd/user>
+      that listens for build requests and stores them a job files
+      under C</var/spool/mixmaster>.
+
+=item A per-user systemd path service in C<~./config/systemd/user>
+      that watches for changes to the spool directory and performs
+      builds.
+
+=end pod
+
+our Str constant SCRIPT_VERSION = "2020.02.04";
 
 sub createBuildRoot(IO::Path $path) {
     try {
@@ -238,3 +254,7 @@ multi sub MAIN(
         }
     }
 }
+
+# Local Variables:
+# mode: perl6
+# End:

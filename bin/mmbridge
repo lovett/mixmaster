@@ -1,5 +1,27 @@
 #!/usr/bin/env rakudo
 
+=begin pod
+
+This is the bridge script for mixmaster. It transforms build requests
+into job files that are written to C</var/spool/mixmaster/USER>.
+
+Build requests arrive on stdin as HTTP requests from a systemd socket
+service. JSON is the primary content type for these requests, but
+multiple formats are supported:
+
+=item A comprehensive format used by Gitea
+=item A lightweight format specific to mixmaster
+=item A minimal format for command execution
+
+Each format is accepted from a discrete URL path, but all such paths
+are accounted for this script.
+
+This script reads the user-specific mixmaster configuration file in
+C<~/.config/mixmaster.ini> to figure out whether a request pertains to
+a known project.
+
+=end pod
+
 use lib '/usr/local/share/mixmaster/lib';
 use lib 'lib';
 
@@ -174,3 +196,7 @@ sub MAIN(
         }
     }
 }
+
+# Local Variables:
+# mode: perl6
+# End:

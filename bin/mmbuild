@@ -1,5 +1,17 @@
 #!/usr/bin/env rakudo
 
+=begin pod
+
+This is the build script for mixmaster, responsible for picking up
+jobs that have been spooled by C<mmbridge> and executing the
+designated build command.
+
+This script is normally invoked by a systemd path service that watches
+for changes to the spool directory. After a build has finished, it
+will pick up the next one until the spool directory is empty.
+
+=end pod
+
 use lib '/usr/local/share/mixmaster/lib';
 use lib 'lib';
 
@@ -218,3 +230,7 @@ multi sub MAIN(IO::Path $jobFile) {
         try close $logHandle;
     }
 }
+
+# Local Variables:
+# mode: perl6
+# End:
