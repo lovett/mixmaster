@@ -16,19 +16,19 @@ setup:
 
 # Simulate a Gitea request without using systemd.
 test-gitea: clean
-	./bin/mmbridge.p6 < samples/gitea.http
+	./bin/mmbridge < samples/gitea.http
 	cat Builds/INBOX/*
 
 # Simulate a default request without using systemd.
 test-default: clean
-	./bin/mmbridge.p6 < samples/default.http
+	./bin/mmbridge < samples/default.http
 
 # Simulate a freestyle request without using systemd.
 test-freestyle: clean
-	./bin/mmbridge.p6 < samples/freestyle.http
+	./bin/mmbridge < samples/freestyle.http
 
 test-get:
-	./bin/mmbridge.p6 < samples/get.http
+	./bin/mmbridge < samples/get.http
 
 # Reset the Builds directory to a pristine state.
 clean:
@@ -37,5 +37,5 @@ clean:
 
 # Perform linting of bin scripts.
 check:
-	perl6 -c bin/mmbridge.p6
-	perl6 -c bin/mmbuild.p6
+	perl6 -c bin/mmbridge
+	perl6 -c bin/mmbuild

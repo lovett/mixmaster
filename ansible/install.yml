@@ -45,6 +45,6 @@
         mode: "0755"
         setype: bin_t
       loop:
-        - "../bin/mmbridge.p6"
-        - "../bin/mmbuild.p6"
-        - "../bin/mmsetup.p6"
+        - "../bin/mmbridge"
+        - "../bin/mmbuild"
+        - "../bin/mmsetup"

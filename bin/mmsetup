@@ -92,7 +92,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot) {
     [Service]
     StandardInput=socket
     StandardError=journal
-    ExecStart=/usr/bin/rakudo /usr/local/bin/mmbridge.p6
+    ExecStart=/usr/bin/rakudo /usr/local/bin/mmbridge
 
     # Local Variables:
     # mode: conf
@@ -132,7 +132,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot) {
 
     [Service]
     WorkingDirectory={$buildRoot}
-    ExecStart=/usr/bin/rakudo /usr/local/bin/mmbuild.p6
+    ExecStart=/usr/bin/rakudo /usr/local/bin/mmbuild
 
     # Local Variables:
     # mode: conf
