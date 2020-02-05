@@ -214,7 +214,3 @@ sub MAIN(
         }
     }
 }
-
-# Local Variables:
-# mode: perl6
-# End:

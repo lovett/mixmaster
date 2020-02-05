@@ -230,7 +230,3 @@ multi sub MAIN(IO::Path $jobFile) {
         try close $logHandle;
     }
 }
-
-# Local Variables:
-# mode: perl6
-# End:

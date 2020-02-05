@@ -1,4 +1,5 @@
 #!/usr/bin/env rakudo
+# -*- mode: perl6 -*-
 
 =begin pod
 
@@ -254,7 +255,3 @@ multi sub MAIN(
         }
     }
 }
-
-# Local Variables:
-# mode: perl6
-# End:
