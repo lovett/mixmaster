@@ -195,7 +195,7 @@ sub MAIN(
                     print "HTTP/1.1 200 OK\r\n";
                     print "Content-Length: {SCRIPT_VERSION.chars}\r\n";
                     print "Content-Type: text/plain; charset=utf-8\r\n";
-                    print "\r\n\r\n";
+                    print "\r\n";
                     print "{SCRIPT_VERSION}";
                     exit;
                 }
