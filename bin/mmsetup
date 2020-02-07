@@ -75,7 +75,7 @@ sub createConfigurationFile(
     say "Populated {$configPath} with  default configuration."
 }
 
-sub createSystemdServices(IO::Path $root, IO::Path $buildRoot) {
+sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
     # Bridge socket
     my $bridgeSocket = $root.add("mixmaster-bridge.socket");
 
@@ -84,7 +84,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot) {
     Description=Mixmaster Bridge Socket
 
     [Socket]
-    ListenStream=8585
+    ListenStream={$port}
     Accept=yes
     ReusePort=true
 
@@ -165,6 +165,7 @@ multi sub MAIN(
     Str  :$buildRoot = "{$*HOME}/Builds", #= Filesystem path for storing builds.
     Str  :$spool = "/var/spool/mixmaster/{$*USER}", #= Filesystem path for storing jobs.
     Str  :$email = '',                    #= Email address to use for notifiations.
+    Int  :$port = 8585,                   #= Port to use with bridge service.
     Bool :$dump,                          #= Display the configuration file.
     Bool :$version,                       #= Display version information.
     Bool :$force,                         #= Overwrite existing files.
@@ -211,6 +212,9 @@ multi sub MAIN(
         @tasks.push("configurationFile");
     }
 
+    # Port
+    say "The systemd socket service will use port {$port}";
+
     # Spool
     unless ($resolvedSpool.d) {
         say("The directory {$resolvedSpool} needs to be created manually. For example:");
@@ -246,7 +250,7 @@ multi sub MAIN(
     }
 
     if (@tasks.contains("systemdServices")) {
-        createSystemdServices($systemdRoot, $resolvedBuildRoot);
+        createSystemdServices($systemdRoot, $resolvedBuildRoot, $port);
     }
 
     CATCH {
