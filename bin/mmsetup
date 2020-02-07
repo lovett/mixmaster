@@ -226,7 +226,7 @@ multi sub MAIN(
     if ($systemdRoot.add("mixmaster-bridge.socket").e and not $force) {
         say "Systemd services already exist under {$systemdRoot}.";
     } else {
-        say("Systemd services wil be written to {$systemdRoot}");
+        say("4 systemd service files wil be written to {$systemdRoot}");
         @tasks.push("systemdServices");
     }
 
