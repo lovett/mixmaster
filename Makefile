@@ -1,3 +1,6 @@
+LOCAL_BIN := /usr/local/bin
+LOCAL_SHARE := /usr/local/share/mixmaster
+
 # Perform linting of bin scripts.
 check:
 	rakudo -c bin/mmbridge
@@ -9,9 +12,13 @@ clean:
 	rm -rf ~/Builds/*
 	rm -rf /var/spool/mixmaster/$(USER)/*.ini
 
-# Deploy the application to the production.
+# Install application scripts.
 install:
-	ansible-playbook ansible/install.yml
+	sudo cp bin/mmsetup  $(LOCAL_BIN)/mmsetup
+	sudo cp bin/mmbuild  $(LOCAL_BIN)/mmbuild
+	sudo cp bin/mmbridge $(LOCAL_BIN)/mmbridge
+	sudo mkdir -p $(LOCAL_SHARE)
+	sudo cp -r lib $(LOCAL_SHARE)/lib
 
 # Install application libraries.
 # Anything listed here should also be in ansible/install.yml.
@@ -28,3 +35,10 @@ test-gitea: clean
 # Update the current installation on the production host.
 upgrade:
 	ansible-playbook --skip-tags firstrun ansible/install.yml
+
+# Reverse of install.
+uninstall:
+	sudo rm -f $(LOCAL_BIN)/mmsetup
+	sudo rm -f $(LOCAL_BIN)/mmbuild
+	sudo rm -f $(LOCAL_BIN)/mbridge
+	sudo rm -rf $(LOCAL_SHARE)
