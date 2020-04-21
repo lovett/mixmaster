@@ -8,7 +8,7 @@ populating:
 
 =item The application configuration file in C<~/.config>
 
-=item The directory whwere builds occur, defaulting to C<~/Builds>
+=item The directory where builds occur, defaulting to C<~/Builds>
 
 =item A per-user systemd socket service in C<~/.config/systemd/user>
       that listens for build requests and stores them a job files
@@ -20,7 +20,7 @@ populating:
 
 =end pod
 
-our Str constant SCRIPT_VERSION = "2020.02.04";
+our Str constant SCRIPT_VERSION = "2020.04.21";
 
 sub createBuildRoot(IO::Path $path) {
     try {
@@ -162,10 +162,10 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 }
 
 multi sub MAIN(
-    Str  :$buildRoot = "{$*HOME}/Builds", #= Filesystem path for storing builds.
-    Str  :$spool = "/var/spool/mixmaster/{$*USER}", #= Filesystem path for storing jobs.
-    Str  :$email = '',                    #= Email address to use for notifiations.
-    Int  :$port = 8585,                   #= Port to use with bridge service.
+    Str  :$buildRoot = "{$*HOME}/Builds", #= Filesystem path for storing builds. Default: ~/Builds
+    Str  :$spool = "/var/spool/mixmaster/{$*USER}", #= Filesystem path for storing jobs. Default: /var/spool/mixmaster/[user]
+    Str  :$email = '',                    #= Email address to use for notifiations. Default: no email notifications.
+    Int  :$port = 8585,                   #= Port to use with bridge service. Default: 8585.
     Bool :$dump,                          #= Display the configuration file.
     Bool :$version,                       #= Display version information.
     Bool :$force,                         #= Overwrite existing files.
@@ -191,10 +191,9 @@ multi sub MAIN(
 
     my @tasks = ();
 
-
     # Build root
     if ($resolvedBuildRoot.d) {
-        say "Build root {$resolvedBuildRoot} already exists.";
+        say "✓ Build root {$resolvedBuildRoot} exists.";
     } else {
         unless ($resolvedBuildRoot.parent.w) {
             die("The parent of {$resolvedBuildRoot} is not writable.\n")
@@ -206,51 +205,46 @@ multi sub MAIN(
 
     # Config
     if ($configPath.f and not $force) {
-        say "Configuration file {$configPath} already exists.";
+        say "✓ Configuration file {$configPath} exists.";
     } else {
         say("The configuration file will be written to {$configPath}");
         @tasks.push("configurationFile");
     }
 
-    # Port
-    say "The systemd socket service will use port {$port}";
-
-    # Spool
-    unless ($resolvedSpool.d) {
-        say("The directory {$resolvedSpool} needs to be created manually. For example:");
-        say("    sudo mkdir -p {$resolvedSpool}");
-        say("    sudo chown {$*USER} {$resolvedSpool}");
-    }
-
     # Systemd
     if ($systemdRoot.add("mixmaster-bridge.socket").e and not $force) {
-        say "Systemd services already exist under {$systemdRoot}.";
+        say "✓ Systemd services exist under {$systemdRoot}.";
     } else {
+        # Port
+        say "The systemd socket service will use port {$port}";
         say("4 systemd service files wil be written to {$systemdRoot}");
         @tasks.push("systemdServices");
     }
 
-
-    unless (@tasks) {
-        say "Nothing else to be done.";
-        exit;
-    }
-
-    unless ($yes) {
+    if (@tasks and not $yes) {
         my Str $confirmation = prompt("Proceed? [y/N] ");
         exit unless $confirmation.lc eq "y";
     }
 
-    if (@tasks.contains("buildRoot")) {
+    if (@tasks and @tasks.contains("buildRoot")) {
         createBuildRoot($resolvedBuildRoot);
     }
 
-    if (@tasks.contains("configurationFile")) {
+    if (@tasks and @tasks.contains("configurationFile")) {
         createConfigurationFile($configPath, $resolvedBuildRoot, $resolvedSpool, $email);
     }
 
-    if (@tasks.contains("systemdServices")) {
+    if (@tasks and @tasks.contains("systemdServices")) {
         createSystemdServices($systemdRoot, $resolvedBuildRoot, $port);
+    }
+
+    # Spool
+    if not ($resolvedSpool.d) {
+        say("❗ The spool directory must be created manually. For example:");
+        say("   sudo mkdir -p {$resolvedSpool}");
+        say("   sudo chown {$*USER} {$resolvedSpool}");
+    } else {
+        say "✓ The spool directory {$resolvedSpool} exists.";
     }
 
     CATCH {
