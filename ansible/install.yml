@@ -3,7 +3,7 @@
   vars:
     application_name: mixmaster
   tasks:
-    - name: Install system packages as root
+    - name: Install system packages
       become: yes
       dnf:
         name:
@@ -14,7 +14,7 @@
       tags:
         - firstrun
 
-    - name: Install application packages as root
+    - name: Install application packages
       become: yes
       command: "zef install {{ item }}"
       loop:
@@ -24,7 +24,7 @@
       tags:
         - firstrun
 
-    - name: Install application libraries as root
+    - name: Install application libraries
       become: yes
       copy:
         src: "{{ item }}"
@@ -35,7 +35,7 @@
       loop:
         - "../lib/Broadcast"
 
-    - name: Install application scripts as root
+    - name: Install application scripts
       become: yes
       copy:
         src: "{{ item }}"
