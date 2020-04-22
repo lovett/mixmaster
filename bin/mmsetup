@@ -20,7 +20,7 @@ populating:
 
 =end pod
 
-our Str constant SCRIPT_VERSION = "2020.04.21";
+our Str constant SCRIPT_VERSION = "2020.04.22";
 
 sub createBuildRoot(IO::Path $path) {
     try {
@@ -159,6 +159,12 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 
     say("Populated {$pathService}.");
 
+    shell 'systemctl --user --quiet enable --now mixmaster-bridge.socket';
+    say("Started {$bridgeSocket}.");
+
+    shell 'systemctl --user --quiet enable --now mixmaster-watcher.path';
+    say("Started {$pathWatcher}.");
+
 }
 
 multi sub MAIN(
@@ -215,9 +221,8 @@ multi sub MAIN(
     if ($systemdRoot.add("mixmaster-bridge.socket").e and not $force) {
         say "✓ Systemd services exist under {$systemdRoot}.";
     } else {
-        # Port
-        say "The systemd socket service will use port {$port}";
-        say("4 systemd service files wil be written to {$systemdRoot}");
+        say("NEW: 4 systemd service files wil be written to {$systemdRoot}");
+        say "NEW: The systemd socket service will use port {$port}";
         @tasks.push("systemdServices");
     }
 
