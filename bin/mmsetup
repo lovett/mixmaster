@@ -76,9 +76,19 @@ sub createConfigurationFile(
 }
 
 sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
+    my $proc = run <which mmbuild>, :out;
+    my $mmbuild = $proc.out.get;
+
+    $proc = run <which mmbridge>, :out;
+    my $mmbridge = $proc.out.get;
+
+    $proc = run <which rakudo>, :out;
+    my $rakudo = $proc.out.get;
+
+    $proc.out.close();
+
     # Bridge socket
     my $bridgeSocket = $root.add("mixmaster-bridge.socket");
-
     spurt $bridgeSocket, qq:to/END/;
     [Unit]
     Description=Mixmaster Bridge Socket
@@ -109,7 +119,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
     [Service]
     StandardInput=socket
     StandardError=journal
-    ExecStart=/usr/bin/rakudo /usr/local/bin/mmbridge
+    ExecStart={$rakudo} {$mmbridge}
 
     # Local Variables:
     # mode: conf
@@ -149,7 +159,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 
     [Service]
     WorkingDirectory={$buildRoot}
-    ExecStart=/usr/bin/rakudo /usr/local/bin/mmbuild
+    ExecStart={$rakudo} {$mmbuild}
 
     # Local Variables:
     # mode: conf
@@ -159,10 +169,10 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 
     say("Populated {$pathService}.");
 
-    shell 'systemctl --user --quiet enable --now mixmaster-bridge.socket';
+    run <systemctl --user --quiet enable --now mixmaster-bridge.socket>;
     say("Started {$bridgeSocket}.");
 
-    shell 'systemctl --user --quiet enable --now mixmaster-watcher.path';
+    run <systemctl --user --quiet enable --now mixmaster-watcher.path>;
     say("Started {$pathWatcher}.");
 
 }
@@ -202,10 +212,10 @@ multi sub MAIN(
         say "✓ Build root {$resolvedBuildRoot} exists.";
     } else {
         unless ($resolvedBuildRoot.parent.w) {
-            die("The parent of {$resolvedBuildRoot} is not writable.\n")
+            die("✘ The parent of {$resolvedBuildRoot} is not writable.\n")
         }
 
-        say("Builds will be stored in {$resolvedBuildRoot}");
+        say("NEW: Builds will be stored in {$resolvedBuildRoot}");
         @tasks.push("buildRoot");
     }
 
@@ -213,7 +223,7 @@ multi sub MAIN(
     if ($configPath.f and not $force) {
         say "✓ Configuration file {$configPath} exists.";
     } else {
-        say("The configuration file will be written to {$configPath}");
+        say("NEW: The configuration file will be written to {$configPath}");
         @tasks.push("configurationFile");
     }
 
@@ -226,20 +236,20 @@ multi sub MAIN(
         @tasks.push("systemdServices");
     }
 
-    if (@tasks and not $yes) {
+    if (@tasks.first and not $yes) {
         my Str $confirmation = prompt("Proceed? [y/N] ");
         exit unless $confirmation.lc eq "y";
     }
 
-    if (@tasks and @tasks.contains("buildRoot")) {
+    if (@tasks.first("buildRoot")) {
         createBuildRoot($resolvedBuildRoot);
     }
 
-    if (@tasks and @tasks.contains("configurationFile")) {
+    if (@tasks.first("configurationFile")) {
         createConfigurationFile($configPath, $resolvedBuildRoot, $resolvedSpool, $email);
     }
 
-    if (@tasks and @tasks.contains("systemdServices")) {
+    if (@tasks.first("systemdServices")) {
         createSystemdServices($systemdRoot, $resolvedBuildRoot, $port);
     }
 
