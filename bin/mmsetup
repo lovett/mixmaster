@@ -128,12 +128,12 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
     END
     say ("Populated {$bridgeService}.");
 
-    # Path watcher
-    my $pathWatcher = $root.add("mixmaster-watcher.path");
+    # Spool watcher.
+    my $watcher = $root.add("mixmaster.path");
 
-    spurt $pathWatcher, qq:to/END/;
+    spurt $watcher, qq:to/END/;
     [Unit]
-    Description=Mixmaster inbox path watcher
+    Description=Mixmaster
 
     [Path]
     DirectoryNotEmpty=/var/spool/mixmaster/{$*USER}
@@ -148,10 +148,10 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
     # End:
 
     END
-    say ("Populated {$pathWatcher}.");
+    say ("Populated {$watcher}.");
 
     # Path service
-    my $pathService = $root.add("mixmaster-watcher.service");
+    my $pathService = $root.add("mixmaster.service");
 
     spurt $pathService, qq:to/END/;
     [Unit]
@@ -172,8 +172,8 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
     run <systemctl --user --quiet enable --now mixmaster-bridge.socket>;
     say("Started {$bridgeSocket}.");
 
-    run <systemctl --user --quiet enable --now mixmaster-watcher.path>;
-    say("Started {$pathWatcher}.");
+    run <systemctl --user --quiet enable --now mixmaster.path>;
+    say("Started {$watcher}.");
 
 }
 
