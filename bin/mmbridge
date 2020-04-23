@@ -28,7 +28,7 @@ use lib 'lib';
 use Config::INI;
 use JSON::Fast;
 
-our Str constant SCRIPT_VERSION = "2020.02.03";
+our Str constant SCRIPT_VERSION = "2020.04.23";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
@@ -41,18 +41,38 @@ sub generate-job-file-name() {
     );
 }
 
-sub send-success-response() {
+sub send-success-response(Str $body='') {
     print "HTTP/1.1 200 OK\r\n";
     print "Connection: close\r\n";
+    print "Content-Length: {$body.chars}\r\n";
+    print "Content-Type: text/plain; charset=utf-8\r\n";
+    print "\r\n";
+    print $body;
 }
 
 sub send-failure-response() {
     print "HTTP/1.0 400 Bad Request\r\n";
     print "Connection: close\r\n";
+    print "\r\n";
 }
 
 sub send-error-response(Str $message) {
-    print "HTTP/1.1 422 {$message}\r\n";
+    print "HTTP/1.1 422 Unprocessable Entity\r\n";
+    print "Connection: close\r\n";
+    print "Content-Length: {$message.chars}\r\n";
+    print "Content-Type: text/plain; charset=utf-8\r\n";
+    print "\r\n";
+    print $message;
+}
+
+sub send-notfound-response() {
+    print "HTTP/1.1 404 Not Found\r\n";
+    print "Connection: close\r\n";
+    print "\r\n";
+}
+
+sub send-notallowed-response() {
+    print "HTTP/1.1 405 Method Not Allowed\r\n";
     print "Connection: close\r\n";
 }
 
@@ -101,8 +121,7 @@ sub accept-job(Buf $body, Str $endpoint) {
         }
 
         default {
-            print "HTTP/1.1 404 Not Found\r\n";
-            print "Connection: close\r\n";
+            send-notfound-response();
             exit;
         }
     }
@@ -117,12 +136,13 @@ sub accept-job(Buf $body, Str $endpoint) {
     };
 
     unless (@matchedTargets) {
-        send-error-response("Unknown branch");
+        send-error-response("Not set up to build {$target}");
         exit;
     }
 
     if (@matchedTargets.elems > 1) {
-        send-error-response("Multiple matches for this target");
+        my @keys = (.key for @matchedTargets);
+        send-error-response("Configuration for {$target} is ambiguous. Could be {@keys.join(' or ')}.");
         exit;
     }
 
@@ -192,25 +212,20 @@ sub MAIN(
         when "GET" {
             given %headers<uri>  {
                 when "/version" {
-                    print "HTTP/1.1 200 OK\r\n";
-                    print "Content-Length: {SCRIPT_VERSION.chars}\r\n";
-                    print "Content-Type: text/plain; charset=utf-8\r\n";
-                    print "\r\n";
-                    print "{SCRIPT_VERSION}";
+                    send-success-response(SCRIPT_VERSION);
                     exit;
                 }
 
                 default {
-                    print "HTTP/1.1 404 Not Found\r\n";
-                    print "Connection: close\r\n";
+                    send-notfound-response();
                     exit;
                 }
             }
         }
 
         default {
-            print "HTTP/1.1 405 Method Not Allowed\r\n";
-            print "Connection: close\r\n";
+            send-notallowed-response();
+            exit;
         }
     }
 }
