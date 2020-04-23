@@ -14,11 +14,10 @@ clean:
 
 # Install application scripts.
 install:
-	sudo cp bin/mmsetup  $(LOCAL_BIN)/mmsetup
-	sudo cp bin/mmbuild  $(LOCAL_BIN)/mmbuild
-	sudo cp bin/mmbridge $(LOCAL_BIN)/mmbridge
+	sudo mkdir -p $(LOCAL_BIN)
 	sudo mkdir -p $(LOCAL_SHARE)
-	sudo cp -r lib $(LOCAL_SHARE)/lib
+	sudo rsync -a bin/ $(LOCAL_BIN)
+	sudo rsync -a --delete lib/ $(LOCAL_SHARE)/lib
 
 # Install application libraries.
 # Anything listed here should also be in ansible/install.yml.
