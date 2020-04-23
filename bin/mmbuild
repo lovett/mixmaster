@@ -31,17 +31,7 @@ signal(SIGTERM).tap: {
     exit;
 }
 
-# Write a message to the systemd journal.
-#
-# This is for tracking job status. Build-specific information should
-# be writen to a job-specific log file via log().
-sub log-to-journal(Str $prefix, Str $message) {
-    say("[{$prefix}] $message");
-}
-
 # Write a message to a job-specific log file.
-#
-# This is the job-centric counterpart to log-to-journal().
 sub log-to-file(Str $prefix, Str $message) {
     try $logHandle.say("{DateTime.now.hh-mm-ss} {$prefix} $_")
     for $message.split("\n");
@@ -54,8 +44,6 @@ sub broadcast(JobState $state, %job, Str $message?) {
         when job-start {
             log-to-file('#', 'Build started');
 
-            log-to-journal(%job<id>, 'Build started');
-
             if (%job<mailto>) {
                 use Broadcast::Email;
                 mail-job-start(%job<mailto>, %job);
@@ -65,7 +53,6 @@ sub broadcast(JobState $state, %job, Str $message?) {
         when job-end {
             my $success = 'Build finished';
             log-to-file('#', $success);
-            log-to-journal(%job<id>, $success);
 
             if (%job<mailto>) {
                 use Broadcast::Email;
@@ -75,7 +62,6 @@ sub broadcast(JobState $state, %job, Str $message?) {
 
         when job-fail {
             log-to-file('#', "Build failed: {$message}");
-            log-to-journal(%job<id>, 'Build failed.');
 
             if (%job<mailto>) {
                 use Broadcast::Email;
