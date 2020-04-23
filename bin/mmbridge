@@ -32,6 +32,14 @@ our Str constant SCRIPT_VERSION = "2020.04.23";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
+sub encode-ini-value(Str $value='') {
+    my $result = $value.trim;
+    $result ~~ s:g/\n/\\\\newline/;
+    $result ~~ s:g/\[/\\\\leftbracket/;
+    $result ~~ s:g/\]/\\\\rightbracket/;
+    return $result;
+}
+
 sub generate-job-file-name() {
     DateTime.now(
         formatter => sub ($self) {
@@ -86,6 +94,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     my Str $project = "";
     my Str $target = "";
     my Str $commit = "";
+    my Str $message = "";
     my Str $viewUrl = "";
 
     given $endpoint {
@@ -101,12 +110,16 @@ sub accept-job(Buf $body, Str $endpoint) {
             $project = %json<repository><full_name>;
             $target = %json<ref>.subst("refs/heads/", "", :nth(1));
             $commit = %json<after>;
+            if (%json<commits>:exists && %json<commits>.elems) {
+                $message = %json<commits>.first<message>;
+            }
+
             $viewUrl = %json<compare_url>;
         }
 
         when "/" {
-            for <scm repositoryUrl project commit target> {
-                unless (%json{$_}) {
+            for <scm repositoryUrl project commit message target> {
+                unless (%json<$_>:exists) {
                     send-error-response("$_ not specified");
                     exit;
                 }
@@ -117,6 +130,7 @@ sub accept-job(Buf $body, Str $endpoint) {
             $project = %json<project>;
             $target = %json<target>;
             $commit = %json<commit>;
+            $message = %json<message>;
             $viewUrl = %json<viewUrl>;
         }
 
@@ -156,6 +170,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     project = $project
     repositoryUrl = $repositoryUrl
     commit = $commit
+    message = {encode-ini-value($message)}
     target = $matchedTarget
     buildCommand = $buildCommand
     viewUrl = $viewUrl

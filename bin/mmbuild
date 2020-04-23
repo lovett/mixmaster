@@ -31,6 +31,15 @@ signal(SIGTERM).tap: {
     exit;
 }
 
+sub decode-ini-value(Str $message) {
+    my $result = $message;
+    $result ~~ s:g/\\\\newline/\n/;
+    $result ~~ s:g/\\\\leftbracket/[/;
+    $result ~~ s:g/\\\\rightbracket/]/;
+    return $result;
+
+}
+
 # Write a message to a job-specific log file.
 sub log-to-file(Str $prefix, Str $message) {
     try $logHandle.say("{DateTime.now.hh-mm-ss} {$prefix} $_")
@@ -182,6 +191,8 @@ multi sub MAIN(IO::Path $jobFile) {
 
     $jobFile.move($logFile);
     %job<path> = $logFile.IO;
+
+    %job<message> = decode-ini-value(%job<message>);
 
     $logHandle = $logFile.open(:a);
     $logHandle.say("pid = {$*PID}");
