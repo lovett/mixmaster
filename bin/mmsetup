@@ -114,7 +114,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 
     spurt $bridgeService, qq:to/END/;
     [Unit]
-    Description=Mixmaster Bridge Service
+    Description=Mixmaster Bridge
 
     [Service]
     StandardInput=socket
@@ -155,7 +155,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 
     spurt $pathService, qq:to/END/;
     [Unit]
-    Description=Mixmaster inbox path service
+    Description=Mixmaster
 
     [Service]
     WorkingDirectory={$buildRoot}
