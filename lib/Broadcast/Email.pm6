@@ -7,10 +7,10 @@ our Str constant PREFIX = '[mixmaster]';
 sub mail-job-start(Str $recipient, %job) is export {
     my Str $project = %job<project>;
     my Str $subject = "{PREFIX} Building {$project}";
-    my Str $body = "Mixmaster has started building {%job<target>} in {$project}. Another message will be sent when the build has finished.";
+    my Str $body = "Mixmaster has started building {%job<target>}.";
 
     if (%job<commit>) {
-        $body ~= "\n\nCommit:\n{%job<commit>}";
+        $body ~= "\n\nCommit: {%job<commit>}";
     }
 
     if (%job<message>) {
@@ -28,7 +28,13 @@ sub mail-job-start(Str $recipient, %job) is export {
 sub mail-job-end(Str $recipient, %job) is export {
     my Str $project = %job<project>;
     my Str $subject = "Re: {PREFIX} Building {$project}";
-    my Str $body = "Mixmaster has finished building {%job<target>} in {$project}.";
+    my Str $body = "Mixmaster has finished building {%job<target>}.";
+
+    if (%job<commit>) {
+        $body ~= "\n\nCommit: {%job<commit>}";
+    }
+
+    $body ~= "\n\nJob: {%job<path>}";
 
     send($recipient, $subject, $body);
 }
