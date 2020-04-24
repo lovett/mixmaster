@@ -39,7 +39,8 @@ sub createConfigurationFile(
     IO::Path $configPath,
     IO::Path $buildRoot,
     IO::Path $spool,
-    Str $email
+    Str $email,
+    Str $sshKey
 ) {
     spurt $configPath, qq:to/END/;
     ; This is the configuration file for mixmaster. It maps project repositories
@@ -49,6 +50,9 @@ sub createConfigurationFile(
 
     ; The filesystem path to the directory that will store builds.
     buildRoot = {$buildRoot}
+
+    ; The SSH key that should be loaded at the start of each build.
+    sshKey = {$sshKey}
 
     ; The filesystem path to the directory that stores incoming build requests.
     ; The mmbridge script will write files here, and the systemd path service
@@ -84,6 +88,9 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 
     $proc = run <which rakudo>, :out;
     my $rakudo = $proc.out.get;
+
+    $proc = run <which ssh-agent>, :out;
+    my $sshAgent = $proc.out.get;
 
     $proc.out.close();
 
@@ -159,7 +166,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
 
     [Service]
     WorkingDirectory={$buildRoot}
-    ExecStart={$rakudo} {$mmbuild}
+    ExecStart={$sshAgent} {$rakudo} {$mmbuild}
 
     # Local Variables:
     # mode: conf
@@ -182,6 +189,7 @@ multi sub MAIN(
     Str  :$spool = "/var/spool/mixmaster/{$*USER}", #= Filesystem path for storing jobs. Default: /var/spool/mixmaster/[user]
     Str  :$email = '',                    #= Email address to use for notifiations. Default: no email notifications.
     Int  :$port = 8585,                   #= Port to use with bridge service. Default: 8585.
+    Str  :$key = '',                      #= SSH key to load at the start of each build. Default: none.
     Bool :$dump,                          #= Display the configuration file.
     Bool :$version,                       #= Display version information.
     Bool :$force,                         #= Overwrite existing files.
@@ -246,7 +254,7 @@ multi sub MAIN(
     }
 
     if (@tasks.first("configurationFile")) {
-        createConfigurationFile($configPath, $resolvedBuildRoot, $resolvedSpool, $email);
+        createConfigurationFile($configPath, $resolvedBuildRoot, $resolvedSpool, $email, $key);
     }
 
     if (@tasks.first("systemdServices")) {

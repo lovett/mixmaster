@@ -202,13 +202,16 @@ multi sub MAIN(IO::Path $jobFile) {
 
     my Str @buildRecipe;
     given %job<scm>.lc {
-        when "git" { @buildRecipe = gitRecipe($buildRoot, %job) }
-        when "freestyle" { @buildRecipe = freestyleRecipe($buildRoot, %job) }
+        when "git" { @buildRecipe = gitRecipe($workspace, %job) }
+        when "freestyle" { @buildRecipe = freestyleRecipe($workspace, %job) }
+    }
+
+    if (%config<sshKey>:exists) {
+        doCommand($workspace, "ssh-add {%config<sshKey>}");
     }
 
     for @buildRecipe {
-        log-to-file('$', $_);
-        doCommand($buildRoot, $_, $logHandle);
+        doCommand($workspace, $_, $logHandle);
     }
 
     broadcast(job-end, %job);
