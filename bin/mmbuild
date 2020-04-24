@@ -51,7 +51,7 @@ sub log-to-file(Str $prefix, Str $message) {
 sub broadcast(JobState $state, %job, Str $message?) {
     given $state {
         when job-start {
-            log-to-file('#', 'Build started');
+            log-to-file('#', "Build started in {%job<workspace>}");
 
             if (%job<mailto>) {
                 use Broadcast::Email;
@@ -80,8 +80,10 @@ sub broadcast(JobState $state, %job, Str $message?) {
     }
 }
 
-sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
-    indir($buildRoot, {
+sub doCommand(IO::Path $workspace, Str $command, IO::Handle $logHandle) {
+    log-to-file('$', $command.trim);
+
+    indir($workspace, {
         my $proc = Proc::Async.new(«$command»);
 
         react {
@@ -104,10 +106,13 @@ sub doCommand(IO::Path $buildRoot, Str $command, IO::Handle $logHandle) {
     });
 }
 
-sub gitRecipe(IO::Path $buildRoot, %job) {
+sub gitRecipe(IO::Path $workspace, %job) {
     my Str @commands;
 
-    unless ($buildRoot.add('.git').d) {
+    if ($workspace.add('.git').d) {
+        @commands.push: "git fetch";
+        @commands.push: "git reset --hard {%job<target>}";
+    } else {
         @commands.push: "git clone --quiet --branch {%job<target>} {%job<repositoryUrl>} .";
     }
 
@@ -121,7 +126,7 @@ sub gitRecipe(IO::Path $buildRoot, %job) {
     return @commands;
 }
 
-sub freestyleRecipe(IO::Path $buildRoot, %job) {
+sub freestyleRecipe(IO::Path $workspace, %job) {
     my Str @commands;
 
     @commands.push: %job<buildCommand>;
@@ -167,17 +172,14 @@ multi sub MAIN(IO::Path $jobFile) {
     %job<id> = $jobFile.IO.basename;
 
     my $fsFriendlyRepositoryName = %job<project>.lc;
-    $fsFriendlyRepositoryName ~~ s:global/\W/-/;
+    $fsFriendlyRepositoryName ~~ s:g/\W/-/;
 
     my $fsFriendlyTarget = %job<target>.lc;
     $fsFriendlyTarget ~~ s:global/\W/-/;
 
+    my IO::Path $projectRoot = %config<_><buildRoot>.IO.add($fsFriendlyRepositoryName);
 
-    my IO::Path $workspace = %config<_><buildRoot>.IO.add($fsFriendlyRepositoryName);
-
-    my IO::Path $jobArchive = $workspace.add('JOBS');
-
-    my IO::Path $buildRoot = $workspace.add($fsFriendlyTarget);
+    my IO::Path $jobArchive = $projectRoot.add('JOBS');
 
     my IO::Path $logFile = $jobArchive.add(($jobFile.extension: 'log').basename);
 
@@ -185,12 +187,15 @@ multi sub MAIN(IO::Path $jobFile) {
         mkdir($jobArchive);
     }
 
-    unless ($buildRoot.d) {
-        mkdir($buildRoot);
-    }
-
     $jobFile.move($logFile);
     %job<path> = $logFile.IO;
+
+    my IO::Path $workspace = $projectRoot.add($fsFriendlyTarget);
+    %job<workspace> = $workspace.IO;
+
+    unless ($workspace.d) {
+        mkdir($workspace);
+    }
 
     %job<message> = decode-ini-value(%job<message>);
 
