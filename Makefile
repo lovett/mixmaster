@@ -41,3 +41,7 @@ uninstall:
 	sudo rm -f $(LOCAL_BIN)/mmbuild
 	sudo rm -f $(LOCAL_BIN)/mbridge
 	sudo rm -rf $(LOCAL_SHARE)
+
+# Perform a local installation whenever application files change.
+watch:
+	find lib bin -type f -name 'mm*' -or -name '*.pm6' | entr make install
