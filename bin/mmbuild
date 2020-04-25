@@ -52,6 +52,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
     given $state {
         when job-start {
             log-to-file('#', "Build started in {%job<workspace>}");
+            log-to-file('#', "Logging to {%job<path>}");
 
             if (%job<mailto>) {
                 use Broadcast::Email;
