@@ -8,10 +8,29 @@ sub short-commit(Str $commit) {
     return substr($commit, 0..7);
 }
 
+sub slurp-log(Str $path) {
+    my $inLogSection = False;
+    my $log = '';
+
+    for $path.IO.lines -> $line {
+        given $line {
+            when "[log]" {
+                $inLogSection = True;
+                $log ~= $line ~ "\n";
+            }
+
+            when $inLogSection {
+                $log ~= $line ~ "\n";
+            }
+        }
+    }
+
+    return $log;
+}
+
 sub mail-job-start(Str $recipient, %job) is export {
     my Str $project = %job<project>;
     my Str $subject = "{PREFIX} Building {$project}";
-
     my Str $body = "Mixmaster has started building ";
 
     if (%job<commit>) {
@@ -42,7 +61,7 @@ sub mail-job-end(Str $recipient, %job) is export {
 
     $body ~= %job<target> ~ ".";
 
-    $body ~= "\n\nJob: {%job<path>}";
+    $body ~= "\n\n" ~ slurp-log(%job<path>);
 
     send($recipient, $subject, $body);
 }
@@ -50,9 +69,15 @@ sub mail-job-end(Str $recipient, %job) is export {
 sub mail-job-fail(Str $recipient, %job) is export {
     my Str $project = %job<project>;
     my Str $subject = "Re: {PREFIX} Building {$project}";
-    my Str $body = "Mixmaster was unable to build {%job<target>} in {$project}.\n\n";
+    my Str $body = "Mixmaster was unable to build ";
 
-    $body ~= slurp %job<path>;
+    if (%job<commit>) {
+        $body ~= short-commit(%job<commit>) ~ " on ";
+    }
+
+    $body ~= %job<target> ~ ".";
+
+    $body ~= "\n\n" ~ slurp-log(%job<path>);
 
     send($recipient, $subject, $body);
 }
