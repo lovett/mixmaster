@@ -4,23 +4,29 @@ use Email::Simple;
 
 our Str constant PREFIX = '[mixmaster]';
 
+sub short-commit(Str $commit) {
+    return substr($commit, 0..7);
+}
+
 sub mail-job-start(Str $recipient, %job) is export {
     my Str $project = %job<project>;
     my Str $subject = "{PREFIX} Building {$project}";
-    my Str $body = "Mixmaster has started building {%job<target>}.";
+
+    my Str $body = "Mixmaster has started building ";
 
     if (%job<commit>) {
-        $body ~= "\n\nCommit: {%job<commit>}";
+        $body ~= short-commit(%job<commit>) ~ " on ";
     }
 
-    if (%job<message>) {
-        $body ~= "\n\n{%job<message>}";
-    }
+    $body ~= %job<target> ~ ".";
 
     if (%job<viewUrl>) {
         $body ~= "\n\n{%job<viewUrl>}";
     }
 
+    if (%job<message>) {
+        $body ~= "\n\n{%job<message>}";
+    }
 
     send($recipient, $subject, $body);
 }
@@ -28,11 +34,13 @@ sub mail-job-start(Str $recipient, %job) is export {
 sub mail-job-end(Str $recipient, %job) is export {
     my Str $project = %job<project>;
     my Str $subject = "Re: {PREFIX} Building {$project}";
-    my Str $body = "Mixmaster has finished building {%job<target>}.";
+    my Str $body = "Mixmaster has finished building ";
 
     if (%job<commit>) {
-        $body ~= "\n\nCommit: {%job<commit>}";
+        $body ~= short-commit(%job<commit>) ~ " on ";
     }
+
+    $body ~= %job<target> ~ ".";
 
     $body ~= "\n\nJob: {%job<path>}";
 
