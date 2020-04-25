@@ -22,9 +22,7 @@ install:
 # Install application libraries.
 # Anything listed here should also be in ansible/install.yml.
 setup:
-	zef install JSON::Fast
-	zef install Config::INI
-	zef install Email::Simple;
+	sudo zef install JSON::Fast Config::INI Email::Simple
 
 # Simulate a Gitea request without using systemd.
 test-gitea: clean
