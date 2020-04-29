@@ -44,7 +44,11 @@ sub mail-job-start(Str $recipient, %job) is export {
     }
 
     if (%job<message>) {
-        $body ~= "\n\n{%job<message>}";
+        $body ~= "\n\n" ~ %job<message>.subst(
+            /(\w)\n(\w)/,
+            { "$0 $1" },
+            :g
+        );
     }
 
     send($recipient, $subject, $body);
