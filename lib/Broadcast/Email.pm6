@@ -8,11 +8,11 @@ sub short-commit(Str $commit) {
     return substr($commit, 0..7);
 }
 
-sub slurp-log(Str $path) {
+sub slurp-log(IO::Path $path) {
     my $inLogSection = False;
     my $log = '';
 
-    for $path.IO.lines -> $line {
+    for $path.lines -> $line {
         given $line {
             when "[log]" {
                 $inLogSection = True;
