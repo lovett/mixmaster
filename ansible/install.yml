@@ -1,7 +1,5 @@
 ---
 - hosts: mixmaster
-  vars:
-    application_name: mixmaster
   tasks:
     - name: Install system packages
       become: yes
@@ -28,12 +26,13 @@
       become: yes
       copy:
         src: "{{ item }}"
-        dest: "/usr/local/share/{{ application_name }}/lib"
+        dest: "/usr/local/share/mixmaster/lib"
         owner: "root"
         group: "root"
         mode: "0644"
       loop:
         - "../lib/Broadcast"
+        - "../lib/IniEncode.pm6"
 
     - name: Install application scripts
       become: yes

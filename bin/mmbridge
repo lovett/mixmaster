@@ -27,18 +27,11 @@ use lib 'lib';
 
 use Config::INI;
 use JSON::Fast;
+use IniEncode;
 
-our Str constant SCRIPT_VERSION = "2020.04.23";
+our Str constant SCRIPT_VERSION = "2020.04.29";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
-
-sub encode-ini-value(Str $value='') {
-    my $result = $value.trim;
-    $result ~~ s:g/\n/\\\\newline/;
-    $result ~~ s:g/\[/\\\\leftbracket/;
-    $result ~~ s:g/\]/\\\\rightbracket/;
-    return $result;
-}
 
 sub generate-job-file-name() {
     DateTime.now(

@@ -16,8 +16,9 @@ use lib '/usr/local/share/mixmaster/lib';
 use lib 'lib';
 
 use Config::INI;
+use IniEncode;
 
-our Str constant SCRIPT_VERSION = "2020.02.03";
+our Str constant SCRIPT_VERSION = "2020.04.29";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
@@ -29,15 +30,6 @@ signal(SIGTERM).tap: {
     log-to-file('X', 'Killed by SIGTERM');
     try close $logHandle;
     exit;
-}
-
-sub decode-ini-value(Str $message) {
-    my $result = $message;
-    $result ~~ s:g/\\\\newline/\n/;
-    $result ~~ s:g/\\\\leftbracket/[/;
-    $result ~~ s:g/\\\\rightbracket/]/;
-    return $result;
-
 }
 
 # Write a message to a job-specific log file.
