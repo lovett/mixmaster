@@ -213,7 +213,7 @@ multi sub MAIN(IO::Path $jobFile) {
     }
 
     if (%config<_><sshKey>:exists) {
-        doCommand($workspace, "ssh-add {%config<_><sshKey>}");
+        doCommand($workspace, "ssh-add {%config<_><sshKey>}", $logHandle);
     }
 
     for @buildRecipe {
