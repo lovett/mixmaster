@@ -12,14 +12,18 @@ clean:
 	rm -rf ~/Builds/*
 	rm -rf /var/spool/mixmaster/$(USER)/*.ini
 
-# Install application scripts.
+# Install the application on a remote machine.
+deploy:
+	ansible-playbook ansible/install.yml
+
+# Install the application on the local machine.
 install:
 	sudo mkdir -p $(LOCAL_BIN)
 	sudo mkdir -p $(LOCAL_SHARE)
 	sudo rsync -a bin/ $(LOCAL_BIN)
 	sudo rsync -a --delete lib/ $(LOCAL_SHARE)/lib
 
-# Install application libraries.
+# Install third-party libraries.
 # Anything listed here should also be in ansible/install.yml.
 setup:
 	sudo zef install JSON::Fast Config::INI Email::Simple
@@ -29,7 +33,7 @@ test-gitea: clean
 	./bin/mmbridge < samples/gitea.http
 	cat Builds/INBOX/*
 
-# Update the current installation on the production host.
+# Update the current installation on a remote host.
 upgrade:
 	ansible-playbook --skip-tags firstrun ansible/install.yml
 
