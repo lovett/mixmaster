@@ -110,10 +110,14 @@ sub accept-job(Buf $body, Str $endpoint) {
             $project = %json<repository><full_name>;
             $target = %json<ref>.subst("refs/heads/", "", :nth(1));
             $commit = %json<after>;
+            $viewUrl = %json<compare_url>;
 
             if (%json<commits>:exists && %json<commits>.elems) {
                 $message = %json<commits>.first<message>;
-                $viewUrl = %json<commits>.first<url>;
+
+                unless ($viewUrl) {
+                    $viewUrl = %json<commits>.first<url>;
+                }
             }
         }
 
