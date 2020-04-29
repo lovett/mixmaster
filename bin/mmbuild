@@ -212,7 +212,7 @@ multi sub MAIN(IO::Path $jobFile) {
         when "freestyle" { @buildRecipe = freestyleRecipe($workspace, %job) }
     }
 
-    if (%config<sshKey>:exists) {
+    if (%config<_><sshKey>:exists) {
         doCommand($workspace, "ssh-add {%config<sshKey>}");
     }
 
