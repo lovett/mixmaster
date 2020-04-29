@@ -112,7 +112,7 @@ sub gitRecipe(IO::Path $workspace, %job) {
 
     if ($workspace.add('.git').d) {
         @commands.push: "git fetch";
-        @commands.push: "git reset --hard {%job<target>}";
+        @commands.push: "git reset --quiet --hard {%job<target>}";
     } else {
         @commands.push: "git clone --quiet --branch {%job<target>} {%job<repositoryUrl>} .";
     }
