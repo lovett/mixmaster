@@ -126,18 +126,6 @@ sub gitRecipe(IO::Path $workspace, %job) {
     return @commands;
 }
 
-sub freestyleRecipe(IO::Path $workspace, %job) {
-    my Str @commands;
-
-    @commands.push: %job<buildCommand>;
-
-    if (%job<mode> ~~ "dryrun") {
-        return ("echo $_" for @commands);
-    }
-
-    return @commands;
-}
-
 multi sub MAIN(Bool :$version) {
     if ($version) {
         say SCRIPT_VERSION;
@@ -208,7 +196,6 @@ multi sub MAIN(IO::Path $jobFile) {
     my Str @buildRecipe;
     given %job<scm>.lc {
         when "git" { @buildRecipe = gitRecipe($workspace, %job) }
-        when "freestyle" { @buildRecipe = freestyleRecipe($workspace, %job) }
     }
 
     if (%config<_><sshKey>:exists) {

@@ -93,12 +93,6 @@ sub accept-job(Buf $body, Str $endpoint) {
     my Str $viewUrl = "";
 
     given $endpoint {
-        when "/freestyle" {
-            $scm = "freestyle";
-            $project = %json<project>;
-            $target = %json<target>;
-        }
-
         when "/gitea" {
             $scm = "git";
             $repositoryUrl = %json<repository><ssh_url>;

@@ -110,19 +110,6 @@ Webhooks) whose Target URL is `http://example.com/gitea`, HTTP Method
 is `POST`, POST Content Type is `application/json`, and Trigger On is
 `Push Events`.
 
-The `/freestyle` endpoint is for cases where something needs to
-happen, but no repository is involved:
-
-```
-{
-  "scm": "freestyle",
-  "project": "freestyle-sleep",
-  "target": "short"
-}
-```
-Here Mixmaster would follow almost the same procedure as it would on
-the default endpoint, but it would skip the initial git checkout.
-
 ## Other Endpoints
 
 `GET /version` will display the installed version of the `mmbridge`
