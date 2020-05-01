@@ -109,7 +109,12 @@ sub gitRecipe(IO::Path $workspace, %job) {
         @commands.push: "git clone --quiet --branch {%job<target>} {%job<repositoryUrl>} .";
     }
 
-    @commands.push: "git checkout --quiet {%job<commit>}";
+    if (%job<commit>) {
+        @commands.push: "git checkout --quiet {%job<commit>}";
+    } else {
+        @commands.push: "git checkout --quiet HEAD";
+    }
+
     @commands.push: %job<buildCommand>;
 
     if (%job<mode> ~~ "dryrun") {

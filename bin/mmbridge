@@ -87,6 +87,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     my Str $project = "";
     my Str $target = "";
     my Str $commit = "";
+    my Str $task = "";
     my Str $message = "";
     my Str $viewUrl = "";
 
@@ -115,8 +116,8 @@ sub accept-job(Buf $body, Str $endpoint) {
         }
 
         when "/" {
-            for <scm repositoryUrl project commit message target> {
-                unless (%json<$_>:exists) {
+            for <scm repositoryUrl project target> {
+                unless (%json{$_}:exists) {
                     send-error-response("$_ not specified");
                     exit;
                 }
@@ -126,9 +127,19 @@ sub accept-job(Buf $body, Str $endpoint) {
             $repositoryUrl = %json<repositoryUrl>;
             $project = %json<project>;
             $target = %json<target>;
-            $commit = %json<commit>;
-            $message = %json<message>;
             $viewUrl = %json<viewUrl>;
+
+            if (%json<commit>:exists) {
+                $commit = %json<commit>;
+            }
+
+            if (%json<task>:exists) {
+                $task = %json<task>;
+            }
+
+            if (%json<message>:exists) {
+                $message = %json<message>;
+            }
         }
 
         default {
@@ -151,6 +162,17 @@ sub accept-job(Buf $body, Str $endpoint) {
         exit;
     }
 
+    if ($task) {
+        @matchedTargets = @matchedTargets.grep: {
+            .key.starts-with("{$target}/{$task}");
+        };
+    }
+
+    unless (@matchedTargets) {
+        send-error-response("Not set up for {$task} task.");
+        exit;
+    }
+
     if (@matchedTargets.elems > 1) {
         my @keys = (.key for @matchedTargets);
         send-error-response("Configuration for {$target} is ambiguous. Could be {@keys.join(' or ')}.");
@@ -167,6 +189,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     project = $project
     repositoryUrl = $repositoryUrl
     commit = $commit
+    task = $task
     message = {encode-ini-value($message)}
     target = $matchedTarget
     buildCommand = $buildCommand
