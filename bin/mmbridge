@@ -194,7 +194,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     commit = $commit
     task = $task
     message = {encode-ini-value($message)}
-    target = $matchedTarget
+    target = $target
     buildCommand = $buildCommand
     viewUrl = $viewUrl
     mailto = {%config<_><mailto> or ''}
