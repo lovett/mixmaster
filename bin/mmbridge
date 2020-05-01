@@ -127,7 +127,10 @@ sub accept-job(Buf $body, Str $endpoint) {
             $repositoryUrl = %json<repositoryUrl>;
             $project = %json<project>;
             $target = %json<target>;
-            $viewUrl = %json<viewUrl>;
+
+            if (%json<viewUrl>:exists) {
+                $viewUrl = %json<viewUrl>;
+            }
 
             if (%json<commit>:exists) {
                 $commit = %json<commit>;
