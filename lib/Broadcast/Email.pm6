@@ -33,6 +33,10 @@ sub mail-job-start(Str $recipient, %job) is export {
     my Str $subject = "{PREFIX} Building {$project}";
     my Str $body = "Mixmaster has started building ";
 
+    if (%job<task>) {
+        $body = "Mixmaster has started the {%job<task>} task on ";
+    }
+
     if (%job<commit>) {
         $body ~= short-commit(%job<commit>) ~ " on ";
     }
