@@ -41,12 +41,14 @@ sub log-to-file(Str $prefix, Str $message) {
 
 # Dispatcher for tracking job progress in local logs and external proceesses.
 sub broadcast(JobState $state, %job, Str $message?) {
+    my $sendEmail = %job<mailto> && (%job<notifications> eq "all" || %job<notifications> ~~ "email");
+
     given $state {
         when job-start {
             log-to-file('#', "Build started in {%job<workspace>}");
             log-to-file('#', "Logging to {%job<path>}");
 
-            if (%job<mailto>) {
+            if ($sendEmail) {
                 use Broadcast::Email;
                 mail-job-start(%job<mailto>, %job);
             }
@@ -56,7 +58,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
             my $success = 'Build finished';
             log-to-file('#', $success);
 
-            if (%job<mailto>) {
+            if ($sendEmail) {
                 use Broadcast::Email;
                 mail-job-end(%job<mailto>, %job);
             }

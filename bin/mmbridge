@@ -89,6 +89,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     my Str $commit = "";
     my Str $task = "";
     my Str $message = "";
+    my Str $notifications = "all";
     my Str $viewUrl = "";
 
     given $endpoint {
@@ -127,6 +128,10 @@ sub accept-job(Buf $body, Str $endpoint) {
             $repositoryUrl = %json<repositoryUrl>;
             $project = %json<project>;
             $target = %json<target>;
+
+            if (%json<notifications>:exists) {
+                $notifications = %json<notifications>;
+            }
 
             if (%json<viewUrl>:exists) {
                 $viewUrl = %json<viewUrl>;
@@ -199,6 +204,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     viewUrl = $viewUrl
     mailto = {%config<_><mailto> or ''}
     mode = {%config<_><mode> or 'normal'}
+    notifications = $notifications
     END
 
     send-success-response();
