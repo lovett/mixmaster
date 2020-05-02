@@ -13,7 +13,6 @@ will pick up the next one until the spool directory is empty.
 =end pod
 
 use lib '/usr/local/share/mixmaster/lib';
-use lib 'lib';
 
 use Config::INI;
 use IniEncode;

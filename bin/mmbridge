@@ -23,7 +23,6 @@ a known project.
 =end pod
 
 use lib '/usr/local/share/mixmaster/lib';
-use lib 'lib';
 
 use Config::INI;
 use JSON::Fast;
