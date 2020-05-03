@@ -20,7 +20,7 @@ populating:
 
 =end pod
 
-our Str constant SCRIPT_VERSION = "2020.04.22";
+our Str constant SCRIPT_VERSION = "2020.05.03";
 
 sub createBuildRoot(IO::Path $path) {
     try {
@@ -31,6 +31,44 @@ sub createBuildRoot(IO::Path $path) {
             when X::IO::Mkdir {
                 die("Unable to create {$path}");
             }
+        }
+    }
+}
+
+sub teardown(
+    IO::Path $configPath,
+    IO::Path $buildRoot,
+    IO::Path $spool,
+    IO::Path $systemdRoot
+) {
+    try {
+        run <systemctl --user --quiet disable --now mixmaster.socket>, :err;
+        say("✓ Stopped bridge service.");
+    }
+
+    try {
+        run <systemctl --user --quiet disable --now mixmaster.path>, :err;
+        say("✓ Stopped path service.");
+    }
+
+    my @fileTargets = [
+        $configPath,
+        $systemdRoot.add('mixmaster.service'),
+        $systemdRoot.add('mixmaster-bridge.socket'),
+        $systemdRoot.add('mixmaster-bridge@.service'),
+        $systemdRoot.add('mixmaster.path'),
+    ];
+
+    for @fileTargets {
+        if $_.f {
+            $_.unlink();
+            say "✓ Deleted {$_}.";
+        }
+    }
+
+    for [$buildRoot, $spool] {
+        if $_.d {
+            say "❗ Kept {$_}.";
         }
     }
 }
@@ -193,7 +231,8 @@ multi sub MAIN(
     Bool :$dump,                          #= Display the configuration file.
     Bool :$version,                       #= Display version information.
     Bool :$force,                         #= Overwrite existing files.
-    Bool :y(:$yes)                        #= Skip confirmation.
+    Bool :y(:$yes),                       #= Skip confirmation.
+    Bool :$teardown                       #= Uninstall files but keep build root and spool directories.
 ) {
     my IO::Path $configPath = $*HOME.IO.add(".config/mixmaster.ini");
     my IO::Path $resolvedBuildRoot = $buildRoot.IO.resolve;
@@ -202,6 +241,11 @@ multi sub MAIN(
 
     if ($version) {
         say SCRIPT_VERSION;
+        exit;
+    }
+
+    if ($teardown) {
+        teardown($configPath, $resolvedBuildRoot, $resolvedSpool, $systemdRoot);
         exit;
     }
 

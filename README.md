@@ -40,6 +40,8 @@ The setup script is just a convenience for getting started. Once it
 has populated the configuration and systemd files, edit directly as
 needed.
 
+To undo the changes make by `mmsetup`, run `mmsetup --teardown`.
+
 ## Architecture
 Builds are kicked off by HTTP requests with JSON payloads received by
 a systemd user socket service.
