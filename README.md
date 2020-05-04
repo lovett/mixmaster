@@ -4,7 +4,7 @@ Mixmaster is a lightweight build service. It's a replacement for
 Jenkins when your needs are minimal, your hardware resources are
 modest, and your patience for elaborate build pipelines is limited.
 
-Mixmaster is self-hosted and user-centric. It consists of 3 scripts, 2
+Mixmaster is self-hosted and user-centric. It consists of 4 scripts, 2
 systemd services, and 1 configuration file. Everything runs on-demand,
 either from your own account as an extension of yourself, or from a
 dedicated user with its own identity.
@@ -182,7 +182,6 @@ in the application config blank. To turn off notifications on a
 per-build basis, provide a `notifications` field in the JSON payload
 set to `none`. This only works for the default endpoint.
 
-
 ## SSH Keys
 
 When a build is started, the `mmbuild` script is wrapped in a call to
@@ -199,3 +198,10 @@ setups could be handled on a build-by-build basis by incorporating a
 call to `ssh-add` into the build process.
 
 In all cases the SSH key would need to be passwordless.
+
+## Handling Failure
+
+The `mmcleanup` script is run as part of the systemd path service. It
+deletes unprocessed jobs from the spool directory if `mmbuild` cannot
+run. There is no retry option for this scenario. Use `journalctl` to
+assess the nature of what went wrong.

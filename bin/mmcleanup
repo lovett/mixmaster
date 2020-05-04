@@ -1,0 +1,55 @@
+#!/usr/bin/env rakudo
+
+=begin pod
+
+This is the cleanup script for mixmaster. It deletes files from the
+spool directory (default: C</var/spool/mixmaster/USER>) when the
+systemd service fails to start.
+
+In normal operation, C<mmbuild> moves files from the spool directory
+to the build root. Cleanup is only necessary when a severe problem
+occurs.
+
+=end pod
+
+use lib '/usr/local/share/mixmaster/lib';
+
+use Config::INI;
+
+our Str constant SCRIPT_VERSION = "2020.05.04";
+our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
+
+sub MAIN(
+    Bool :$version  #= Display version information.
+) {
+    if ($version) {
+        say SCRIPT_VERSION;
+        exit;
+    }
+
+    unless (CONFIG.f) {
+        exit;
+    }
+
+    my Hash %config{Str} = Config::INI::parse_file(Str(CONFIG));
+
+    unless (%config<_><spool>.IO.d) {
+        exit;
+    }
+
+    # See https://www.freedesktop.org/software/systemd/man/systemd.exec.html
+    given %*ENV<SERVICE_RESULT> {
+        when "success" {
+            exit;
+        }
+
+        default {
+            my IO::Path @jobs = dir(%config<_><spool>, test => /'.' ini $/);
+
+            for (@jobs) {
+                try unlink($_);
+                say "Deleted {$_}";
+            }
+        }
+    }
+}
