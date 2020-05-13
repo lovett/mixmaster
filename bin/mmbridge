@@ -87,7 +87,7 @@ sub accept-job(Buf $body, Str $endpoint) {
     my Str $target = "";
     my Str $commit = "";
     my Str $task = "";
-    my Str $message = "";
+    my Str %messages;
     my Str $notifications = "all";
     my Str $viewUrl = "";
 
@@ -100,8 +100,14 @@ sub accept-job(Buf $body, Str $endpoint) {
             $commit = %json<after>;
             $viewUrl = %json<compare_url>;
 
-            if (%json<commits>:exists && %json<commits>.elems) {
-                $message = %json<commits>.first<message>;
+            for |%json<commits> -> %commit {
+                say %commit<id>;
+            }
+
+            if (%json<commits>:exists) {
+                for |%json<commits> -> %commit {
+                    %messages{%commit<id>} = %commit<message>;
+                }
 
                 unless ($viewUrl) {
                     $viewUrl = %json<commits>.first<url>;
@@ -139,7 +145,7 @@ sub accept-job(Buf $body, Str $endpoint) {
             }
 
             if (%json<message>:exists) {
-                $message = %json<message>;
+                %messages{$commit} = %json<message>;
             }
         }
 
@@ -184,6 +190,11 @@ sub accept-job(Buf $body, Str $endpoint) {
 
     my $jobFileName = generate-job-file-name();
 
+    my $commitSection = '';
+    for %messages.kv -> $id, $message {
+        $commitSection ~= "commit-{$id} = {encode-ini-value($message)}\n";
+    }
+
     spurt "{%config<_><spool>}/{$jobFileName}", qq:to/END/;
     [job]
     scm = $scm
@@ -191,13 +202,13 @@ sub accept-job(Buf $body, Str $endpoint) {
     repositoryUrl = $repositoryUrl
     commit = $commit
     task = $task
-    message = {encode-ini-value($message)}
     target = $target
     buildCommand = $buildCommand
     viewUrl = $viewUrl
     mailto = {%config<_><mailto> or ''}
     mode = {%config<_><mode> or 'normal'}
     notifications = $notifications
+    {$commitSection}
     END
 
     send-success-response();

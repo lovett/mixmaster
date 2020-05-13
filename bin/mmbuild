@@ -15,7 +15,6 @@ will pick up the next one until the spool directory is empty.
 use lib '/usr/local/share/mixmaster/lib';
 
 use Config::INI;
-use IniEncode;
 
 our Str constant SCRIPT_VERSION = "2020.04.29";
 
@@ -182,8 +181,6 @@ multi sub MAIN(IO::Path $jobFile) {
     unless ($workspace.d) {
         mkdir($workspace);
     }
-
-    %job<message> = decode-ini-value(%job<message>);
 
     $logHandle = $logFile.open(:a);
     $logHandle.say("pid = {$*PID}");

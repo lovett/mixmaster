@@ -1,6 +1,7 @@
 unit module Broadcast::Email;
 
 use Email::Simple;
+use IniEncode;
 
 our Str constant PREFIX = '[mixmaster]';
 
@@ -47,12 +48,19 @@ sub mail-job-start(Str $recipient, %job) is export {
         $body ~= "\n\n{%job<viewUrl>}";
     }
 
-    if (%job<message>) {
-        $body ~= "\n\n" ~ %job<message>.subst(
-            /(\w)\n(\w)/,
-            { "$0 $1" },
-            :g
-        );
+    $body ~= "\n\n";
+
+    for %job.kv -> $key, $value {
+        if $key.starts-with('commit-') {
+            my $id = $key.subst(/commit\-/, '').substr(0..10);
+            my $message = decode-ini-value($value).subst(
+                /(\w)\n(\w)/,
+                { "$0 $1" },
+                :g
+            );
+
+            $body ~= "Commit {$id}\n{$message}\n\n\n";
+        }
     }
 
     send($recipient, $subject, $body);
