@@ -104,16 +104,15 @@ sub gitRecipe(IO::Path $workspace, %job) {
     my Str @commands;
 
     if ($workspace.add('.git').d) {
-        @commands.push: "git fetch";
-        @commands.push: "git reset --quiet --hard {%job<target>}";
+        @commands.push: "git reset --hard";
+        @commands.push: "git checkout --quiet {%job<target>}";
+        @commands.push: "git pull";
     } else {
         @commands.push: "git clone --quiet --branch {%job<target>} {%job<repositoryUrl>} .";
     }
 
     if (%job<commit>) {
         @commands.push: "git checkout --quiet {%job<commit>}";
-    } else {
-        @commands.push: "git checkout --quiet HEAD";
     }
 
     @commands.push: %job<buildCommand>;
