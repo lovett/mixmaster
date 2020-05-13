@@ -46,4 +46,5 @@
       loop:
         - "../bin/mmbridge"
         - "../bin/mmbuild"
+        - "../bin/mmcleanup"
         - "../bin/mmsetup"
