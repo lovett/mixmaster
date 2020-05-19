@@ -189,7 +189,7 @@ sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
     DirectoryMode=0700
 
     [Install]
-    WantedBy=multi-user.target
+    WantedBy=default.target
 
     # Local Variables:
     # mode: conf
