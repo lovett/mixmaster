@@ -47,3 +47,7 @@ uninstall:
 # Perform a local installation whenever application files change.
 watch:
 	find lib bin -type f -name 'mm*' -or -name '*.pm6' | entr make install
+
+# Push the repository to GitHub.
+mirror:
+	git push --force git@github.com:lovett/mixmaster.git master:master
