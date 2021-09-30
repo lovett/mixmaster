@@ -28,7 +28,7 @@ use Config::INI;
 use JSON::Fast;
 use IniEncode;
 
-our Str constant SCRIPT_VERSION = "2020.04.29";
+our Str constant SCRIPT_VERSION = "2021.09.29";
 
 our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
@@ -87,9 +87,9 @@ sub accept-job(Buf $body, Str $endpoint) {
     my Str $target = "";
     my Str $commit = "";
     my Str $task = "";
-    my Str %messages;
     my Str $notifications = "all";
     my Str $viewUrl = "";
+    my %messages;
 
     given $endpoint {
         when "/gitea" {
@@ -106,7 +106,7 @@ sub accept-job(Buf $body, Str $endpoint) {
 
             if (%json<commits>:exists) {
                 for |%json<commits> -> %commit {
-                    %messages{%commit<id>} = %commit<message>;
+                    %messages{"{%commit<timestamp>},{%commit<id>}"} = %commit<message>;
                 }
 
                 unless ($viewUrl) {
@@ -191,8 +191,8 @@ sub accept-job(Buf $body, Str $endpoint) {
     my $jobFileName = generate-job-file-name();
 
     my $commitSection = '';
-    for %messages.kv -> $id, $message {
-        $commitSection ~= "commit-{$id} = {encode-ini-value($message)}\n";
+    for %messages.kv -> $key, $message {
+        $commitSection ~= "commit-{$key} = {encode-ini-value($message)}\n";
     }
 
     spurt "{%config<_><spool>}/{$jobFileName}", qq:to/END/;
