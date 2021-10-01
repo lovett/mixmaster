@@ -52,7 +52,7 @@ sub mail-job-start(Str $recipient, %job) is export {
 
     for %job.kv -> $key, $value {
         if $key.starts-with('commit-') {
-            my ($timestamp, $id) = $key.subst(/commit\-/, '').split(',')
+            my ($timestamp, $id) = $key.subst(/commit\-/, '').split(',');
             my $shortId = $id.substr(0..10);
             my $message = decode-ini-value($value).subst(
                 /(\w)\n(\w)/,
