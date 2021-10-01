@@ -1,26 +1,25 @@
 #!/usr/bin/env rakudo
-# -*- mode: perl6 -*-
 
 =begin pod
 
-This is the setup script for mixmaster. It's responsible for
-populating:
+This is the setup script for mixmaster. It is responsible for creating:
 
 =item The application configuration file in C<~/.config>
 
-=item The directory where builds occur, defaulting to C<~/Builds>
+=item The build directory, defaulting to C<~/Builds>
 
-=item A per-user systemd socket service in C<~/.config/systemd/user>
-      that listens for build requests and converts them to job files
-      under C</var/spool/mixmaster>.
+=item The spool directory, defaulting to C</var/spool/mixmaster/USER>
 
-=item A per-user systemd path service in C<~./config/systemd/user>
-      that watches for changes to the spool directory and performs
-      builds.
+=item A systemd user socket service in C<~/.config/systemd/user> that
+      listens for build requests and converts them to job files in the
+      spool directory.
+
+=item A systemd user path service in C<~./config/systemd/user> that
+      picks up job files from the spool directory and performs builds.
 
 =end pod
 
-our Str constant SCRIPT_VERSION = "2020.05.04";
+our Str constant SCRIPT_VERSION = "2020.09.30";
 
 sub createBuildRoot(IO::Path $path) {
     try {
@@ -86,31 +85,27 @@ sub createConfigurationFile(
 
     [_]
 
-    ; The filesystem path to the directory that will store builds.
+    ; The directory that will store builds.
     buildRoot = {$buildRoot}
 
     ; The SSH key that should be loaded at the start of each build.
     sshKey = {$sshKey}
 
-    ; The filesystem path to the directory that stores incoming build requests.
-    ; The mmbridge script will write files here, and the systemd path service
-    ; will watch it for changes.
+    ; The directory that stores job files.
     spool = {$spool}
 
-    ; Use "dryrun" to have mixmaster echo build commands for testing purposes.
+    ; Use "dryrun" to echo build commands for testing purposes.
     ; Use "normal" to have build commands executed.
     mode = normal
 
-    ; The email address to send notifications of build progress.
+    ; The email address that should receive build updates.
     mailto = {$email}
 
-    ; Example configuration for a project with two buildable targets (branches).
-    ;
-    ; The production target is built by invoking the command "make deploy".
-    ; The staging target is built by invoking "make deploy-to-stage".
+    ; Sample project configuration.
     [example-org/example-repo]
     production = make deploy
     staging = make deploy-to-staging
+    master/my-task = make my-task
 
     END
 
