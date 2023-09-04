@@ -227,11 +227,6 @@ sub MAIN(
         exit;
     }
 
-    unless (CONFIG.f) {
-        send-error-response("Configuration file not found.");
-        exit;
-    }
-
     my Str %headers{Str};
 
     for lines() {
@@ -254,6 +249,11 @@ sub MAIN(
 
     given %headers<method>.uc {
         when "POST" or "PUT" {
+            unless (CONFIG.f) {
+                send-error-response("Configuration file not found.");
+                exit;
+            }
+
             my Buf $body = $*IN.read(%headers<content-length>);
             accept-job($body, %headers<uri>);
         }
