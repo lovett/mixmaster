@@ -25,208 +25,22 @@ a known project.
 use lib '/usr/local/share/mixmaster/lib';
 use lib $*PROGRAM.absolute.IO.parent(2).add('lib');
 
-use Config::INI;
-use JSON::Fast;
-use IniEncode;
+use HttpResponse;
+use Job;
+use Config;
 
 our Str constant SCRIPT_VERSION = "2021.09.29";
 
-our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
-
-sub generate-job-file-name() {
-    DateTime.now(
-        formatter => sub ($self) {
-            sprintf "%04d%02d%02d-%02d%02d%02d.ini",
-            .year, .month, .day, .hour, .minute, .whole-second given $self;
-        }
-    );
+multi MAIN(Bool :$man) {
+    run $*EXECUTABLE, '--doc', $*PROGRAM;
 }
 
-sub send-success-response(Str $body='') {
-    print "HTTP/1.1 200 OK\r\n";
-    print "Connection: close\r\n";
-    print "Content-Length: {$body.chars}\r\n";
-    print "Content-Type: text/plain; charset=utf-8\r\n";
-    print "\r\n";
-    print $body;
+multi MAIN(Bool :$version) {
+    say SCRIPT_VERSION;
+    exit;
 }
 
-sub send-failure-response() {
-    print "HTTP/1.0 400 Bad Request\r\n";
-    print "Connection: close\r\n";
-    print "\r\n";
-}
-
-sub send-error-response(Str $message) {
-    print "HTTP/1.1 422 Unprocessable Entity\r\n";
-    print "Connection: close\r\n";
-    print "Content-Length: {$message.chars}\r\n";
-    print "Content-Type: text/plain; charset=utf-8\r\n";
-    print "\r\n";
-    print $message;
-}
-
-sub send-notfound-response() {
-    print "HTTP/1.1 404 Not Found\r\n";
-    print "Connection: close\r\n";
-    print "\r\n";
-}
-
-sub send-notallowed-response() {
-    print "HTTP/1.1 405 Method Not Allowed\r\n";
-    print "Connection: close\r\n";
-}
-
-sub accept-job(Buf $body, Str $endpoint) {
-    my Hash %config{Str} = Config::INI::parse_file(Str(CONFIG));
-
-    my %json{Str} = from-json $body.decode;
-
-    my Str $scm = "";
-    my Str $repositoryUrl = "";
-    my Str $project = "";
-    my Str $target = "";
-    my Str $commit = "";
-    my Str $task = "";
-    my Str $notifications = "all";
-    my Str $viewUrl = "";
-    my %messages;
-
-    given $endpoint {
-        when "/gitea" {
-            $scm = "git";
-            $repositoryUrl = %json<repository><ssh_url>;
-            $project = %json<repository><full_name>;
-            $target = %json<ref>.subst("refs/heads/", "", :nth(1));
-            $commit = %json<after>;
-            $viewUrl = %json<compare_url>;
-
-            for |%json<commits> -> %commit {
-                say %commit<id>;
-            }
-
-            if (%json<commits>:exists) {
-                for |%json<commits> -> %commit {
-                    %messages{"{%commit<timestamp>},{%commit<id>}"} = %commit<message>;
-                }
-
-                unless ($viewUrl) {
-                    $viewUrl = %json<commits>.first<url>;
-                }
-            }
-        }
-
-        when "/" {
-            for <scm repositoryUrl project target> {
-                unless (%json{$_}:exists) {
-                    send-error-response("$_ not specified");
-                    exit;
-                }
-            }
-
-            $scm = %json<scm>;
-            $repositoryUrl = %json<repositoryUrl>;
-            $project = %json<project>;
-            $target = %json<target>;
-
-            if (%json<notifications>:exists) {
-                $notifications = %json<notifications>;
-            }
-
-            if (%json<viewUrl>:exists) {
-                $viewUrl = %json<viewUrl>;
-            }
-
-            if (%json<commit>:exists) {
-                $commit = %json<commit>;
-            }
-
-            if (%json<task>:exists) {
-                $task = %json<task>;
-            }
-
-            if (%json<message>:exists) {
-                %messages{$commit} = %json<message>;
-            }
-        }
-
-        default {
-            send-notfound-response();
-            exit;
-        }
-    }
-
-    unless (%config{$project}:exists) {
-        send-error-response("Unknown project");
-        exit;
-    }
-
-    my Pair @matchedTargets = %config{$project}.pairs.grep: {
-        .key.starts-with($target)
-    };
-
-    unless (@matchedTargets) {
-        send-error-response("Not set up to build {$target}");
-        exit;
-    }
-
-    if ($task) {
-        @matchedTargets = @matchedTargets.grep: {
-            .key.starts-with("{$target}/{$task}");
-        };
-    }
-
-    unless (@matchedTargets) {
-        send-error-response("Not set up for {$task} task.");
-        exit;
-    }
-
-    if (@matchedTargets.elems > 1) {
-        my @keys = (.key for @matchedTargets);
-        send-error-response("Configuration for {$target} is ambiguous. Could be {@keys.join(' or ')}.");
-        exit;
-    }
-
-    my (Str $matchedTarget, Str $buildCommand) = @matchedTargets.first.kv;
-
-    my $jobFileName = generate-job-file-name();
-
-    my $commitSection = '';
-    for %messages.kv -> $key, $message {
-        $commitSection ~= "commit-{$key} = {encode-ini-value($message)}\n";
-    }
-
-    spurt "{%config<_><spool>}/{$jobFileName}", qq:to/END/;
-    [job]
-    scm = $scm
-    project = $project
-    repositoryUrl = $repositoryUrl
-    commit = $commit
-    task = $task
-    target = $target
-    buildCommand = $buildCommand
-    viewUrl = $viewUrl
-    mailto = {%config<_><mailto> or ''}
-    mode = {%config<_><mode> or 'normal'}
-    notifications = $notifications
-    {$commitSection}
-    END
-
-    send-success-response();
-
-    CATCH {
-        send-failure-response();
-    }
-}
-
-sub MAIN(
-    Bool :$version  #= Display version information.
-) {
-    if ($version) {
-        say SCRIPT_VERSION;
-        exit;
-    }
-
+multi sub MAIN() {
     my Str %headers{Str};
 
     for lines() {
@@ -249,7 +63,7 @@ sub MAIN(
 
     given %headers<method>.uc {
         when "POST" or "PUT" {
-            unless (CONFIG.f) {
+            unless has-config() {
                 send-error-response("Configuration file not found.");
                 exit;
             }
