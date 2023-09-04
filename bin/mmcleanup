@@ -53,3 +53,7 @@ sub MAIN(
         }
     }
 }
+
+# Local Variables:
+# mode: raku
+# End:

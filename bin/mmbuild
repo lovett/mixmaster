@@ -217,3 +217,7 @@ multi sub MAIN(IO::Path $jobFile) {
         try close $logHandle;
     }
 }
+
+# Local Variables:
+# mode: raku
+# End:
