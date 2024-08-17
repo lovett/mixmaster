@@ -19,216 +19,31 @@ This is the setup script for mixmaster. It is responsible for creating:
 
 =end pod
 
-our Str constant SCRIPT_VERSION = "2020.09.30";
+our Str constant SCRIPT_VERSION = "2024.08.16";
 
-sub createBuildRoot(IO::Path $path) {
-    try {
-        mkdir($path);
-        say "Created {$path} directory.";
+use lib '/usr/local/share/mixmaster/lib';
+use lib $*PROGRAM.absolute.IO.parent(2).add('lib');
 
-        CATCH {
-            when X::IO::Mkdir {
-                die("Unable to create {$path}");
-            }
-        }
-    }
+use Systemd;
+use Filesystem;
+use Config;
+
+multi MAIN(Bool :$man) {
+    run $*EXECUTABLE, '--doc', $*PROGRAM;
 }
 
-sub teardown(
-    IO::Path $configPath,
-    IO::Path $buildRoot,
-    IO::Path $spool,
-    IO::Path $systemdRoot
-) {
-    try {
-        run <systemctl --user --quiet disable --now mixmaster.socket>, :err;
-        say("✓ Stopped bridge service.");
-    }
-
-    try {
-        run <systemctl --user --quiet disable --now mixmaster.path>, :err;
-        say("✓ Stopped path service.");
-    }
-
-    my @fileTargets = [
-        $configPath,
-        $systemdRoot.add('mixmaster.service'),
-        $systemdRoot.add('mixmaster-bridge.socket'),
-        $systemdRoot.add('mixmaster-bridge@.service'),
-        $systemdRoot.add('mixmaster.path'),
-    ];
-
-    for @fileTargets {
-        if $_.f {
-            $_.unlink();
-            say "✓ Deleted {$_}.";
-        }
-    }
-
-    for [$buildRoot, $spool] {
-        if $_.d {
-            say "❗ Kept {$_}.";
-        }
-    }
-}
-
-sub createConfigurationFile(
-    IO::Path $configPath,
-    IO::Path $buildRoot,
-    IO::Path $spool,
-    Str $email,
-    Str $sshKey
-) {
-    spurt $configPath, qq:to/END/;
-    ; This is the configuration file for mixmaster. It maps project repositories
-    ; to build commands and defines application settings.
-
-    [_]
-
-    ; The directory that will store builds.
-    buildRoot = {$buildRoot}
-
-    ; The SSH key that should be loaded at the start of each build.
-    sshKey = {$sshKey}
-
-    ; The directory that stores job files.
-    spool = {$spool}
-
-    ; Use "dryrun" to echo build commands for testing purposes.
-    ; Use "normal" to have build commands executed.
-    mode = normal
-
-    ; The email address that should receive build updates.
-    mailto = {$email}
-
-    ; Sample project configuration.
-    [example-org/example-repo]
-    production = make deploy
-    staging = make deploy-to-staging
-    master/my-task = make my-task
-
-    END
-
-    say "Populated {$configPath} with  default configuration."
-}
-
-sub createSystemdServices(IO::Path $root, IO::Path $buildRoot, Int $port) {
-    my $proc = run <which mmbuild>, :out;
-    my $mmbuild = $proc.out.get;
-
-    $proc = run <which mmbridge>, :out;
-    my $mmbridge = $proc.out.get;
-
-    $proc = run <which mmcleanup>, :out;
-    my $mmcleanup = $proc.out.get;
-
-    $proc = run <which rakudo>, :out;
-    my $rakudo = $proc.out.get;
-
-    $proc = run <which ssh-agent>, :out;
-    my $sshAgent = $proc.out.get;
-
-    $proc.out.close();
-
-    # Bridge socket
-    my $bridgeSocket = $root.add("mixmaster-bridge.socket");
-    spurt $bridgeSocket, qq:to/END/;
-    [Unit]
-    Description=Mixmaster Bridge Socket
-
-    [Socket]
-    ListenStream={$port}
-    Accept=yes
-    ReusePort=true
-
-    [Install]
-    WantedBy = sockets.target
-
-    # Local Variables:
-    # mode: conf
-    # End:
-
-    END
-
-    say("Populated {$bridgeSocket}.");
-
-    # Bridge service
-    my $bridgeService = $root.add('mixmaster-bridge@.service');
-
-    spurt $bridgeService, qq:to/END/;
-    [Unit]
-    Description=Mixmaster Bridge
-
-    [Service]
-    StandardInput=socket
-    StandardError=journal
-    ExecStart={$rakudo} {$mmbridge}
-
-    # Local Variables:
-    # mode: conf
-    # End:
-
-    END
-    say ("Populated {$bridgeService}.");
-
-    # Spool watcher.
-    my $watcher = $root.add("mixmaster.path");
-
-    spurt $watcher, qq:to/END/;
-    [Unit]
-    Description=Mixmaster
-
-    [Path]
-    DirectoryNotEmpty=/var/spool/mixmaster/{$*USER}
-    MakeDirectory=true
-    DirectoryMode=0700
-
-    [Install]
-    WantedBy=default.target
-
-    # Local Variables:
-    # mode: conf
-    # End:
-
-    END
-    say ("Populated {$watcher}.");
-
-    # Path service
-    my $pathService = $root.add("mixmaster.service");
-
-    spurt $pathService, qq:to/END/;
-    [Unit]
-    Description=Mixmaster
-
-    [Service]
-    WorkingDirectory={$buildRoot}
-    ExecStart={$sshAgent} {$rakudo} {$mmbuild}
-    ExecStopPost={$rakudo} {$mmcleanup}
-
-    # Local Variables:
-    # mode: conf
-    # End:
-
-    END
-
-    say("Populated {$pathService}.");
-
-    run <systemctl --user --quiet enable --now mixmaster-bridge.socket>;
-    say("Started {$bridgeSocket}.");
-
-    run <systemctl --user --quiet enable --now mixmaster.path>;
-    say("Started {$watcher}.");
-
+multi MAIN(Bool :$version) {
+    say SCRIPT_VERSION;
+    exit;
 }
 
 multi sub MAIN(
-    Str  :$buildRoot = "{$*HOME}/Builds", #= Filesystem path for storing builds. Default: ~/Builds
-    Str  :$spool = "/var/spool/mixmaster/{$*USER}", #= Filesystem path for storing jobs. Default: /var/spool/mixmaster/[user]
-    Str  :$email = '',                    #= Email address to use for notifiations. Default: no email notifications.
-    Int  :$port = 8585,                   #= Port to use with bridge service. Default: 8585.
-    Str  :$key = '',                      #= SSH key to load at the start of each build. Default: none.
+    Str  :$buildRoot = "{$*HOME}/Builds", #= Filesystem path for storing builds.
+    Str  :$spool = "/var/spool/mixmaster/{$*USER}", #= Filesystem path for storing jobs.
+    Str  :$email = '',                    #= Email address to use for notifiations.
+    Int  :$port = 8585,                   #= Port to use with bridge service.
+    Str  :$key = '',                      #= SSH key to load at the start of each build.
     Bool :$dump,                          #= Display the configuration file.
-    Bool :$version,                       #= Display version information.
     Bool :$force,                         #= Overwrite existing files.
     Bool :y(:$yes),                       #= Skip confirmation.
     Bool :$teardown                       #= Uninstall files but keep build root and spool directories.
@@ -238,13 +53,8 @@ multi sub MAIN(
     my IO::Path $resolvedSpool = $spool.IO.resolve;
     my IO::Path $systemdRoot = IO::Path.new("{$*HOME}/.config/systemd/user");
 
-    if ($version) {
-        say SCRIPT_VERSION;
-        exit;
-    }
-
     if ($teardown) {
-        teardown($configPath, $resolvedBuildRoot, $resolvedSpool, $systemdRoot);
+        systemd-teardown($configPath, $resolvedBuildRoot, $resolvedSpool, $systemdRoot);
         exit;
     }
 
@@ -293,15 +103,15 @@ multi sub MAIN(
     }
 
     if (@tasks.first("buildRoot")) {
-        createBuildRoot($resolvedBuildRoot);
+        create-build-root($resolvedBuildRoot);
     }
 
     if (@tasks.first("configurationFile")) {
-        createConfigurationFile($configPath, $resolvedBuildRoot, $resolvedSpool, $email, $key);
+        create-initial-config($configPath, $resolvedBuildRoot, $resolvedSpool, $email, $key);
     }
 
     if (@tasks.first("systemdServices")) {
-        createSystemdServices($systemdRoot, $resolvedBuildRoot, $port);
+        systemd-setup($systemdRoot, $resolvedBuildRoot, $port);
     }
 
     # Spool

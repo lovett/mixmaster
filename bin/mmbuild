@@ -15,11 +15,9 @@ will pick up the next one until the spool directory is empty.
 use lib '/usr/local/share/mixmaster/lib';
 use lib $*PROGRAM.absolute.IO.parent(2).add('lib');
 
-use Config::INI;
+use Config;
 
 our Str constant SCRIPT_VERSION = "2021.02.04";
-
-our IO::Path constant CONFIG = $*HOME.add(".config/mixmaster.ini");
 
 my IO::Handle $logHandle;
 
@@ -124,28 +122,19 @@ sub gitRecipe(IO::Path $workspace, %job) {
     return @commands;
 }
 
-multi sub MAIN(Bool :$version) {
-    if ($version) {
-        say SCRIPT_VERSION;
-        exit;
-    }
+multi MAIN(Bool :$man) {
+    run $*EXECUTABLE, '--doc', $*PROGRAM;
+}
 
-    my %config{Str} = Config::INI::parse_file(Str(CONFIG));
-
-    my IO::Path @jobs = dir(%config<_><spool>, test => /'.' ini $/).sort: { .changed };
-
-    unless (@jobs) {
-        say 'No jobs found.';
-        exit;
-    }
-
-    MAIN(@jobs.first);
+multi MAIN(Bool :$version) {
+    say SCRIPT_VERSION;
+    exit;
 }
 
 multi sub MAIN(IO::Path $jobFile) {
-    my %config{Str} = Config::INI::parse_file(Str(CONFIG));
+    my %config{Str} = get-config();
 
-    my %job{Str} = Config::INI::parse_file($jobFile.path);
+    my %job{Str} = get-job-config($jobFile);
 
     unless (%job<job>:exists) {
         try unlink($jobFile);
@@ -217,6 +206,19 @@ multi sub MAIN(IO::Path $jobFile) {
     LEAVE {
         try close $logHandle;
     }
+}
+
+multi sub MAIN() {
+    my %config{Str} = get-config();
+
+    my IO::Path @jobs = dir(%config<_><spool>, test => /'.' ini $/).sort: { .changed };
+
+    unless (@jobs) {
+        say 'No jobs found.';
+        exit;
+    }
+
+    MAIN(@jobs.first);
 }
 
 # Local Variables:
