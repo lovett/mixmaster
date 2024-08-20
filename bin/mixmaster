@@ -1,0 +1,50 @@
+#!/usr/bin/env rakudo
+
+constant SCRIPT_VERSION = "dev";
+constant DEFAULT_ROOT = "{$*HOME}/Builds";
+
+use lib '/usr/local/share/mixmaster/lib';
+use lib $*PROGRAM.absolute.IO.parent(2).add('lib');
+
+multi sub MAIN("setup",
+    Str  :$root = DEFAULT_ROOT, #= Filesystem path where builds will occur.
+    Bool :$force = False #= Overwrite existing files.
+) {
+    use Command::Setup;
+    Command::setup($root.IO, $force);
+} #= Create the build root and install systemd services.
+
+multi sub MAIN("bridge",
+    Str :$root = DEFAULT_ROOT,
+) {
+    use Command::Bridge;
+    Command::bridge($root.IO);
+} #= Add a build request to the inbox.
+
+multi sub MAIN("build", Str :$root = DEFAULT_ROOT) {
+    use Command::Build;
+    Command::build($root.IO);
+} #= Start the next build.
+
+multi sub MAIN("dump", Str :$root = DEFAULT_ROOT) {
+    use Command::Dump;
+    Command::dump($root.IO);
+} #= View the configuration file in the specified root.
+
+multi sub MAIN("clean", Str :$root = DEFAULT_ROOT) {
+    use Command::Clean;
+    Command::clean($root.IO);
+} #= Remove stale job files and build folders.
+
+multi sub MAIN("teardown") {
+    use Command::Teardown;
+    Command::teardown();
+} #= Uninstall systemd services.
+
+multi MAIN("version") {
+    say SCRIPT_VERSION;
+} #= Print the application version.
+
+# Local Variables:
+# mode: raku
+# End:
