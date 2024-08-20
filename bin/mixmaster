@@ -26,15 +26,15 @@ multi sub MAIN("build", Str :$root = DEFAULT_ROOT) {
     Command::build($root.IO);
 } #= Start the next build.
 
-multi sub MAIN("dump", Str :$root = DEFAULT_ROOT) {
-    use Command::Dump;
-    Command::dump($root.IO);
-} #= View the configuration file in the specified root.
-
 multi sub MAIN("clean", Str :$root = DEFAULT_ROOT) {
     use Command::Clean;
     Command::clean($root.IO);
 } #= Remove stale job files and build folders.
+
+multi sub MAIN("dump", Str :$root = DEFAULT_ROOT) {
+    use Command::Dump;
+    Command::dump($root.IO);
+} #= View the configuration file in the specified root.
 
 multi sub MAIN("teardown") {
     use Command::Teardown;
