@@ -19,6 +19,23 @@ sub config-path(IO::Path $root --> IO::Path) is export {
     return $root.add("mixmaster.ini");
 }
 
+sub job-path(IO::Path $root --> IO::Path) is export {
+    my $inbox = inbox-path($root);
+    my $filename = DateTime.now(
+        formatter => sub ($self) {
+            sprintf "%04d%02d%02d-%02d%02d%02d.json",
+            .year, .month, .day, .hour, .minute, .whole-second given $self;
+        }
+    );
+
+    return $inbox.add($filename);
+}
+
+sub create-job(IO::Path $root, Buf $body) is export {
+    my IO::Path $job = job-path($root);
+    spurt $job, $body;
+}
+
 sub create-directory(IO::Path $path) is export {
     try {
         mkdir($path);
