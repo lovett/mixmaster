@@ -9,10 +9,11 @@ our sub setup(IO::Path $root, Bool $force) is export {
         success-message("Created $root");
     }
 
-    my $inbox = inbox-path($root);
-    unless ($inbox.d) {
-        mkdir($inbox);
-        success-message("Created $inbox");
+    for (inbox-path($root), archive-path($root)) {
+        unless ($_.d) {
+            mkdir($_);
+            success-message("Created $_");
+        }
     }
 
     my $config = config-path($root);
