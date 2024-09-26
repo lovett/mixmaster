@@ -36,6 +36,11 @@ multi sub MAIN("dump", Str :$root = DEFAULT_ROOT) {
     Command::dump($root.IO);
 } #= View the configuration file in the specified root.
 
+multi sub MAIN("recipe", Str :$job) {
+    use Command::Recipe;
+    Command::recipe($job.IO);
+} #= Show the commands a build would run.
+
 multi sub MAIN("teardown") {
     use Command::Teardown;
     Command::teardown();
