@@ -31,11 +31,6 @@ multi sub MAIN("clean", Str :$root = DEFAULT_ROOT) {
     Command::clean($root.IO);
 } #= Remove stale job files and build folders.
 
-multi sub MAIN("dump", Str :$root = DEFAULT_ROOT) {
-    use Command::Dump;
-    Command::dump($root.IO);
-} #= View the configuration file in the specified root.
-
 multi sub MAIN("recipe", Str :$job) {
     use Command::Recipe;
     Command::recipe($job.IO);
