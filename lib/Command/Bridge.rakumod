@@ -16,12 +16,11 @@ The JSON body is not processed here.
 
 =end pod
 
-use HttpResponse;
 use Filesystem;
 
 our sub bridge(IO::Path $root) {
     unless ($root.d) {
-        send-notfound-response();
+        respond-notfound();
         return;
     }
 
@@ -51,17 +50,52 @@ our sub bridge(IO::Path $root) {
 
             try {
                 create-job($root, $body);
-                send-success-response();
+                respond-success();
 
                 CATCH {
-                    send-failure-response();
+                    respond-failure();
                 }
             }
         }
 
         default {
-            send-notallowed-response();
+            respond-notallowed();
             exit;
         }
     }
+}
+
+sub respond-success(Str $body='') {
+    print "HTTP/1.1 200 OK\r\n";
+    print "Connection: close\r\n";
+    print "Content-Length: {$body.chars}\r\n";
+    print "Content-Type: text/plain; charset=utf-8\r\n";
+    print "\r\n";
+    print $body;
+}
+
+sub respond-failure() {
+    print "HTTP/1.0 400 Bad Request\r\n";
+    print "Connection: close\r\n";
+    print "\r\n";
+}
+
+sub respond-error(Str $message) {
+    print "HTTP/1.1 422 Unprocessable Entity\r\n";
+    print "Connection: close\r\n";
+    print "Content-Length: {$message.chars}\r\n";
+    print "Content-Type: text/plain; charset=utf-8\r\n";
+    print "\r\n";
+    print $message;
+}
+
+sub respond-notfound() {
+    print "HTTP/1.1 404 Not Found\r\n";
+    print "Connection: close\r\n";
+    print "\r\n";
+}
+
+sub respond-notallowed() {
+    print "HTTP/1.1 405 Method Not Allowed\r\n";
+    print "Connection: close\r\n";
 }
