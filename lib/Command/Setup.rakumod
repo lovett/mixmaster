@@ -21,10 +21,4 @@ our sub setup(IO::Path $root, Bool $force) is export {
         create-config($config);
         success-message("Populated {$config} with  default configuration.")
     }
-
-    for systemd-service-paths() {
-        next if $_.f and not $force;
-        create-systemd-service($_, $root);
-        success-message("Created {$_}.");
-    }
 }

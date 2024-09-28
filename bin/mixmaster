@@ -12,7 +12,15 @@ multi sub MAIN("setup",
 ) {
     use Command::Setup;
     Command::setup($root.IO, $force);
-} #= Create the build root and install systemd services.
+} #= Create the build root
+
+multi sub MAIN("service",
+    Str  :$root = DEFAULT_ROOT,
+    Bool :$force = False
+) {
+    use Command::Service;
+    Command::service($root.IO, $force);
+} #= Install systemd services
 
 multi sub MAIN("bridge",
     Str :$root = DEFAULT_ROOT,
