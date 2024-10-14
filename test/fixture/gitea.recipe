@@ -1,0 +1,4 @@
+mkdir -p /tmp/mixmaster/example-org-example-repo/production
+git clone --quiet --branch production https://git.example.com/example-org/example-repo.git .
+git checkout --quiet yyy
+make deploy

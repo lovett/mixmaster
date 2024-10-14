@@ -1,9 +1,3 @@
-POST /gitea HTTP/1.0
-Content-Type: application/json
-Remote-Addr: 127.0.0.1
-Connection: close
-Content-Length: 2721
-
 {
   "secret": "",
   "ref": "refs/heads/production",
