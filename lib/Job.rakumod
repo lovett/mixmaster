@@ -2,7 +2,6 @@ unit module Job;
 
 use Config;
 use Filesystem;
-use HttpResponse;
 use JSON::Fast;
 
 enum JobType <freestyle git task>;

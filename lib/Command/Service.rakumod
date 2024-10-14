@@ -1,6 +1,7 @@
 unit package Command;
 
 use Filesystem;
+use Console;
 
 our sub service(IO::Path $root, Bool $force) is export {
     for systemd-service-paths() {
