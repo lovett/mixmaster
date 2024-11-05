@@ -32,7 +32,6 @@
         mode: "0644"
       loop:
         - "../lib/Broadcast"
-        - "../lib/IniEncode.pm6"
 
     - name: Install application scripts
       become: yes

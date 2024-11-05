@@ -1,7 +1,6 @@
 unit module Broadcast::Email;
 
 use Email::Simple;
-use IniEncode;
 
 our Str constant PREFIX = '[mixmaster]';
 
