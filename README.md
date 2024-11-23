@@ -198,10 +198,3 @@ setups could be handled on a build-by-build basis by incorporating a
 call to `ssh-add` into the build process.
 
 In all cases the SSH key would need to be passwordless.
-
-## Handling Failure
-
-The `mmcleanup` script is run as part of the systemd path service. It
-deletes unprocessed jobs from the spool directory if `mmbuild` cannot
-run. There is no retry option for this scenario. Use `journalctl` to
-assess the nature of what went wrong.

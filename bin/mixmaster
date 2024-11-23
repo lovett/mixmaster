@@ -34,11 +34,6 @@ multi sub MAIN("build", Str :$root = DEFAULT_ROOT) {
     Command::build($root.IO);
 } #= Start the next build.
 
-multi sub MAIN("clean", Str :$root = DEFAULT_ROOT) {
-    use Command::Clean;
-    Command::clean($root.IO);
-} #= Remove stale job files and build folders.
-
 multi sub MAIN("recipe", Str :$job) {
     use Command::Recipe;
     Command::recipe($job.IO);
