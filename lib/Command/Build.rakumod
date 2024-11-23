@@ -2,8 +2,8 @@ unit package Command;
 
 =begin pod
 
-The build command takes JSON files out of the inbox and starts a build
-based on their contents.
+The build command takes a JSON file out of the inbox and starts a build
+based on its contents.
 
 It is normally invoked by a systemd path service that watches
 for changes to the inbox.
@@ -19,36 +19,29 @@ use Filesystem;
 
 enum JobState <job-start job-end job-fail>;
 
-my IO::Handle $log;
+# signal(SIGTERM).tap: {
+#     log-to-file('X', 'Killed by SIGTERM');
+#     try close $log;
+#     exit;
+# }
 
-signal(SIGTERM).tap: {
-    log-to-file('X', 'Killed by SIGTERM');
-    try close $log;
-    exit;
-}
-
-sub log-handle(Str $filename, IO::Path $workspace --> IO::Handle) {
-    my $file = $filename.IO.extension: 'log';
-    my $path = archive-path($workspace).add($file);
-    open $path, :a;
-}
-
-sub log-to-file(Str $prefix, Str $message) {
+sub log-to-file(IO::Handle $handle, Str $prefix, Str $message) {
     for $message.split("\n") {
-        try $log.say("{DateTime.now.hh-mm-ss} {$prefix} $_");
-        try $log.flush();
+        try $handle.say("{DateTime.now.hh-mm-ss} {$prefix} $_");
+        try $handle.flush();
     }
 }
 
 # Dispatcher for tracking job progress in local logs and external proceesses.
 sub broadcast(JobState $state, %job, Str $message?) {
+    my $log = %job<mixmaster><log>;
     # my $sendEmail = %job<mailto> && (%job<notifications> eq "all" || %job<notifications> ~~ "email");
 
     given $state {
         when job-start {
-            log-to-file('#', "Build started for {%job<_mixmaster_jobfile>}");
-            log-to-file('#', "Building in {%job<_mixmaster_workspace>}");
-            log-to-file('#', "Logging to {$log.path()}");
+            log-to-file($log, '#', "Build started for {%job<_mixmaster_jobfile>}");
+            log-to-file($log, '#', "Building in {%job<_mixmaster_workspace>}");
+            log-to-file($log, '#', "Logging to {$log.path()}");
 
             # if ($sendEmail) {
             #     use Broadcast::Email;
@@ -57,7 +50,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
         }
 
         when job-end {
-            log-to-file('#', "Build complete");
+            log-to-file($log, '#', "Build complete");
 
             # if ($sendEmail) {
             #     use Broadcast::Email;
@@ -66,7 +59,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
         }
 
         when job-fail {
-            log-to-file('#', "Build failed: {$message}");
+            log-to-file($log, '#', "Build failed: {$message}");
 
             # if (%job<mailto>) {
             #     use Broadcast::Email;
@@ -76,19 +69,21 @@ sub broadcast(JobState $state, %job, Str $message?) {
     }
 }
 
-sub doCommand(IO::Path $workspace, Str $command, IO::Handle $log) {
-    log-to-file('$', $command.trim);
+sub doCommand(%job, Str $command) {
+    my $log = %job<mixmaster><log>;
+    log-to-file($log, '$', $command.trim);
 
-    indir($workspace, {
+    indir(%job<mixmaster><checkout>, {
         my $proc = Proc::Async.new(«$command»);
 
         react {
             whenever $proc.stdout.lines {
-                log-to-file('O', $_.trim);
+                log-to-file($log, 'O', $_.trim);
             }
 
             whenever $proc.stderr {
-                log-to-file('!', $_.trim);
+                log-to-file($log, '!', $_.trim);
+                say "STDERR: " ~ $_.trim;
             }
 
             whenever $proc.start {
@@ -109,30 +104,32 @@ multi sub build(IO::Path $path where *.f) {
 
     archive-job($path);
 
-    $log = log-handle($path.basename, %job<mixmaster><workspace>);
+    %job = job-recipe(%job);
 
-    my Str @recipe = job-recipe(%job);
+    my $log-filename = %job<mixmaster><jobfile>.IO.extension: 'log';
+    my $log-path = %job<mixmaster><archive>.add($log-filename.basename);
+    %job<mixmaster><log> = open $log-path, :a;
 
-    broadcast(job-start, %job);
+    # broadcast(job-start, %job);
 
-    for @recipe {
-        doCommand(%job<mixmaster><workspace>, $_, $log);
+    for %job<mixmaster><recipe>.list {
+        doCommand(%job, $_);
     }
 
-    broadcast(job-end, %job);
+    # broadcast(job-end, %job);
 
-    CATCH {
-        when X::AdHoc {
-            broadcast(job-fail, %job, .payload);
-        }
+    # CATCH {
+    #     when X::AdHoc {
+    #         broadcast(job-fail, %job, .payload);
+    #     }
 
-        default {
-            broadcast(job-fail, %job, .Str);
-        }
-    }
+    #     default {
+    #         broadcast(job-fail, %job, .Str);
+    #     }
+    # }
 
     LEAVE {
-        try close $log;
+        try close %job<mixmaster><log>;
     }
 }
 

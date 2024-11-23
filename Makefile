@@ -15,7 +15,7 @@ install:
 # Install third-party libraries.
 # Anything listed here should also be in ansible/install.yml.
 setup:
-	sudo zef install JSON::Fast Config::INI Email::Simple
+	sudo zef install JSON::Fast Config::INI Email::Simple File::Temp
 
 # Update the current installation on a remote host.
 upgrade:

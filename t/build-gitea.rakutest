@@ -1,33 +1,34 @@
 #!/usr/bin/env rakudo
 
 use Test;
+use File::Temp;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $fixture = $*PROGRAM.IO.parent().add('fixture/gitea.http');
-my $root = "/tmp/mixmaster";
-my $workspace = $root.IO.add("example-org-example-repo");
+my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
+my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
+my $root = tempdir;
+my $workspace = $root.IO.add("test-org-test-repo");
+my $test-repo = "/tmp/test-repo";
 
 sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--root $root setup} unless $root.IO.d;
+    run $mixmaster, qqw{--root $root setup};
 
-    for dir($root.IO.add("INBOX")) -> $file {
-        $file.unlink if $file.IO.f;
+    copy($job-fixture, $root.IO.add("INBOX").add($job-fixture.basename));
+
+    copy($config-fixture, $root.IO.add($config-fixture.basename));
+
+    unless ($test-repo.IO.d) {
+        run "git", qqw{init -q $test-repo};
+        indir $test-repo, {
+            run "git", qqw{checkout -q -b production};
+            spurt $test-repo.IO.add("hello.txt"),  "hello world";
+            run "git", qqw{add hello.txt};
+            run "git", qqw{commit -q -m Hello};
+        };
     }
 
-    for dir($root.IO.add("ARCHIVE")) -> $file {
-        $file.unlink if $file.IO.f;
-    }
+    run $mixmaster, qqw{--root $root build};
 
-    for dir($workspace.add("ARCHIVE")) -> $file {
-        $file.unlink if $file.IO.f;
-    }
-
-    my $proc = run $mixmaster, qqw{--root $root bridge}, :in;
-    $proc.in.print($fixture.IO.slurp);
-    $proc.in.close();
-
-
-    run $mixmaster, qqw{--root $root build}, :in;
 
     is dir($root.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
     is dir($root.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
@@ -35,6 +36,15 @@ sub MAIN() is test-assertion {
     is $workspace.d, True, "Workspace was created";
     is $workspace.add("ARCHIVE").d, True, "Workspace archive was created";
     is $workspace.add("production").d, True, "Workspace target directory was created";
-    is dir($workspace.add("ARCHIVE")).elems, 1, "Workspace log was created";
 
+    my $log = $workspace.add("ARCHIVE/gitea.log");
+
+    is $log.f, True, "Workspace log was created";
+
+    my @log-lines = $log.IO.slurp;
+
+    is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Git clone was logged";
+    is @log-lines.grep(rx:s/\$ git checkout/).elems, 1, "Got checkout was logged";
+    is @log-lines.grep(rx:s/\$ echo Stub command for building production branch/).elems, 1, "Build command was logged";
+    is @log-lines.grep(rx:s/O Stub command for building production branch/).elems, 1, "Build command output was logged";
 }

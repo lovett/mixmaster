@@ -3,16 +3,22 @@
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $recipe-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.recipe');
+my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
+my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
+
+# Not using tempdir so that recipe fixture can be matched to a known path
 my $root = "/tmp/mixmaster";
+my $job-file = $root.IO.add("INBOX").add($job-fixture.basename);
+my $workspace = $root.IO.add("test-org-test-repo");
+my $test-repo = "/tmp/test-repo.git";
 
 sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--root $root setup} unless $root.IO.d;
-
-    my $job-file = $root.IO.add("INBOX").add($job-fixture.basename);
+    run $mixmaster, qqw{--root $root setup};
 
     copy($job-fixture, $job-file);
+
+    copy($config-fixture, $root.IO.add($config-fixture.basename));
 
     my $proc = run $mixmaster, qqw{--job $job-file recipe}, :out;
     my $recipe = $proc.out.slurp: :close;

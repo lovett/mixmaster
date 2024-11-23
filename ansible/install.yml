@@ -19,6 +19,7 @@
         - "JSON::Fast"
         - "Config::INI"
         - "Email::Simple"
+        - "File::Temp"
       tags:
         - firstrun
 

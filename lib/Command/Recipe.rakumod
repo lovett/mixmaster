@@ -11,9 +11,9 @@ use Job;
 our sub recipe(IO::Path $path where *.f) is export {
     my %job = load-job($path);
 
-    my Str @recipe = job-recipe(%job);
+    %job = job-recipe(%job);
 
-    for @recipe {
+    for %job<mixmaster><recipe>.list {
         .say;
     }
 }
