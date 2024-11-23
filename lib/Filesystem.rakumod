@@ -72,32 +72,6 @@ sub create-directory(IO::Path $path) is export {
     }
 }
 
-sub create-config(IO::Path $path) is export {
-    spurt $path, qq:to/END/;
-    ; This is the configuration file for mixmaster. It maps project repositories
-    ; to build commands and defines application settings.
-
-    [_]
-
-    ; The SSH key that should be loaded at the start of each build.
-    sshKey =
-
-    ; Use "dryrun" to echo build commands for testing purposes.
-    ; Use "normal" to have build commands executed.
-    mode = normal
-
-    ; The email address that should receive build updates.
-    mailto =
-
-    ; Sample project configuration.
-    [example-org/example-repo]
-    production = make deploy
-    staging = make deploy-to-staging
-    master/my-task = make my-task
-
-    END
-}
-
 multi sub create-systemd-service(
     IO::Path $path where *.basename eq "mixmaster.service",
     IO::Path $root

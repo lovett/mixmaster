@@ -1,24 +1,21 @@
 unit package Command;
 
 use Filesystem;
+use Config;
 use Console;
 
-our sub setup(IO::Path $root, Bool $force) is export {
-    unless $root.d {
-        mkdir($root);
-        success-message("Created $root");
+our sub setup(IO::Path $root) is export {
+    for $root, inbox-path($root), archive-path($root) {
+        .mkdir;
+        success-message("Created $_");
     }
 
-    for (inbox-path($root), archive-path($root)) {
-        unless ($_.d) {
-            mkdir($_);
-            success-message("Created $_");
-        }
-    }
+    my $path = config-path($root);
 
-    my $config = config-path($root);
-    unless ($config.f or $force) {
-        create-config($config);
-        success-message("Populated {$config} with  default configuration.")
+    if ($path.f) {
+        info-message("$path already exists, leaving as-is");
+    } else {
+        create-config($path);
+        success-message("Populated {$path} with  default configuration.")
     }
 }

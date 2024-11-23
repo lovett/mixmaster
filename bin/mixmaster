@@ -8,10 +8,9 @@ use lib $*PROGRAM.absolute.IO.parent(2).add('lib');
 
 multi sub MAIN("setup",
     Str  :$root = DEFAULT_ROOT, #= Filesystem path where builds will occur.
-    Bool :$force = False #= Overwrite existing files.
 ) {
     use Command::Setup;
-    Command::setup($root.IO, $force);
+    Command::setup($root.IO);
 } #= Create the build root
 
 multi sub MAIN("service",
