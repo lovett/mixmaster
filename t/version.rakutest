@@ -1,0 +1,16 @@
+#!/usr/bin/env rakudo
+
+use Test;
+
+my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+
+plan 2;
+
+my $proc = run $mixmaster, "version", :out;
+my $out = $proc.out.slurp(:close);
+my $version = $out.lines[0];
+
+is $version, "dev", "Version constant is printed to stdout";
+ok $proc.exitcode == 0, "Command exits zero";
+
+done-testing;
