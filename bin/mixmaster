@@ -7,18 +7,17 @@ use lib '/usr/local/share/mixmaster/lib';
 use lib $*PROGRAM.absolute.IO.parent(2).add('lib');
 
 multi sub MAIN("setup",
-    Str  :$buildroot = DEFAULT_BUILDROOT, #= Filesystem path where builds will be kept.
+    Str  :$buildroot = DEFAULT_BUILDROOT #= Filesystem path where builds will be kept
 ) {
     use Command::Setup;
     Command::setup($buildroot.IO);
 } #= Establish a buildroot and starter config
 
 multi sub MAIN("service",
-    Str  :$buildroot = DEFAULT_BUILDROOT,
-    Bool :$force = False
+    Str  :$buildroot = DEFAULT_BUILDROOT
 ) {
     use Command::Service;
-    Command::service($buildroot.IO, $force);
+    Command::service($buildroot.IO);
 } #= Install systemd services
 
 multi sub MAIN("bridge",

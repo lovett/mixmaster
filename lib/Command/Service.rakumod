@@ -3,9 +3,8 @@ unit package Command;
 use Filesystem;
 use Console;
 
-our sub service(IO::Path $buildroot, Bool $force) is export {
+our sub service(IO::Path $buildroot) is export {
     for systemd-service-paths() {
-        next if $_.f and not $force;
         mkdir($_.parent);
         create-systemd-service($_, $buildroot);
         success-message("Created {$_}.");
