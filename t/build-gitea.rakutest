@@ -6,16 +6,16 @@ use File::Temp;
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
-my $root = tempdir;
-my $workspace = $root.IO.add("test-org-test-repo");
+my $buildroot = tempdir;
+my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo";
 
 sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--root $root setup};
+    run $mixmaster, qqw{--buildroot $buildroot setup};
 
-    copy($job-fixture, $root.IO.add("INBOX").add($job-fixture.basename));
+    copy($job-fixture, $buildroot.IO.add("INBOX").add($job-fixture.basename));
 
-    copy($config-fixture, $root.IO.add($config-fixture.basename));
+    copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
 
     unless ($test-repo.IO.d) {
         run "git", qqw{init -q $test-repo};
@@ -27,11 +27,11 @@ sub MAIN() is test-assertion {
         };
     }
 
-    run $mixmaster, qqw{--root $root build};
+    run $mixmaster, qqw{--buildroot $buildroot build};
 
 
-    is dir($root.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
-    is dir($root.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
+    is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
+    is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
 
     is $workspace.d, True, "Workspace was created";
     is $workspace.add("ARCHIVE").d, True, "Workspace archive was created";

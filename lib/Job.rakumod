@@ -8,11 +8,11 @@ enum JobType <freestyle git task>;
 
 sub load-job(IO::Path $path --> Hash) is export {
     my %job = from-json($path.slurp // "\{}");
-    my $root = nearest-root($path);
+    my $buildroot = nearest-root($path);
 
     %job<mixmaster> = %{
-        root => $root,
-        config => load-config($root),
+        buildroot => $buildroot,
+        config => load-config($buildroot),
         jobfile => $path,
         jobtype => job-type(%job),
         workspace => Nil,
@@ -97,7 +97,7 @@ sub git-recipe(%job) {
     my Str $project-dir = filesystem-friendly($project);
     my Str $branch = %job<ref>.subst("refs/heads/", "");
     my Str $branch-dir = filesystem-friendly($branch);
-    my IO::Path $workspace = %job<mixmaster><root>.add($project-dir).mkdir;
+    my IO::Path $workspace = %job<mixmaster><buildroot>.add($project-dir).mkdir;
 
     my $checkout = $workspace.add($branch-dir).mkdir;
     my $archive = $workspace.add("ARCHIVE").mkdir;

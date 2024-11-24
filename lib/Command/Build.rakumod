@@ -133,12 +133,12 @@ multi sub build(IO::Path $path where *.f) {
     }
 }
 
-multi sub build(IO::Path $root where *.d) {
-    my $inbox = inbox-path($root);
+multi sub build(IO::Path $buildroot where *.d) {
+    my $inbox = inbox-path($buildroot);
     my IO::Path $job = $inbox.dir(test => /'.' json $/).first();
 
     return unless $job;
 
     build($job);
-    build($root);
+    build($buildroot);
 }

@@ -3,18 +3,18 @@ unit package Command;
 use Filesystem;
 use Console;
 
-our sub service(IO::Path $root, Bool $force) is export {
+our sub service(IO::Path $buildroot, Bool $force) is export {
     for systemd-service-paths() {
         next if $_.f and not $force;
         mkdir($_.parent);
-        create-systemd-service($_, $root);
+        create-systemd-service($_, $buildroot);
         success-message("Created {$_}.");
     }
 }
 
 multi sub create-systemd-service(
     IO::Path $path where *.basename eq "mixmaster.service",
-    IO::Path $root
+    IO::Path $buildroot
 ) is export {
     my $proc = run <which ssh-agent>, :out;
     my $sshAgent = $proc.out.get;
@@ -25,8 +25,8 @@ multi sub create-systemd-service(
     Description=Mixmaster
 
     [Service]
-    WorkingDirectory={$root}
-    ExecStart={$sshAgent} {$*PROGRAM.absolute} --root {$root.absolute} build
+    WorkingDirectory={$buildroot}
+    ExecStart={$sshAgent} {$*PROGRAM.absolute} --buildroot {$buildroot.absolute} build
 
     # Local Variables:
     # mode: conf
@@ -37,7 +37,7 @@ multi sub create-systemd-service(
 
 multi sub create-systemd-service(
     IO::Path $path where *.basename eq "mixmaster-bridge.socket",
-    IO::Path $root
+    IO::Path $buildroot
 ) is export {
     spurt $path, qq:to/END/;
     [Unit]
@@ -60,7 +60,7 @@ multi sub create-systemd-service(
 
 multi sub create-systemd-service(
     IO::Path $path where *.basename eq 'mixmaster-bridge@.service',
-    IO::Path $root
+    IO::Path $buildroot
 ) is export {
     spurt $path, qq:to/END/;
     [Unit]
@@ -69,7 +69,7 @@ multi sub create-systemd-service(
     [Service]
     StandardInput=socket
     StandardError=journal
-    ExecStart={$*PROGRAM.absolute} --root {$root.absolute} bridge
+    ExecStart={$*PROGRAM.absolute} --buildroot {$buildroot.absolute} bridge
 
     # Local Variables:
     # mode: conf
@@ -80,14 +80,14 @@ multi sub create-systemd-service(
 
 multi sub create-systemd-service(
     IO::Path $path where *.basename eq "mixmaster.path",
-    IO::Path $root
+    IO::Path $buildroot
 ) is export {
     spurt $path, qq:to/END/;
     [Unit]
     Description=Mixmaster
 
     [Path]
-    DirectoryNotEmpty={inbox-path($root)}
+    DirectoryNotEmpty={inbox-path($buildroot)}
     MakeDirectory=true
     DirectoryMode=0700
 

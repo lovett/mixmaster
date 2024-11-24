@@ -11,17 +11,17 @@ sub systemd-service-paths(--> Seq) is export {
     return $filenames.map: { "{$*HOME}/.config/systemd/user/".IO.add($_) };
 }
 
-sub inbox-path(IO::Path $root --> IO::Path) is export {
-    return $root.add("INBOX");
+sub inbox-path(IO::Path $buildroot --> IO::Path) is export {
+    return $buildroot.add("INBOX");
 }
 
-sub archive-path(IO::Path $root --> IO::Path) is export {
-    return $root.add("ARCHIVE");
+sub archive-path(IO::Path $buildroot --> IO::Path) is export {
+    return $buildroot.add("ARCHIVE");
 }
 
 sub archive-job(IO::Path $path where *.f) is export {
-    my $root = nearest-root($path);
-    my $archive = archive-path($root);
+    my $buildroot = nearest-root($path);
+    my $archive = archive-path($buildroot);
     rename($path, $archive.add($path.basename));
 }
 
@@ -35,12 +35,12 @@ sub nearest-root(IO::Path $origin --> IO::Path) is export {
     return $path;
 }
 
-sub config-path(IO::Path $root --> IO::Path) is export {
-    return $root.add("mixmaster.ini");
+sub config-path(IO::Path $buildroot --> IO::Path) is export {
+    return $buildroot.add("mixmaster.ini");
 }
 
-sub job-path(IO::Path $root --> IO::Path) is export {
-    my $inbox = inbox-path($root);
+sub job-path(IO::Path $buildroot --> IO::Path) is export {
+    my $inbox = inbox-path($buildroot);
     my $filename = DateTime.now(
         formatter => sub ($self) {
             sprintf "%04d%02d%02d-%02d%02d%02d.json",
@@ -55,8 +55,8 @@ sub filesystem-friendly(Str $value) is export {
     return $value.lc.subst(/\W/, "-", :g);
 }
 
-sub create-job(IO::Path $root, Buf $body) is export {
-    my IO::Path $job = job-path($root);
+sub create-job(IO::Path $buildroot, Buf $body) is export {
+    my IO::Path $job = job-path($buildroot);
     spurt $job, $body;
 }
 

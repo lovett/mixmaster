@@ -4,11 +4,11 @@ use Test;
 use File::Temp;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $appRoot = tempdir;
+my $buildroot = tempdir;
 
 %*ENV<HOME> = tempdir;
 
-run $mixmaster, qqw{--root $appRoot service}, :out;
+run $mixmaster, qqw{--buildroot $buildroot service}, :out;
 
 my @filenames := <
     mixmaster.service
@@ -22,7 +22,7 @@ plan 8;
 indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
     my $target = "mixmaster.service".IO;
     is $target.f, True, "Creates mixmaster.service";
-    is $target.lines.grep("WorkingDirectory=$appRoot").elems, 1, "Service file sets WorkingDirectory to app root";
+    is $target.lines.grep("WorkingDirectory=$buildroot").elems, 1, "Service file sets WorkingDirectory to buildroot";
 
     $target = "mixmaster-bridge.socket".IO;
     is $target.f, True, "Creates bridge socket";
@@ -30,11 +30,11 @@ indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
 
     $target = "mixmaster-bridge\@.service".IO;
     is $target.f, True, "Creates bridge service";
-    is $target.lines.grep(/ExecStart.*\-\-root\s$appRoot.*bridge/).elems, 1, "Bridge service invokes bridge command in app root";
+    is $target.lines.grep(/ExecStart.*\-\-buildroot\s$buildroot.*bridge/).elems, 1, "Bridge service invokes bridge command in buildroot";
 
     $target = "mixmaster.path".IO;
     is $target.f, True, "Creates path service";
-    is $target.lines.grep("DirectoryNotEmpty=$appRoot/INBOX").elems, 1, "Path service watches INBOX";
+    is $target.lines.grep("DirectoryNotEmpty=$buildroot/INBOX").elems, 1, "Path service watches INBOX";
 });
 
 done-testing;

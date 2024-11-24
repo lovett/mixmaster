@@ -5,14 +5,14 @@ use JSON::Fast;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $fixture = $*PROGRAM.IO.parent().add('fixture/freestyle.json');
-my $root = "/tmp/mixmaster";
+my $buildroot = "/tmp/mixmaster";
 
 sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--root $root setup} unless $root.IO.d;
+    run $mixmaster, qqw{--buildroot $buildroot setup} unless $buildroot.IO.d;
 
     my $job = $fixture.IO.slurp;
 
-    my $proc = run $mixmaster, qqw{--root $root bridge}, :in;
+    my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in;
     $proc.in.print: qq:to/HEADERS/;
     POST / HTTP/1.0
     Content-Type: application/json
@@ -25,7 +25,7 @@ sub MAIN() is test-assertion {
 
     $proc.in.close();
 
-    my IO::Path @jobs = $root.IO.add("INBOX").dir(test => /'.' json $/);
+    my IO::Path @jobs = $buildroot.IO.add("INBOX").dir(test => /'.' json $/);
 
     is @jobs.tail.IO.f, True, "Job file was created in INBOX";
 

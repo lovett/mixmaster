@@ -4,13 +4,13 @@ use Filesystem;
 use Config;
 use Console;
 
-our sub setup(IO::Path $root) is export {
-    for $root, inbox-path($root), archive-path($root) {
+our sub setup(IO::Path $buildroot) is export {
+    for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
         .mkdir;
         success-message("Created $_");
     }
 
-    my $path = config-path($root);
+    my $path = config-path($buildroot);
 
     if ($path.f) {
         info-message("$path already exists, leaving as-is");

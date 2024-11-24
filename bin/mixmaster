@@ -1,51 +1,51 @@
 #!/usr/bin/env rakudo
 
 constant SCRIPT_VERSION = "dev";
-constant DEFAULT_ROOT = "{$*HOME}/Builds";
+constant DEFAULT_BUILDROOT = "{$*HOME}/Builds";
 
 use lib '/usr/local/share/mixmaster/lib';
 use lib $*PROGRAM.absolute.IO.parent(2).add('lib');
 
 multi sub MAIN("setup",
-    Str  :$root = DEFAULT_ROOT, #= Filesystem path where builds will occur.
+    Str  :$buildroot = DEFAULT_BUILDROOT, #= Filesystem path where builds will be kept.
 ) {
     use Command::Setup;
-    Command::setup($root.IO);
-} #= Create the build root
+    Command::setup($buildroot.IO);
+} #= Establish a buildroot and starter config
 
 multi sub MAIN("service",
-    Str  :$root = DEFAULT_ROOT,
+    Str  :$buildroot = DEFAULT_BUILDROOT,
     Bool :$force = False
 ) {
     use Command::Service;
-    Command::service($root.IO, $force);
+    Command::service($buildroot.IO, $force);
 } #= Install systemd services
 
 multi sub MAIN("bridge",
-    Str :$root = DEFAULT_ROOT,
+    Str :$buildroot = DEFAULT_BUILDROOT,
 ) {
     use Command::Bridge;
-    Command::bridge($root.IO);
-} #= Add a build request to the inbox.
+    Command::bridge($buildroot.IO);
+} #= Add a build request to the inbox
 
-multi sub MAIN("build", Str :$root = DEFAULT_ROOT) {
+multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) {
     use Command::Build;
-    Command::build($root.IO);
-} #= Start the next build.
+    Command::build($buildroot.IO);
+} #= Start a build
 
 multi sub MAIN("recipe", Str :$job) {
     use Command::Recipe;
     Command::recipe($job.IO);
-} #= Show the commands a build would run.
+} #= Show the commands a build would run
 
 multi sub MAIN("teardown") {
     use Command::Teardown;
     Command::teardown();
-} #= Uninstall systemd services.
+} #= Uninstall systemd services
 
 multi MAIN("version") {
     say SCRIPT_VERSION;
-} #= Print the application version.
+} #= Print the application version
 
 # Local Variables:
 # mode: raku

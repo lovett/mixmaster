@@ -4,15 +4,15 @@ use Test;
 use File::Temp;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $root = tempdir;
+my $buildroot = tempdir;
 
 plan 4;
 
-run $mixmaster, qqw{--root $root setup}, :out;
+run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
-is $root.IO.d, True, "Creates root directory";
-is $root.IO.add("INBOX").d, True, "Creates INBOX directory in root";
-is $root.IO.add("ARCHIVE").d, True, "Creates ARCHIVE directory in root";
-is $root.IO.add("mixmaster.ini").f, True, "Creates mixmaster.ini in root";
+is $buildroot.IO.d, True, "Creates buildroot";
+is $buildroot.IO.add("INBOX").d, True, "Creates INBOX directory in buildroot";
+is $buildroot.IO.add("ARCHIVE").d, True, "Creates ARCHIVE directory in buildroot";
+is $buildroot.IO.add("mixmaster.ini").f, True, "Creates mixmaster.ini in buildroot";
 
 done-testing;

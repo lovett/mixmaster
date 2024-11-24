@@ -18,8 +18,8 @@ The JSON body is not processed here.
 
 use Filesystem;
 
-our sub bridge(IO::Path $root) {
-    unless ($root.d) {
+our sub bridge(IO::Path $buildroot) {
+    unless ($buildroot.d) {
         respond-notfound();
         return;
     }
@@ -49,7 +49,7 @@ our sub bridge(IO::Path $root) {
             my Buf $body = $*IN.read(%headers<content-length>);
 
             try {
-                create-job($root, $body);
+                create-job($buildroot, $body);
                 respond-success();
 
                 CATCH {
