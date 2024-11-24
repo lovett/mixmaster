@@ -14,7 +14,7 @@ my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo.git";
 
 sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--buildroot $buildroot setup};
+    run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
     copy($job-fixture, $job-file);
 
@@ -28,4 +28,6 @@ sub MAIN() is test-assertion {
     for $expected-recipe.lines.kv -> $i, $_ {
         is $recipe.lines[$i] eq $_, True, "Line {$i+1} of recipe matches fixture";
     }
+
+    ok $proc.exitcode == 0, "Command exits zero";
 }

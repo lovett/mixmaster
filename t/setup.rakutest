@@ -6,13 +6,15 @@ use File::Temp;
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $buildroot = tempdir;
 
-plan 4;
+plan 5;
 
-run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
+my $proc = run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
+$proc.out.close();
 
 is $buildroot.IO.d, True, "Creates buildroot";
 is $buildroot.IO.add("INBOX").d, True, "Creates INBOX directory in buildroot";
 is $buildroot.IO.add("ARCHIVE").d, True, "Creates ARCHIVE directory in buildroot";
 is $buildroot.IO.add("mixmaster.ini").f, True, "Creates mixmaster.ini in buildroot";
+ok $proc.exitcode == 0, "Command exits zero";
 
 done-testing;

@@ -11,7 +11,7 @@ my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo";
 
 sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--buildroot $buildroot setup};
+    run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
     copy($job-fixture, $buildroot.IO.add("INBOX").add($job-fixture.basename));
 
@@ -27,7 +27,8 @@ sub MAIN() is test-assertion {
         };
     }
 
-    run $mixmaster, qqw{--buildroot $buildroot build};
+    my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out;
+    $proc.out.close();
 
 
     is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
@@ -47,4 +48,5 @@ sub MAIN() is test-assertion {
     is @log-lines.grep(rx:s/\$ git checkout/).elems, 1, "Got checkout was logged";
     is @log-lines.grep(rx:s/\$ echo Stub command for building production branch/).elems, 1, "Build command was logged";
     is @log-lines.grep(rx:s/O Stub command for building production branch/).elems, 1, "Build command output was logged";
+    ok $proc.exitcode == 0, "Command exits zero";
 }

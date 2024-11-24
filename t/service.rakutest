@@ -8,7 +8,8 @@ my $buildroot = tempdir;
 
 %*ENV<HOME> = tempdir;
 
-run $mixmaster, qqw{--buildroot $buildroot service}, :out;
+my $proc = run $mixmaster, qqw{--buildroot $buildroot service}, :out;
+$proc.out.close();
 
 my @filenames := <
     mixmaster.service
@@ -17,7 +18,7 @@ my @filenames := <
     mixmaster.path
 >;
 
-plan 8;
+plan 9;
 
 indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
     my $target = "mixmaster.service".IO;
@@ -26,7 +27,7 @@ indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
 
     $target = "mixmaster-bridge.socket".IO;
     is $target.f, True, "Creates bridge socket";
-    is $target.lines.grep("ListenStream=8585").elems, 1, "Socket listen on port 85858";
+    is $target.lines.grep("ListenStream=8585").elems, 1, "Socket listen on port 8585";
 
     $target = "mixmaster-bridge\@.service".IO;
     is $target.f, True, "Creates bridge service";
@@ -36,5 +37,7 @@ indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
     is $target.f, True, "Creates path service";
     is $target.lines.grep("DirectoryNotEmpty=$buildroot/INBOX").elems, 1, "Path service watches INBOX";
 });
+
+ok $proc.exitcode == 0, "Command exits zero";
 
 done-testing;
