@@ -2,34 +2,37 @@
 
 use Test;
 use JSON::Fast;
+use File::Temp;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
-my $buildroot = "/tmp/mixmaster";
+my $buildroot = tempdir;
 
-sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--buildroot $buildroot setup} unless $buildroot.IO.d;
+plan 3;
 
-    my $job = $fixture.IO.slurp;
+run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
-    my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in;
-    $proc.in.print: qq:to/HEADERS/;
-    POST / HTTP/1.0
-    Content-Type: application/json
-    Remote-Addr: 127.0.0.1
-    Connection: close
-    Content-Length: {$job.chars}
+my $job = $fixture.IO.slurp;
 
-    {$job}
-    HEADERS
+my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in, :out;
+$proc.in.print: qq:to/HEADERS/;
+POST / HTTP/1.0
+Content-Type: application/json
+Remote-Addr: 127.0.0.1
+Connection: close
+Content-Length: {$job.chars}
 
-    $proc.in.close();
+{$job}
+HEADERS
 
-    my IO::Path @jobs = $buildroot.IO.add("INBOX").dir(test => /'.' json $/);
+$proc.in.close();
 
-    is @jobs.tail.IO.f, True, "Job file was created in INBOX";
+my IO::Path @files = $buildroot.IO.add("INBOX").dir(test => /'.' json $/);
 
-    my %job = from-json(@jobs.tail.IO.slurp // "\{}");
+is @files.elems, 1, "Creates job file in inbox";
 
-    is %job<compare_url>, "http://example.com/compare_url", "Job file matches gitea fixture";
-}
+is @files[0].slurp.chars, $job.chars, "Job file matches fixture";
+
+ok $proc.exitcode == 0, "Command exits zero";
+
+done-testing;
