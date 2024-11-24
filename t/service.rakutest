@@ -1,0 +1,40 @@
+#!/usr/bin/env rakudo
+
+use Test;
+use File::Temp;
+
+my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+my $appRoot = tempdir;
+
+%*ENV<HOME> = tempdir;
+
+run $mixmaster, qqw{--root $appRoot service}, :out;
+
+my @filenames := <
+    mixmaster.service
+    mixmaster-bridge.socket
+    mixmaster-bridge@.service
+    mixmaster.path
+>;
+
+plan 8;
+
+indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
+    my $target = "mixmaster.service".IO;
+    is $target.f, True, "Creates mixmaster.service";
+    is $target.lines.grep("WorkingDirectory=$appRoot").elems, 1, "Service file sets WorkingDirectory to app root";
+
+    $target = "mixmaster-bridge.socket".IO;
+    is $target.f, True, "Creates bridge socket";
+    is $target.lines.grep("ListenStream=8585").elems, 1, "Socket listen on port 85858";
+
+    $target = "mixmaster-bridge\@.service".IO;
+    is $target.f, True, "Creates bridge service";
+    is $target.lines.grep(/ExecStart.*\-\-root\s$appRoot.*bridge/).elems, 1, "Bridge service invokes bridge command in app root";
+
+    $target = "mixmaster.path".IO;
+    is $target.f, True, "Creates path service";
+    is $target.lines.grep("DirectoryNotEmpty=$appRoot/INBOX").elems, 1, "Path service watches INBOX";
+});
+
+done-testing;
