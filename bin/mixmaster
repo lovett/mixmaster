@@ -37,11 +37,6 @@ multi sub MAIN("recipe", Str :$job) {
     Command::recipe($job.IO);
 } #= Show the commands a build would run
 
-multi sub MAIN("teardown") {
-    use Command::Teardown;
-    Command::teardown();
-} #= Uninstall systemd services
-
 multi MAIN("version") {
     say SCRIPT_VERSION;
 } #= Print the application version
