@@ -102,9 +102,9 @@ our proto build(IO::Path $path) {*}
 multi sub build(IO::Path $path where *.f) {
     my %job = load-job($path);
 
-    archive-job($path);
-
-    %job = job-recipe(%job);
+    my $buildroot = nearest-root($path);
+    my $archive = archive-path($buildroot);
+    rename($path, $archive.add($path.basename));
 
     my $log-filename = %job<mixmaster><jobfile>.IO.extension: 'log';
     my $log-path = %job<mixmaster><archive>.add($log-filename.basename);

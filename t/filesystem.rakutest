@@ -1,0 +1,33 @@
+#!/usr/bin/env rakudo
+
+use Test;
+use File::Temp;
+
+use lib $*PROGRAM.parent(2).add("lib");
+use Filesystem;
+
+plan 8;
+
+my $buildroot = tempdir.IO;
+spurt $buildroot.add("mixmaster.ini"), "placeholder";
+
+my $subdir = $buildroot.add("dir1/dir2/dir3");
+
+mkdir($subdir);
+
+is inbox-path($buildroot), $buildroot.add("INBOX"), "Inbox resides in buildroot";
+
+is archive-path($buildroot), $buildroot.add("ARCHIVE"), "Archive resides in buildroot";
+
+is config-path($buildroot), $buildroot.add("mixmaster.ini"), "Config file resides in buildroot";
+
+is nearest-root($subdir), $buildroot, "Buildroot is identified from subfolder";
+is nearest-root($subdir.add("myfile.txt")), $buildroot, "Buildroot is identified from file";
+
+my $buildroot2 = tempdir.IO;
+is nearest-root($buildroot2), Nil, "Buildroot identification terminates";
+
+is filesystem-friendly("hello world/and again"), "hello-world-and-again", "Filename normalization handles spaces and slashes";
+is filesystem-friendly("hello/////world"), "hello-world", "Filename normalization collapses multiple nonword characters";
+
+done-testing;

@@ -49,7 +49,15 @@ our sub bridge(IO::Path $buildroot) {
             my Buf $body = $*IN.read(%headers<content-length>);
 
             try {
-                create-job($buildroot, $body);
+                my $inbox = inbox-path($buildroot);
+                my $filename = DateTime.now(
+                    formatter => sub ($self) {
+                        sprintf "%04d%02d%02d-%02d%02d%02d.json",
+                        .year, .month, .day, .hour, .minute, .whole-second given $self;
+                    }
+                );
+
+                spurt $inbox.add($filename), $body;
                 respond-success();
 
                 CATCH {
