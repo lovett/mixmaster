@@ -4,10 +4,21 @@ use Filesystem;
 use Console;
 
 our sub service(IO::Path $buildroot) is export {
-    for systemd-service-paths() {
-        mkdir($_.parent);
-        create-systemd-service($_, $buildroot);
-        success-message("Created {$_}.");
+    my @files := <
+        mixmaster.service
+        mixmaster-bridge.socket
+        mixmaster-bridge@.service
+        mixmaster.path
+    >;
+
+    my $dir = "{$*HOME}/.config/systemd/user".IO;
+
+    mkdir($dir);
+
+    for @files {
+        my $path = $dir.add($_);
+        create-systemd-service($path, $buildroot);
+        success-message("Created {$path}");
     }
 }
 
@@ -99,3 +110,7 @@ multi sub create-systemd-service(
 
     END
 }
+
+# Local Variables:
+# mode: raku
+# End:

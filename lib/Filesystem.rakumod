@@ -1,16 +1,5 @@
 unit module Filesystem;
 
-sub systemd-service-paths(--> Seq) is export {
-    my $filenames = <
-        mixmaster.service
-        mixmaster-bridge.socket
-        mixmaster-bridge@.service
-        mixmaster.path
-    >;
-
-    return $filenames.map: { "{$*HOME}/.config/systemd/user/".IO.add($_) };
-}
-
 sub inbox-path(IO::Path $buildroot --> IO::Path) is export {
     return $buildroot.add("INBOX");
 }
@@ -71,7 +60,3 @@ sub create-directory(IO::Path $path) is export {
         }
     }
 }
-
-# Local Variables:
-# mode: raku
-# End:
