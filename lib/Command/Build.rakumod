@@ -17,7 +17,7 @@ use Config;
 use Job;
 use Filesystem;
 
-enum JobState <job-start job-end job-fail>;
+enum JobState <job-start progress-command progress-stdout progress-stderr job-end job-fail>;
 
 # signal(SIGTERM).tap: {
 #     log-to-file('X', 'Killed by SIGTERM');
@@ -48,6 +48,19 @@ sub broadcast(JobState $state, %job, Str $message?) {
             # }
         }
 
+        when progress-command {
+            log-to-file($log, '$', $message.trim);
+        }
+
+        when progress-stdout {
+            log-to-file($log, 'O', $message.trim);
+        }
+
+        when progress-stderr {
+            log-to-file($log, '!', $message.trim);
+            say "STDERR: " ~ $message.trim;
+        }
+
         when job-end {
             log-to-file($log, '#', "Build complete");
 
@@ -69,31 +82,6 @@ sub broadcast(JobState $state, %job, Str $message?) {
 }
 
 sub do-command(%job, Str $command) {
-    my $log = %job<context><log>;
-    log-to-file($log, '$', $command.trim);
-
-    indir(%job<context><checkout>, {
-        my $proc = Proc::Async.new(«$command»);
-
-        react {
-            whenever $proc.stdout.lines {
-                log-to-file($log, 'O', $_.trim);
-            }
-
-            whenever $proc.stderr {
-                log-to-file($log, '!', $_.trim);
-                say "STDERR: " ~ $_.trim;
-            }
-
-            whenever $proc.start {
-                if (.exitcode !== 0) {
-                    die "Command exited non-zero ({.exitcode})";
-                }
-
-                done;
-            }
-        }
-    });
 }
 
 our proto build(IO::Path $path) {*}
@@ -106,9 +94,32 @@ multi sub build(IO::Path $path where *.f) {
 
     broadcast(job-start, %job);
 
-    for %job<context><recipe>.list {
-        do-command(%job, $_);
-    }
+    indir(%job<context><checkout>, {
+        for %job<context><recipe>.list {
+            my $command = $_;
+            broadcast(progress-command, %job, $command);
+
+            my $proc = Proc::Async.new(«$command»);
+
+            react {
+                whenever $proc.stdout.lines {
+                    broadcast(progress-stdout, %job, $_);
+                }
+
+                whenever $proc.stderr {
+                    broadcast(progress-stderr, %job, $_);
+                }
+
+                whenever $proc.start {
+                    if (.exitcode !== 0) {
+                        die "Command exited non-zero ({.exitcode})";
+                    }
+
+                    done;
+                }
+            }
+        }
+    });
 
     broadcast(job-end, %job);
 
