@@ -32,16 +32,15 @@ sub log-to-file(IO::Handle $handle, Str $prefix, Str $message) {
     }
 }
 
-# Dispatcher for tracking job progress in local logs and external proceesses.
 sub broadcast(JobState $state, %job, Str $message?) {
-    my $log = %job<context><log>;
+    my $log = open-job-log(%job);
     # my $sendEmail = %job<mailto> && (%job<notifications> eq "all" || %job<notifications> ~~ "email");
 
     given $state {
         when job-start {
-            log-to-file($log, '#', "Build started for {%job<_mixmaster_jobfile>}");
-            log-to-file($log, '#', "Building in {%job<_mixmaster_workspace>}");
-            log-to-file($log, '#', "Logging to {$log.path()}");
+            log-to-file($log, '#', "Build started for {%job<context><jobfile>}");
+            log-to-file($log, '#', "Building in {%job<context><workspace>}");
+            log-to-file($log, '#', "Logging to {%job<context><log-path>}");
 
             # if ($sendEmail) {
             #     use Broadcast::Email;
@@ -69,7 +68,7 @@ sub broadcast(JobState $state, %job, Str $message?) {
     }
 }
 
-sub doCommand(%job, Str $command) {
+sub do-command(%job, Str $command) {
     my $log = %job<context><log>;
     log-to-file($log, '$', $command.trim);
 
@@ -102,34 +101,29 @@ our proto build(IO::Path $path) {*}
 multi sub build(IO::Path $path where *.f) {
     my %job = load-job($path);
 
-    my $buildroot = nearest-root($path);
-    my $archive = archive-path($buildroot);
+    my IO::Path $archive = archive-path(%job<context><buildroot>);
     rename($path, $archive.add($path.basename));
 
-    my $log-filename = %job<context><jobfile>.IO.extension: 'log';
-    my $log-path = %job<context><archive>.add($log-filename.basename);
-    %job<context><log> = open $log-path, :a;
-
-    # broadcast(job-start, %job);
+    broadcast(job-start, %job);
 
     for %job<context><recipe>.list {
-        doCommand(%job, $_);
+        do-command(%job, $_);
     }
 
-    # broadcast(job-end, %job);
+    broadcast(job-end, %job);
 
-    # CATCH {
-    #     when X::AdHoc {
-    #         broadcast(job-fail, %job, .payload);
-    #     }
+    CATCH {
+        when X::AdHoc {
+            broadcast(job-fail, %job, .payload);
+        }
 
-    #     default {
-    #         broadcast(job-fail, %job, .Str);
-    #     }
-    # }
+        default {
+            broadcast(job-fail, %job, .Str);
+        }
+    }
 
     LEAVE {
-        try close %job<context><log>;
+        try close-job-log(%job);
     }
 }
 

@@ -36,6 +36,20 @@ sub load-job(IO::Path $path --> Hash) is export {
     return %job;
 }
 
+sub open-job-log(%job --> IO::Handle) is export {
+    unless %job<context><log> {
+        my $log-filename = %job<context><jobfile>.basename.IO.extension: 'log';
+        my $log-path = %job<context><archive>.add($log-filename);
+        %job<context><log-path> = $log-path;
+        %job<context><log> = open $log-path, :a;
+    }
+    return %job<context><log>;
+}
+
+sub close-job-log(%job) is export {
+    try close %job<context><log>;
+}
+
 sub job-type(%job --> JobType) {
     return freestyle if %job<scm> ~~ "freestyle";
     return task if %job<task>:exists;
