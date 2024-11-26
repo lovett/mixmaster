@@ -8,20 +8,30 @@ enum JobType <freestyle git task>;
 
 sub load-job(IO::Path $path --> Hash) is export {
     my %job = from-json($path.slurp // "\{}");
-    my $buildroot = nearest-root($path);
 
-    %job<mixmaster> = %{
-        buildroot => $buildroot,
-        config => load-config($buildroot),
-        jobfile => $path,
-        jobtype => job-type(%job),
-        workspace => Nil,
-        checkout => Nil,
-        archive => Nil,
-        branch => Nil,
-        project => Nil,
-        recipe => [],
-    }
+    %job<context> = Hash.new;
+    %job<context><buildroot> = nearest-root($path);
+    %job<context><config> = load-config(%job<context><buildroot>);
+    %job<context><jobfile> = $path;
+    %job<context><jobtype> = job-type(%job);
+
+    %job<context><project> = job-project(%job);
+
+    %job<context><project-dir> = filesystem-friendly(%job<context><project>);
+
+    %job<context><workspace> = %job<context><buildroot>.add(%job<context><project-dir>).mkdir;
+
+    %job<context><archive> = %job<context><workspace>.add("ARCHIVE").mkdir;
+
+    %job<context><branch> = job-branch(%job);
+
+    %job<context><branch-dir> = filesystem-friendly(%job<context><branch>);
+
+    %job<context><checkout> = %job<context><workspace>.add(%job<context><branch-dir>).mkdir;
+
+    %job<context><build-command> = build-command(%job);
+
+    %job<context><recipe> = job-recipe(%job);
 
     return %job;
 }
@@ -32,13 +42,40 @@ sub job-type(%job --> JobType) {
     return git;
 }
 
-sub build-command(%job, Str $project, Str $branch --> Str) {
+sub job-project(%job --> Str) {
+    given %job<context><jobtype> {
+        when git {
+            return %job<repository><full_name>;
+        }
+
+        default {
+            return %job<project>;
+        }
+    }
+}
+
+sub job-branch(%job --> Str) {
+    given %job<context><jobtype> {
+        when git {
+            return %job<ref>.subst("refs/heads/", "");
+        }
+
+        default {
+            return "";
+        }
+    }
+}
+
+sub build-command(%job --> Str) {
+    my $project = %job<context><project>;
+    my $branch = %job<context><branch>;
+
     my $matcher = $branch;
-    if %job<mixmaster><jobtype> ~~ task {
+    if %job<context><jobtype> ~~ task {
         $matcher ~= "/{%job<task>}";
     }
 
-    my Pair @matches = %job<mixmaster><config>{$project}.pairs.grep: {
+    my Pair @matches = %job<context><config>{$project}.pairs.grep: {
         .key.starts-with($matcher);
     }
 
@@ -58,75 +95,64 @@ sub build-command(%job, Str $project, Str $branch --> Str) {
     }
 }
 
-sub job-recipe(%job --> Hash) is export {
-    if (%job<mixmaster><config><_><sshKey>) {
-        %job<mixmaster><recipe>.push: "ssh-add -q {%job<mixmaster><config><_><sshKey>}"
+sub job-recipe(%job --> Array[Str]) is export {
+    my Str @recipe = [];
+
+    my $key = %job<context><config><_><sshKey>;
+
+    if ($key) {
+        @recipe.push: "ssh-add -q {$key}"
     }
 
-    given %job<mixmaster><jobtype> {
+    given %job<context><jobtype> {
         when freestyle {
-            return freestyle-recipe(%job);
+            @recipe.append: freestyle-recipe(%job);
         }
 
         when git {
-            return git-recipe(%job);
+            @recipe.append: git-recipe(%job);
         }
 
         when task {
-            return task-recipe(%job);
+            @recipe.append: task-recipe(%job);
         }
     }
+
+    @recipe.push: %job<context><build-command>;
+
+    if (%job<context><config><mode> ~~ "dryrun") {
+        @recipe = ("echo $_" for @recipe);
+    }
+
+    return @recipe;
 }
 
 sub freestyle-recipe(%job) {
-    my Str @recipe;
-    my $project = %job<project>;
-    @recipe.push: "echo freestyle placeholder";
-    return @recipe;
+    return ["echo freestyle placeholder"];
 }
 
 sub task-recipe(%job) {
-    my Str @recipe;
-    my $project = %job<project>;
-    @recipe.push: "echo task placeholder";
-    return @recipe;
+    return ["echo task placeholder"];
 }
 
 sub git-recipe(%job) {
-    my Str $project = %job<repository><full_name>;
-    my Str $project-dir = filesystem-friendly($project);
-    my Str $branch = %job<ref>.subst("refs/heads/", "");
-    my Str $branch-dir = filesystem-friendly($branch);
-    my IO::Path $workspace = %job<mixmaster><buildroot>.add($project-dir).mkdir;
+    my Str @recipe;
+    my Str $branch = %job<context><branch>;
+    my IO::Path $checkout = %job<context><checkout>;
+    my Str $clone-url = %job<repository><clone_url>;
+    my Str $revision = %job<after>;
 
-    my $checkout = $workspace.add($branch-dir).mkdir;
-    my $archive = $workspace.add("ARCHIVE").mkdir;
-
-    indir $checkout, {
-        if (".git".IO.d) {
-            %job<mixmaster><recipe>.push: "git reset --quiet --hard";
-            %job<mixmaster><recipe>.push: "git checkout --quiet {$branch}";
-            %job<mixmaster><recipe>.push: "git pull --ff-only";
-        } else {
-            %job<mixmaster><recipe>.push: "git clone --quiet --branch {$branch} {%job<repository><clone_url>} .";
-        }
-    };
-
-    if (%job<after>) {
-        %job<mixmaster><recipe>.push: "git checkout --quiet {%job<after>}";
+    if ($checkout.add(".git").d) {
+        @recipe.push: "git reset --quiet --hard";
+        @recipe.push: "git checkout --quiet {$branch}";
+        @recipe.push: "git pull --ff-only";
+    } else {
+        @recipe.push: "git clone --quiet --branch {$branch} {$clone-url} .";
     }
 
-    %job<mixmaster><recipe>.push: build-command(%job, $project, $branch);
-
-    if (%job<config><mode> ~~ "dryrun") {
-        %job<mixmaster><recipe> = ("echo $_" for %job<mixmaster><recipe>);
+    if ($revision) {
+        @recipe.push: "git checkout --quiet {$revision}";
     }
 
-    %job<mixmaster><workspace> = $workspace;
-    %job<mixmaster><checkout> = $checkout;
-    %job<mixmaster><archive> = $archive;
-    %job<mixmaster><branch> = $branch;
-    %job<mixmaster><project> = $project;
-
-    return %job;
+    return @recipe;
 }

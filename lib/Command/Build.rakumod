@@ -34,7 +34,7 @@ sub log-to-file(IO::Handle $handle, Str $prefix, Str $message) {
 
 # Dispatcher for tracking job progress in local logs and external proceesses.
 sub broadcast(JobState $state, %job, Str $message?) {
-    my $log = %job<mixmaster><log>;
+    my $log = %job<context><log>;
     # my $sendEmail = %job<mailto> && (%job<notifications> eq "all" || %job<notifications> ~~ "email");
 
     given $state {
@@ -70,10 +70,10 @@ sub broadcast(JobState $state, %job, Str $message?) {
 }
 
 sub doCommand(%job, Str $command) {
-    my $log = %job<mixmaster><log>;
+    my $log = %job<context><log>;
     log-to-file($log, '$', $command.trim);
 
-    indir(%job<mixmaster><checkout>, {
+    indir(%job<context><checkout>, {
         my $proc = Proc::Async.new(«$command»);
 
         react {
@@ -106,13 +106,13 @@ multi sub build(IO::Path $path where *.f) {
     my $archive = archive-path($buildroot);
     rename($path, $archive.add($path.basename));
 
-    my $log-filename = %job<mixmaster><jobfile>.IO.extension: 'log';
-    my $log-path = %job<mixmaster><archive>.add($log-filename.basename);
-    %job<mixmaster><log> = open $log-path, :a;
+    my $log-filename = %job<context><jobfile>.IO.extension: 'log';
+    my $log-path = %job<context><archive>.add($log-filename.basename);
+    %job<context><log> = open $log-path, :a;
 
     # broadcast(job-start, %job);
 
-    for %job<mixmaster><recipe>.list {
+    for %job<context><recipe>.list {
         doCommand(%job, $_);
     }
 
@@ -129,7 +129,7 @@ multi sub build(IO::Path $path where *.f) {
     # }
 
     LEAVE {
-        try close %job<mixmaster><log>;
+        try close %job<context><log>;
     }
 }
 
