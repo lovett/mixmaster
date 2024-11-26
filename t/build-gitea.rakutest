@@ -10,43 +10,41 @@ my $buildroot = tempdir;
 my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo";
 
-sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
+plan 11;
 
-    copy($job-fixture, $buildroot.IO.add("INBOX").add($job-fixture.basename));
+run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
-    copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
+copy($job-fixture, $buildroot.IO.add("INBOX").add($job-fixture.basename));
 
-    unless ($test-repo.IO.d) {
-        run "git", qqw{init -q $test-repo};
-        indir $test-repo, {
-            run "git", qqw{checkout -q -b production};
-            spurt $test-repo.IO.add("hello.txt"),  "hello world";
-            run "git", qqw{add hello.txt};
-            run "git", qqw{commit -q -m Hello};
-        };
-    }
+copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
 
-    my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out;
-    $proc.out.close();
-
-
-    is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
-    is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
-
-    is $workspace.d, True, "Workspace was created";
-    is $workspace.add("ARCHIVE").d, True, "Workspace archive was created";
-    is $workspace.add("production").d, True, "Workspace target directory was created";
-
-    my $log = $workspace.add("ARCHIVE/gitea.log");
-
-    is $log.f, True, "Workspace log was created";
-
-    my @log-lines = $log.IO.slurp;
-
-    is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Git clone was logged";
-    is @log-lines.grep(rx:s/\$ git checkout/).elems, 1, "Got checkout was logged";
-    is @log-lines.grep(rx:s/\$ echo Stub command for building production branch/).elems, 1, "Build command was logged";
-    is @log-lines.grep(rx:s/O Stub command for building production branch/).elems, 1, "Build command output was logged";
-    ok $proc.exitcode == 0, "Command exits zero";
+unless ($test-repo.IO.d) {
+    run "git", qqw{init -q $test-repo};
+    indir $test-repo, {
+        run "git", qqw{checkout -q -b production};
+        spurt $test-repo.IO.add("hello.txt"),  "hello world";
+        run "git", qqw{add hello.txt};
+        run "git", qqw{commit -q -m Hello};
+    };
 }
+
+my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out;
+$proc.out.close();
+
+is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
+is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
+is $workspace.d, True, "Workspace was created";
+is $workspace.add("ARCHIVE").d, True, "Workspace archive was created";
+is $workspace.add("production").d, True, "Workspace target directory was created";
+
+my $log = $workspace.add("ARCHIVE/gitea.log");
+is $log.f, True, "Workspace log was created";
+
+my @log-lines = $log.IO.slurp;
+is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Git clone was logged";
+is @log-lines.grep(rx:s/\$ git checkout/).elems, 1, "Got checkout was logged";
+is @log-lines.grep(rx:s/\$ echo Stub command for building production branch/).elems, 1, "Build command was logged";
+is @log-lines.grep(rx:s/O Stub command for building production branch/).elems, 1, "Build command output was logged";
+ok $proc.exitcode == 0, "Command exits zero";
+
+done-testing;

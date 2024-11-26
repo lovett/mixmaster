@@ -1,33 +1,35 @@
 #!/usr/bin/env rakudo
 
 use Test;
+use File::Temp;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $recipe-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.recipe');
 my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
 
-# Not using tempdir so that recipe fixture can be matched to a known path
-my $buildroot = "/tmp/mixmaster";
+my $buildroot = tempdir;
 my $job-file = $buildroot.IO.add("INBOX").add($job-fixture.basename);
 my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo.git";
 
-sub MAIN() is test-assertion {
-    run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
+plan 4;
 
-    copy($job-fixture, $job-file);
+run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
-    copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
+copy($job-fixture, $job-file);
 
-    my $proc = run $mixmaster, qqw{--job $job-file recipe}, :out;
-    my $recipe = $proc.out.slurp: :close;
+copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
 
-    my $expected-recipe = $recipe-fixture.IO.slurp;
+my $proc = run $mixmaster, qqw{--job $job-file recipe}, :out;
+my $recipe = $proc.out.slurp: :close;
 
-    for $expected-recipe.lines.kv -> $i, $_ {
-        is $recipe.lines[$i] eq $_, True, "Line {$i+1} of recipe matches fixture";
-    }
+my $expected-recipe = $recipe-fixture.IO.slurp;
 
-    ok $proc.exitcode == 0, "Command exits zero";
+for $expected-recipe.lines.kv -> $i, $_ {
+    is $recipe.lines[$i] eq $_, True, "Line {$i+1} of recipe matches fixture";
 }
+
+ok $proc.exitcode == 0, "Command exits zero";
+
+done-testing;
