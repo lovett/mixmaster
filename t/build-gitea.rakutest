@@ -11,7 +11,7 @@ my $buildroot = tempdir;
 my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo";
 
-plan 14;
+plan 11;
 
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
@@ -43,9 +43,6 @@ is $log.f, True, "Workspace log was created";
 
 my @log-lines = $log.IO.slurp;
 
-is @log-lines.grep(rx:s/\# Build started for/).elems, 1, "Build start message appeared in log";
-is @log-lines.grep(rx:s/\# Building in/).elems, 1, "Build workspace appeared in log";
-is @log-lines.grep(rx:s/\# Logging to .* gitea.log/).elems, 1, "Log path appeared in log";
 is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Git clone appeared in log";
 is @log-lines.grep(rx:s/\$ git checkout/).elems, 1, "Git checkout appeared in log";
 is @log-lines.grep(rx:s/\$ echo Stub command for building production branch/).elems, 1, "Build command was logged";

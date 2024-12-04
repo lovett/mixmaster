@@ -1,0 +1,43 @@
+#!/usr/bin/env rakudo
+
+use Test;
+use File::Temp;
+use Data::Generators;
+
+use lib $*PROGRAM.parent(2).add("lib");
+use Broadcast;
+use Job;
+
+plan 8;
+
+my ($log-file, $log-handle) = tempfile;
+
+my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
+my %job = load-job($job-fixture);
+my $command-phrase = ~random-word 3;
+my $stdout-phrase = ~random-word 4;
+my $stderr-phrase = ~random-word 5;
+my $fail-phrase = ~random-word 5;
+
+%job<config><mailto> = Nil;
+%job<context><log> = $log-handle;
+
+broadcast-start(%job);
+broadcast-command(%job, $command-phrase);
+broadcast-stdout(%job, $stdout-phrase);
+broadcast-stderr(%job, $stderr-phrase);
+broadcast-end(%job);
+broadcast-fail(%job, $fail-phrase);
+
+my @log-lines = $log-file.IO.slurp.lines;
+
+ok @log-lines[0].contains("# Build started for"), "Build start message was logged";
+ok @log-lines[1].contains("# Building in"), "Build workspace was logged";
+ok @log-lines[2].contains(rx:s/Logging to .* gitea.log/), "Log path was logged";
+ok @log-lines[3].contains("\$ $command-phrase"), "Command message was logged";
+ok @log-lines[4].contains("O $stdout-phrase"), "Stdout message was logged";
+ok @log-lines[5].contains("! $stderr-phrase"), "Stderr message was logged";
+ok @log-lines[6].contains("# End of build"), "Build end message was logged";
+ok @log-lines[7].contains("# Build failed: $fail-phrase"), "Build failure message was logged";
+
+done-testing;

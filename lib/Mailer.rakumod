@@ -1,4 +1,4 @@
-unit module Broadcast::Email;
+unit module Email;
 
 use Email::Simple;
 
@@ -53,7 +53,7 @@ sub mail-job-start(Str $recipient, %job) is export {
         if $key.starts-with('commit-') {
             my ($timestamp, $id) = $key.subst(/commit\-/, '').split(',');
             my $shortId = short-commit($id);
-            my $message = decode-ini-value($value).subst(
+            my $message = $value.subst(
                 /(\w)\n(\w)/,
                 { "$0 $1" },
                 :g

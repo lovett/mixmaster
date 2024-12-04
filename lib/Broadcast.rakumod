@@ -1,15 +1,12 @@
 unit module Broadcast;
 
-sub broadcast-start(%job, Str $message?) is export {
-    # my $sendEmail = %job<mailto> && (%job<notifications> eq "all" || %job<notifications> ~~ "email");
+use Mailer;
+
+sub broadcast-start(%job) is export {
     log(%job, '#', "Build started for {%job<context><jobfile>}");
     log(%job, '#', "Building in {%job<context><workspace>}");
     log(%job, '#', "Logging to {%job<context><log-path>}");
-
-    # if ($sendEmail) {
-    #     use Broadcast::Email;
-    #     mail-job-start(%job<mailto>, %job);
-    # }
+    mail-job-start(%job);
 }
 
 sub broadcast-command(%job, Str $message) is export {
@@ -22,31 +19,16 @@ sub broadcast-stdout(%job, Str $message) is export {
 
 sub broadcast-stderr(%job, Str $message) is export {
     log(%job, '!', $message);
-    say "STDERR: " ~ $message.trim;
 }
 
 sub broadcast-end(%job) is export {
-    my $sendEmail = %job<mailto> && (%job<notifications> eq "all" || %job<notifications> ~~ "email");
-
     log(%job, '#', "End of build");
-
-    try close %job<context><log>;
-
-    # if ($sendEmail) {
-    #     use Broadcast::Email;
-    #     mail-job-end(%job<mailto>, %job);
-    # }
+    mail-job-end(%job);
 }
 
 sub broadcast-fail(%job, Str $message) is export {
-    my $sendEmail = %job<mailto> && (%job<notifications> eq "all" || %job<notifications> ~~ "email");
-
     log(%job, '#', "Build failed: {$message}");
-
-    # if (%job<mailto>) {
-    #     use Broadcast::Email;
-    #     mail-job-fail(%job<mailto>, %job);
-    # }
+    mail-job-fail(%job);
 }
 
 sub log(%job, Str $prefix, Str $message) {
