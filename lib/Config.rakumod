@@ -27,6 +27,9 @@ sub create-config(IO::Path $path) is export {
     ; The email address that should receive build updates.
     mailto =
 
+    ; The command for sending email.
+    mailcommand = /usr/sbin/sendmail -t
+
     ; Sample project configuration.
     [example-org/example-repo]
     production = make deploy

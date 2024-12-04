@@ -12,6 +12,9 @@ sub load-job(IO::Path $path --> Hash) is export {
     %job<context> = Hash.new;
     %job<context><buildroot> = nearest-root($path);
     %job<context><config> = load-config(%job<context><buildroot>);
+
+    %job<context><mailable> = %job<config><mailto> ~~ Str && %job<config><mailcommand> ~~ Str;
+
     %job<context><jobfile> = $path;
     %job<context><jobtype> = job-type(%job);
 

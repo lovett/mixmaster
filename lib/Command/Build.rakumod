@@ -65,10 +65,12 @@ multi sub build(IO::Path $path where *.f) {
 
     CATCH {
         when X::AdHoc {
+            %job<context><failed> = True;
             broadcast-fail(%job, .payload);
         }
 
         default {
+            %job<context><failed> = True;
             broadcast-fail(%job, .Str);
         }
     }
