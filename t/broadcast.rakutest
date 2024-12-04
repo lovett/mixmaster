@@ -5,15 +5,28 @@ use File::Temp;
 use Data::Generators;
 
 use lib $*PROGRAM.parent(2).add("lib");
+
 use Broadcast;
 use Job;
 
-plan 8;
 
+my $testdir = tempdir;
 my ($log-file, $log-handle) = tempfile;
 
+
 my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
-my %job = load-job($job-fixture);
+my $job-file = $testdir.IO.add($job-fixture.basename);
+
+my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
+my $config-file = $testdir.IO.add($config-fixture.basename);
+
+
+plan 9;
+
+copy($job-fixture, $job-file);
+copy($config-fixture, $config-file);
+
+my %job = load-job($job-file);
 my $command-phrase = ~random-word 3;
 my $stdout-phrase = ~random-word 4;
 my $stderr-phrase = ~random-word 5;
@@ -34,10 +47,11 @@ my @log-lines = $log-file.IO.slurp.lines;
 ok @log-lines[0].contains("# Build started for"), "Build start message was logged";
 ok @log-lines[1].contains("# Building in"), "Build workspace was logged";
 ok @log-lines[2].contains(rx:s/Logging to .* gitea.log/), "Log path was logged";
-ok @log-lines[3].contains("\$ $command-phrase"), "Command message was logged";
-ok @log-lines[4].contains("O $stdout-phrase"), "Stdout message was logged";
-ok @log-lines[5].contains("! $stderr-phrase"), "Stderr message was logged";
-ok @log-lines[6].contains("# End of build"), "Build end message was logged";
-ok @log-lines[7].contains("# Build failed: $fail-phrase"), "Build failure message was logged";
+ok @log-lines[3].contains("Email notifications will not be sent"), "Unmailable message was logged";
+ok @log-lines[4].contains("\$ $command-phrase"), "Command message was logged";
+ok @log-lines[5].contains("O $stdout-phrase"), "Stdout message was logged";
+ok @log-lines[6].contains("! $stderr-phrase"), "Stderr message was logged";
+ok @log-lines[7].contains("# End of build"), "Build end message was logged";
+ok @log-lines[8].contains("# Build failed: $fail-phrase"), "Build failure message was logged";
 
 done-testing;
