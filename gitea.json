@@ -1,0 +1,109 @@
+{
+  "secret": "",
+  "ref": "refs/heads/production",
+  "before": "xxx",
+  "after": "c813fdac0d87cfd294fae845940818d4b919ca62",
+  "compare_url": "http://example.com/compare_url",
+  "commits": [
+    {
+      "id": "xxx",
+      "message": "Test commit message\n",
+      "url": "http://example.com/commit/xxx",
+      "author": {
+        "name": "Test User",
+        "email": "test@example.com",
+        "username": "test"
+      },
+      "committer": {
+        "name": "Test User",
+        "email": "test@example.com",
+        "username": "test"
+      },
+      "verification": null,
+      "timestamp": "2000-01-01T-00:00-04:00",
+      "added": null,
+      "removed": null,
+      "modified": null
+    },
+    {
+      "id": "yyy",
+      "message": "Commit message for yyy test commit\n",
+      "url": "http://example.com/commit/yyy",
+      "author": {
+        "name": "Test User 2",
+        "email": "test2@example.com",
+        "username": "test2"
+      },
+      "committer": {
+        "name": "Test User 2",
+        "email": "test2@example.com",
+        "username": ""
+      },
+      "verification": null,
+      "timestamp": "2000-01-01T00:00:03-04:00",
+      "added": null,
+      "removed": null,
+      "modified": null
+    }
+  ],
+  "head_commit": null,
+  "repository": {
+    "id": 35,
+    "owner": {
+      "id": 3,
+      "login": "test-org",
+      "full_name": "",
+      "email": "",
+      "avatar_url": "http://example.com/test-org-avatar-url",
+      "language": "",
+      "is_admin": false,
+      "username": "test-org"
+    },
+    "name": "test-repo",
+    "full_name": "test-org/test-repo",
+    "description": "Test repo",
+    "empty": false,
+    "private": false,
+    "fork": false,
+    "parent": null,
+    "mirror": false,
+    "size": 12345,
+    "html_url": "http://example.com/testrepo",
+    "ssh_url": "git@git.example.com:test-org/test-repo",
+    "clone_url": "file:///tmp/test-repo",
+    "website": "",
+    "stars_count": 0,
+    "forks_count": 0,
+    "watchers_count": 1,
+    "open_issues_count": 0,
+    "default_branch": "master",
+    "archived": false,
+    "created_at": "2000-01-01T00:00:00-04:00",
+    "updated_at": "2000-01-01T00:00:01-04:00",
+    "permissions": {
+      "admin": false,
+      "push": false,
+      "pull": false
+    }
+  },
+  "pusher": {
+    "id": 1,
+    "login": "test",
+    "full_name": "Test User",
+    "email": "test@example.com",
+    "avatar_url": "http://example.com",
+    "language": "en-US",
+    "is_admin": true,
+    "username": "test"
+  },
+  "sender": {
+    "id": 1,
+    "login": "test",
+    "full_name": "Test User",
+    "email": "test@example.com",
+    "avatar_url": "http://example.com",
+    "language": "en-US",
+    "is_admin": true,
+    "username": "test"
+  }
+}

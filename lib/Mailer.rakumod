@@ -11,29 +11,29 @@ sub job-start-email(%job) is export {
     #     $body = "Mixmaster has started the {%job<task>} task on ";
     # }
 
-    if (%job<commit>) {
-        $body ~= short-commit(%job<commit>) ~ " on ";
+    if (%job<after>) {
+        $body ~= short-commit(%job<after>) ~ " on ";
     }
 
     $body ~= %job<context><branch> ~ ".";
 
-    if (%job<viewUrl>) {
-        $body ~= "\n\n{%job<viewUrl>}";
-    }
+    # if (%job<commits>) {
+    #     $body ~= "\n\n{%job<viewUrl>}";
+    # }
 
     $body ~= "\n\n";
 
-    for %job.kv -> $key, $value {
-        if $key.starts-with('commit-') {
-            my ($timestamp, $id) = $key.subst(/commit\-/, '').split(',');
-            my $shortId = short-commit($id);
-            my $message = $value.subst(
+    if (%job<commits>:exists) {
+        for %job<commits>.list -> %commit {
+            my $timestamp = %commit<timestamp>.trim;
+            my $id = short-commit(%commit<id>);
+            my $message = %commit<message>.trim.subst(
                 /(\w)\n(\w)/,
                 { "$0 $1" },
                 :g
             );
 
-            $body ~= "Commit {$shortId} on {$timestamp}\n{$message}\n\n\n";
+            $body ~= "Commit {$id} on {$timestamp}\n{$message}\n\n";
         }
     }
 
@@ -46,13 +46,14 @@ sub job-end-email(%job) is export {
         $body = "Mixmaster was unable to build ";
     }
 
-    if (%job<commit>) {
-        $body ~= short-commit(%job<commit>) ~ " on ";
+    if (%job<after>) {
+        $body ~= short-commit(%job<after>) ~ " on ";
     }
 
     $body ~= %job<context><branch> ~ ".";
 
-    $body ~= "\n\n" ~ %job<context><log-path>.slurp;
+    $body ~= "\n\nBuild log:\n";
+    $body ~= %job<context><log-path>.slurp;
 
     return ("Re: {PREFIX} Building {%job<context><project>}", $body);
 }

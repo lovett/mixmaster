@@ -152,7 +152,7 @@ sub git-recipe(%job) {
     my Str $branch = %job<context><branch>;
     my IO::Path $checkout = %job<context><checkout>;
     my Str $clone-url = %job<repository><clone_url>;
-    my Str $revision = %job<after>;
+    my Str $commit = %job<after>;
 
     if ($checkout.add(".git").d) {
         @recipe.push: "git reset --quiet --hard";
@@ -162,8 +162,8 @@ sub git-recipe(%job) {
         @recipe.push: "git clone --quiet --branch {$branch} {$clone-url} .";
     }
 
-    if ($revision) {
-        @recipe.push: "git checkout --quiet {$revision}";
+    if ($commit) {
+        @recipe.push: "git checkout --quiet {$commit}";
     }
 
     return @recipe;

@@ -1,0 +1,53 @@
+#!/usr/bin/env rakudo
+
+use Test;
+use File::Temp;
+
+use lib $*PROGRAM.parent(2).add("lib");
+
+use Mailer;
+use Job;
+
+my $testdir = tempdir;
+
+my %fixtures;
+my %files;
+
+indir $*PROGRAM.IO.parent().add('fixture'), {
+    %fixtures<job> = "gitea.json".IO;
+    %fixtures<config> = "mixmaster.ini".IO;
+    %fixtures<start> = "start.email".IO;
+    %fixtures<success> = "success.email".IO;
+    %fixtures<successLog> = "success.log".IO;
+    %fixtures<fail> = "fail.email".IO;
+    %fixtures<failLog> = "fail.log".IO;
+}
+
+indir $testdir, {
+    %files<job> = %fixtures<job>.basename.IO;
+    %files<config> = %fixtures<config>.basename.IO;
+}
+
+copy(%fixtures<job>, %files<job>);
+copy(%fixtures<config>, %files<config>);
+
+my %job = load-job(%files<job>);
+
+plan 6;
+
+my ($startSubject, $startBody) = job-start-email(%job);
+is $startSubject, "[mixmaster] Building test-org/test-repo", "Start email subject";
+is $startBody.trim, %fixtures<start>.slurp.trim, "Start email body";
+
+%job<context><log-path> = %fixtures<successLog>;
+my ($endSubject, $endBody) = job-end-email(%job);
+is $endSubject, "Re: [mixmaster] Building test-org/test-repo", "End email subject";
+is $endBody.trim, %fixtures<success>.slurp.trim, "End email body";
+
+%job<context><failed> = True;
+%job<context><log-path> = %fixtures<failLog>;
+my ($failSubject, $failBody) = job-end-email(%job);
+is $failSubject, "Re: [mixmaster] Building test-org/test-repo", "Fail email subject";
+is $failBody.trim, %fixtures<fail>.slurp.trim, "Fail email body";
+
+done-testing;
