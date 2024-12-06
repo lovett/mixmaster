@@ -17,9 +17,9 @@ sub job-start-email(%job) is export {
 
     $body ~= %job<context><branch> ~ ".";
 
-    # if (%job<commits>) {
-    #     $body ~= "\n\n{%job<viewUrl>}";
-    # }
+    if (%job<compare_url>) {
+        $body ~= "\n\n{%job<compare_url>}";
+    }
 
     $body ~= "\n\n";
 
