@@ -16,11 +16,14 @@ The JSON body is not processed here.
 
 =end pod
 
+use JSON::Fast;
+
 use Filesystem;
 
 our sub bridge(IO::Path $buildroot) {
     unless ($buildroot.d) {
         respond-notfound();
+        note "Build request rejected: $buildroot is not a directory.";
         return;
     }
 
@@ -48,27 +51,30 @@ our sub bridge(IO::Path $buildroot) {
         when "POST" or "PUT" {
             my Buf $body = $*IN.read(%headers<content-length>);
 
-            try {
-                my $inbox = inbox-path($buildroot);
-                my $filename = DateTime.now(
-                    formatter => sub ($self) {
-                        sprintf "%04d%02d%02d-%02d%02d%02d.json",
-                        .year, .month, .day, .hour, .minute, .whole-second given $self;
-                    }
-                );
+            my $json = from-json $body.decode;
 
-                spurt $inbox.add($filename), $body;
-                respond-success();
+            my $inbox = inbox-path($buildroot);
+            my $filename = DateTime.now(
+                formatter => sub ($self) {
+                    sprintf "%04d%02d%02d-%02d%02d%02d.json",
+                    .year, .month, .day, .hour, .minute, .whole-second given $self;
+                }
+            );
 
-                CATCH {
+            spurt $inbox.add($filename), $body;
+            respond-success();
+
+            CATCH {
+                default {
                     respond-failure();
+                    note("Build request rejected: " ~ .message);
                 }
             }
         }
 
         default {
             respond-notallowed();
-            exit;
+            note("Build request rejected: HTTP request was not POST or PUT");
         }
     }
 }
@@ -86,15 +92,6 @@ sub respond-failure() {
     print "HTTP/1.0 400 Bad Request\r\n";
     print "Connection: close\r\n";
     print "\r\n";
-}
-
-sub respond-error(Str $message) {
-    print "HTTP/1.1 422 Unprocessable Entity\r\n";
-    print "Connection: close\r\n";
-    print "Content-Length: {$message.chars}\r\n";
-    print "Content-Type: text/plain; charset=utf-8\r\n";
-    print "\r\n";
-    print $message;
 }
 
 sub respond-notfound() {

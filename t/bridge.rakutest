@@ -8,14 +8,14 @@ my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $buildroot = tempdir;
 
-plan 3;
+plan 4;
 
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
 my $job = $fixture.IO.slurp;
 
-my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in, :out;
-$proc.in.print: qq:to/HEADERS/;
+my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in, :out, :err;
+$proc.in.print: qq:to/REQUEST/;
 POST / HTTP/1.0
 Content-Type: application/json
 Remote-Addr: 127.0.0.1
@@ -23,15 +23,19 @@ Connection: close
 Content-Length: {$job.chars}
 
 {$job}
-HEADERS
+REQUEST
 
 $proc.in.close();
+
+my $stderr = $proc.err.slurp(:close).trim;
 
 my IO::Path @files = $buildroot.IO.add("INBOX").dir(test => /'.' json $/);
 
 is @files.elems, 1, "Creates job file in inbox";
 
 is @files[0].slurp.chars, $job.chars, "Job file matches fixture";
+
+is $stderr, "", "Does not write to stderr";
 
 ok $proc.exitcode == 0, "Command exits zero";
 
