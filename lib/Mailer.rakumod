@@ -65,7 +65,8 @@ sub mail(%config, Str $subject, Str $body) is export {
     my $message = Email::Simple.create(
         :header[
                  ['To', $recipient],
-                 ['Subject', $subject]
+                 ['Subject', $subject],
+                 ['Content-type', 'text/plain; charset="UTF-8"'],
              ],
         :body($body)
     );
