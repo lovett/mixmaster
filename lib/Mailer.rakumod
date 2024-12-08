@@ -60,7 +60,7 @@ sub job-end-email(%job) is export {
 
 sub mail(%config, Str $subject, Str $body) is export {
     my $recipient = %config<mailto>;
-    my $mailcommand = %config<mailcommand>;
+    my @mailcommand = %config<mailcommand>.split(" ");
 
     my $message = Email::Simple.create(
         :header[
@@ -71,7 +71,7 @@ sub mail(%config, Str $subject, Str $body) is export {
         :body($body)
     );
 
-    my $proc = Proc::Async.new(:w, $mailcommand);
+    my $proc = Proc::Async.new(:w, @mailcommand.head, @mailcommand.tail(*-1));
     react {
         whenever $proc.start {
             done
