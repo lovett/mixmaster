@@ -15,7 +15,7 @@ install:
 # Install third-party libraries.
 # Anything listed here should also be in ansible/install.yml.
 setup:
-	sudo zef install JSON::Fast Config::INI Email::Simple File::Temp Data::Generators
+	zef install --to=home JSON::Fast Config::INI Email::Simple File::Temp Data::Generators
 
 # Update the current installation on a remote host.
 upgrade:
