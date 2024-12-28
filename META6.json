@@ -17,6 +17,7 @@
     "Console": "lib/Console.rakumod",
     "Filesystem": "lib/Filesystem.rakumod",
     "Job": "lib/Job.rakumod",
+    "Mailer": "lib/Mailer.rakumod"
   },
   "depends" : [
     "Config::INI",
