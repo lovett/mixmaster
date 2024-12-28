@@ -2,7 +2,7 @@
   "secret": "",
   "ref": "refs/heads/production",
   "before": "xxx",
-  "after": "c813fdac0d87cfd294fae845940818d4b919ca62",
+  "after": "HEAD",
   "compare_url": "http://example.com/compare_url",
   "commits": [
     {
