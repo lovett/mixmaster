@@ -1,10 +1,10 @@
-unit package Command;
+unit module Command::Setup;
 
 use Filesystem;
 use Config;
 use Console;
 
-our sub setup(IO::Path $buildroot) is export {
+our sub run(IO::Path $buildroot) is export {
     for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
         .mkdir;
         success-message("Created $_");

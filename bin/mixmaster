@@ -9,33 +9,33 @@ use lib $*PROGRAM.absolute.IO.parent(2).add("lib");
 #| Establish a buildroot and starter config
 multi sub MAIN("setup", Str :$buildroot = DEFAULT_BUILDROOT #= Filesystem path where builds will be kept
 ) {
-    use Command::Setup;
-    Command::setup($buildroot.IO);
+    need Command::Setup;
+    Command::Setup::run($buildroot.IO);
 }
 
 #| Install systemd services
 multi sub MAIN("service", Str :$buildroot = DEFAULT_BUILDROOT) {
-    use Command::Service;
-    Command::service($buildroot.IO);
+    need Command::Service;
+    Command::Service::run($buildroot.IO);
 }
 
 #| Receive build requests over HTTP
 multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) {
-    use Command::Bridge;
-    Command::bridge($buildroot.IO);
+    need Command::Bridge;
+    Command::Bridge::run($buildroot.IO);
 }
 
 #| Start a build
 multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) {
     use Command::Build;
-    Command::build($buildroot.IO);
+    Command::Build::run($buildroot.IO);
 }
 
 #| Show the commands a build would run
 multi sub MAIN("recipe", Str :$job #= Filesystem path to an existing job file
 ) {
     use Command::Recipe;
-    Command::recipe($job.IO);
+    Command::Recipe::run($job.IO);
 }
 
 #| Print the application version

@@ -1,9 +1,9 @@
-unit package Command;
+unit module Command::Service;
 
 use Filesystem;
 use Console;
 
-our sub service(IO::Path $buildroot) is export {
+our sub run(IO::Path $buildroot) is export {
     my @files := <
         mixmaster.service
         mixmaster-bridge.socket

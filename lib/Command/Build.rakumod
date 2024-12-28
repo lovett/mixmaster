@@ -1,4 +1,4 @@
-unit package Command;
+unit module Command::Build;
 
 =begin pod
 
@@ -26,9 +26,9 @@ use Broadcast;
 # }
 
 
-our proto build(IO::Path $path) {*}
+our proto run(IO::Path $path) {*}
 
-multi sub build(IO::Path $path where *.f) {
+multi sub run(IO::Path $path where *.f) {
     my %job = load-job($path);
 
     my IO::Path $archive = archive-path(%job<context><buildroot>);
@@ -80,12 +80,12 @@ multi sub build(IO::Path $path where *.f) {
     }
 }
 
-multi sub build(IO::Path $buildroot where *.d) {
+multi sub run(IO::Path $buildroot where *.d) {
     my $inbox = inbox-path($buildroot);
     my IO::Path $job = $inbox.dir(test => /'.' json $/).first();
 
     return unless $job;
 
-    build($job);
-    build($buildroot);
+    run($job);
+    run($buildroot);
 }

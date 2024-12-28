@@ -1,4 +1,4 @@
-unit package Command;
+unit module Command::Bridge;
 
 =begin pod
 
@@ -20,7 +20,7 @@ use JSON::Fast;
 
 use Filesystem;
 
-our sub bridge(IO::Path $buildroot) {
+our sub run(IO::Path $buildroot) {
     unless ($buildroot.d) {
         respond-notfound();
         note "Build request rejected: $buildroot is not a directory.";
