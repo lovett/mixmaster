@@ -1,0 +1,31 @@
+{
+  "raku" : "6.d",
+  "name" : "Mixmaster",
+  "version" : "dev",
+  "auth" : "github:lovett",
+  "description" : "A lightweight build service.",
+  "authors" : [ "Bill Lovett" ],
+  "provides" : {
+    "Broadcast": "lib/Broadcast.rakumod",
+    "Command:Bridge": "lib/Command/Bridge.rakumod",
+    "Command:Build": "lib/Command/Build.rakumod",
+    "Command:Mailer": "lib/Mailer.rakumod",
+    "Command:Recipe": "lib/Command/Recipe.rakumod",
+    "Command:Service": "lib/Command/Service.rakumod",
+    "Command:Setup": "lib/Command/Setup.rakumod",
+    "Config": "lib/Config.rakumod",
+    "Console": "lib/Console.rakumod",
+    "Filesystem": "lib/Filesystem.rakumod",
+    "Job": "lib/Job.rakumod",
+  },
+  "depends" : [
+    "Config::INI",
+    "Email::Simple",
+    "JSON::Fast"
+  ],
+  "test-depends" : [
+    "File::Temp",
+    "Data::Generators"
+  ],
+  "source-url" : "git://github.com/lovett/mixmaster.git"
+}
