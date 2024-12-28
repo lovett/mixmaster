@@ -22,10 +22,10 @@ copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
 unless ($test-repo.IO.d) {
     run "git", qqw{init -q $test-repo};
     indir $test-repo, {
-        run "git", qqw{checkout -q -b production};
+        run "git", <checkout -q -b production>;
         spurt $test-repo.IO.add("hello.txt"),  "hello world";
-        run "git", qqw{add hello.txt};
-        run "git", qqw{commit -q -m Hello};
+        run "git", <add hello.txt>;
+        run "git", <commit -q -m Hello>;
     };
 }
 
