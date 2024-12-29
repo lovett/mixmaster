@@ -25,8 +25,9 @@
     "JSON::Fast"
   ],
   "test-depends" : [
-    "File::Temp",
-    "Data::Generators"
+    "App::Prove6",
+    "Data::Generators",
+    "File::Temp"
   ],
   "source-url" : "git://github.com/lovett/mixmaster.git"
 }
