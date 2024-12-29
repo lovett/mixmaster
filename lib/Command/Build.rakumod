@@ -13,7 +13,6 @@ Building continues recursively until the inbox is empty.
 =end pod
 
 use JSON::Fast;
-use Config;
 use Job;
 use Filesystem;
 use Broadcast;

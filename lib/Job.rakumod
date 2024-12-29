@@ -1,6 +1,7 @@
 unit module Job;
 
-use Config;
+use Config::INI;
+
 use Filesystem;
 use JSON::Fast;
 
@@ -41,6 +42,13 @@ sub load-job(IO::Path $path --> Hash) is export {
     %job<context><log> = open %job<context><log-path>, :a;
 
     return %job;
+}
+
+sub load-config(IO::Path $buildroot --> Hash) {
+    my $path = config-path($buildroot);
+    my $ini = Config::INI::parse_file($path.absolute);
+    return $ini if $ini;
+    return %{};
 }
 
 sub job-type(%job --> JobType) {
