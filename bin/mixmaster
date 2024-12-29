@@ -3,39 +3,38 @@
 constant SCRIPT_VERSION = "dev";
 constant DEFAULT_BUILDROOT = "{$*HOME}/Builds";
 
-use lib "/usr/local/share/mixmaster/lib";
 use lib $*PROGRAM.absolute.IO.parent(2).add("lib");
 
 #| Establish a buildroot and starter config
 multi sub MAIN("setup", Str :$buildroot = DEFAULT_BUILDROOT #= Filesystem path where builds will be kept
 ) {
     need Command::Setup;
-    Command::Setup::run($buildroot.IO);
+    Command::Setup::make-it-so($buildroot.IO);
 }
 
 #| Install systemd services
 multi sub MAIN("service", Str :$buildroot = DEFAULT_BUILDROOT) {
     need Command::Service;
-    Command::Service::run($buildroot.IO);
+    Command::Service::make-it-so($buildroot.IO);
 }
 
 #| Receive build requests over HTTP
 multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) {
     need Command::Bridge;
-    Command::Bridge::run($buildroot.IO);
+    Command::Bridge::make-it-so($buildroot.IO);
 }
 
 #| Start a build
 multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) {
     use Command::Build;
-    Command::Build::run($buildroot.IO);
+    Command::Build::make-it-so($buildroot.IO);
 }
 
 #| Show the commands a build would run
 multi sub MAIN("recipe", Str :$job #= Filesystem path to an existing job file
 ) {
     use Command::Recipe;
-    Command::Recipe::run($job.IO);
+    Command::Recipe::make-it-so($job.IO);
 }
 
 #| Print the application version

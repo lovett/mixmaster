@@ -20,7 +20,7 @@ use JSON::Fast;
 
 use Filesystem;
 
-our sub run(IO::Path $buildroot) {
+our sub make-it-so(IO::Path $buildroot) {
     unless ($buildroot.d) {
         respond-notfound();
         note "Build request rejected: $buildroot is not a directory.";

@@ -4,7 +4,7 @@ use Filesystem;
 use Config;
 use Console;
 
-our sub run(IO::Path $buildroot) is export {
+our sub make-it-so(IO::Path $buildroot) is export {
     for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
         .mkdir;
         success-message("Created $_");
