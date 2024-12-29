@@ -6,10 +6,13 @@ use File::Temp;
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $buildroot = tempdir;
 
-%*ENV<HOME> = tempdir;
+my $home = tempdir;
 
-my $proc = run $mixmaster, qqw{--buildroot $buildroot service}, :out;
-$proc.out.close();
+symlink(%*ENV<HOME>.IO.add(".raku"), $home.IO.add(".raku"));
+
+%*ENV<HOME> = $home;
+
+my $proc = run $mixmaster, qqw{--buildroot $buildroot service};
 
 my @filenames := <
     mixmaster.service
