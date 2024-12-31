@@ -3,7 +3,7 @@ unit module Command::Setup;
 use Filesystem;
 use Console;
 
-our sub make-it-so(IO::Path $buildroot) is export {
+my sub make-it-so(IO::Path $buildroot) is export {
     for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
         .mkdir;
         success-message("Created $_");

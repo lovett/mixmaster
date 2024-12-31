@@ -3,7 +3,7 @@ unit module Command::Service;
 use Filesystem;
 use Console;
 
-our sub make-it-so(IO::Path $buildroot) is export {
+my sub make-it-so(IO::Path $buildroot) is export {
     my @files := <
         mixmaster.service
         mixmaster-bridge.socket

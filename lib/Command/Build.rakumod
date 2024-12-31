@@ -27,7 +27,7 @@ use Broadcast;
 
 our proto make-it-so(IO::Path $path) {*}
 
-multi sub make-it-so(IO::Path $path where *.f) {
+multi sub make-it-so(IO::Path $path where *.f) is export {
     my %job = load-job($path);
 
     my IO::Path $archive = archive-path(%job<context><buildroot>);
@@ -79,7 +79,7 @@ multi sub make-it-so(IO::Path $path where *.f) {
     }
 }
 
-multi sub make-it-so(IO::Path $buildroot where *.d) {
+multi sub make-it-so(IO::Path $buildroot where *.d) is export {
     my $inbox = inbox-path($buildroot);
     my IO::Path $job = $inbox.dir(test => /'.' json $/).first();
 

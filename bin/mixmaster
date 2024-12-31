@@ -8,38 +8,38 @@ use lib $*PROGRAM.absolute.IO.parent(2).add("lib");
 #| Establish a buildroot and starter config
 multi sub MAIN("setup", Str :$buildroot = DEFAULT_BUILDROOT #= Filesystem path where builds will be kept
 ) {
-    need Command::Setup;
-    Command::Setup::make-it-so($buildroot.IO);
+    run-command("setup", $buildroot.IO);
 }
 
 #| Install systemd services
 multi sub MAIN("service", Str :$buildroot = DEFAULT_BUILDROOT) {
-    need Command::Service;
-    Command::Service::make-it-so($buildroot.IO);
+    run-command("service", $buildroot.IO);
 }
 
 #| Receive build requests over HTTP
 multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) {
-    need Command::Bridge;
-    Command::Bridge::make-it-so($buildroot.IO);
+    run-command("bridge", $buildroot.IO);
 }
 
 #| Start a build
 multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) {
-    use Command::Build;
-    Command::Build::make-it-so($buildroot.IO);
+    run-command("build", $buildroot.IO);
 }
 
 #| Show the commands a build would run
 multi sub MAIN("recipe", Str :$job #= Filesystem path to an existing job file
 ) {
-    use Command::Recipe;
-    Command::Recipe::make-it-so($job.IO);
+    run-command("recipe", $job.IO);
 }
 
 #| Print the application version
 multi MAIN("version") {
     say SCRIPT_VERSION;
+}
+
+sub run-command(Str $command, *@args) {
+    require ::("Command::{$command.tc}") <&make-it-so>;
+    make-it-so(|@args);
 }
 
 # Local Variables:
