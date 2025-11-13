@@ -37,13 +37,22 @@ multi sub MAIN("recipe", Str :$job #= Path of a job file
     if $job.defined {
         run-command("recipe", $job.IO);
     } else {
-        say $*USAGE;
+        note $*USAGE;
+        exit 2;
     }
 }
 
 sub run-command(Str $command, *@args) {
     require ::("Command::{$command.tc}") <&make-it-so>;
-    make-it-so(|@args);
+
+    try {
+        make-it-so(|@args);
+
+        CATCH {
+            note "ERROR: " ~ .message;
+            exit 3;
+        }
+    }
 }
 
 # Local Variables:

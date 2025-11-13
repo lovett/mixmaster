@@ -1,0 +1,25 @@
+#!/usr/bin/env rakudo
+
+use Test;
+
+my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+
+plan 6;
+
+my $proc = run $mixmaster, qqw{--job recipe}, :out, :err;
+my $out = $proc.out.slurp(:close);
+my $err = $proc.err.slurp: :close;
+
+is $out, "", "Bare flag stdout is empty";
+like $err.lines[0], / Usage: /, "Bare flag stderr shows usage message";
+is $proc.exitcode, 2, "Bare flag exits with error status";
+
+$proc = run $mixmaster, "recipe", :out, :err;
+$out = $proc.out.slurp(:close);
+$err = $proc.err.slurp: :close;
+
+is $out, "", "Missing flag stdout is empty";
+like $err.lines[0], / Usage: /, "Missing flag shows usage message";
+is $proc.exitcode, 2, "Missing flag exits with error status";
+
+done-testing;

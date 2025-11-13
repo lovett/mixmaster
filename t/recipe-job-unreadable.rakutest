@@ -1,0 +1,18 @@
+#!/usr/bin/env rakudo
+
+use Test;
+use Data::Generators;
+
+my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+
+plan 3;
+
+my $proc = run $mixmaster, qqw[--job {~random-string} recipe], :out, :err;
+my $out = $proc.out.slurp: :close;
+my $err = $proc.err.slurp: :close;
+
+is $out, "", "Stdout is empty";
+like $err.lines[0], / 'not readable' $ /, "Custom error message is shown";
+is $proc.exitcode, 3, "Exits with error status";
+
+done-testing;
