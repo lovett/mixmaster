@@ -2,7 +2,7 @@ unit module Command::Recipe;
 
 =begin pod
 
-The recipe command shows the commands that would be run during a build.
+The recipe command shows the commands that would run during a build.
 
 =end pod
 

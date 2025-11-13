@@ -5,8 +5,13 @@ constant DEFAULT_BUILDROOT = "{$*HOME}/Builds";
 
 use lib $*PROGRAM.absolute.IO.parent(2).add("lib");
 
-#| Establish a buildroot and starter config
-multi sub MAIN("setup", Str :$buildroot = DEFAULT_BUILDROOT #= Filesystem path where builds will be kept
+#| Print the application version and exit
+multi MAIN(Bool :$version where *.so) {
+    say SCRIPT_VERSION;
+}
+
+#| Create a buildroot and starter config
+multi sub MAIN("setup", Str :$buildroot = DEFAULT_BUILDROOT #= Path of the directory where builds occur
 ) {
     run-command("setup", $buildroot.IO);
 }
@@ -16,25 +21,24 @@ multi sub MAIN("service", Str :$buildroot = DEFAULT_BUILDROOT) {
     run-command("service", $buildroot.IO);
 }
 
-#| Receive build requests over HTTP
-multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) {
+#| Receive build requests over HTTP. Normally invoked by mixmaster-bridge systemd service.
+multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) is hidden-from-USAGE {
     run-command("bridge", $buildroot.IO);
 }
 
-#| Start a build
-multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) {
+#| Start a build. Usually invoked by the mixmaster systemd service.
+multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) is hidden-from-USAGE {
     run-command("build", $buildroot.IO);
 }
 
-#| Show the commands a build would run
-multi sub MAIN("recipe", Str :$job #= Filesystem path to an existing job file
+#| Show the commands that would run during a build
+multi sub MAIN("recipe", Str :$job #= Path of a job file
 ) {
-    run-command("recipe", $job.IO);
-}
-
-#| Print the application version
-multi MAIN("version") {
-    say SCRIPT_VERSION;
+    if $job.defined {
+        run-command("recipe", $job.IO);
+    } else {
+        say $*USAGE;
+    }
 }
 
 sub run-command(Str $command, *@args) {
