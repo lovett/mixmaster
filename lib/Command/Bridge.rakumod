@@ -22,9 +22,8 @@ use Filesystem;
 
 my sub make-it-so(IO::Path $buildroot) is export {
     unless ($buildroot.d) {
-        respond-notfound();
-        note "Build request rejected: $buildroot is not a directory.";
-        return;
+        respond-internal-error();
+        die "Build request rejected because $buildroot is not a directory.";
     }
 
     my Str %headers{Str};
@@ -67,14 +66,14 @@ my sub make-it-so(IO::Path $buildroot) is export {
             CATCH {
                 default {
                     respond-failure();
-                    note("Build request rejected: " ~ .message);
+                    die "Build request rejected: " ~ .message;
                 }
             }
         }
 
         default {
             respond-notallowed();
-            note("Build request rejected: HTTP request was not POST or PUT");
+            die "Build request rejected because HTTP request was not POST or PUT";
         }
     }
 }
@@ -94,8 +93,8 @@ sub respond-failure() {
     print "\r\n";
 }
 
-sub respond-notfound() {
-    print "HTTP/1.1 404 Not Found\r\n";
+sub respond-internal-error() {
+    print "HTTP/1.1 500 Internal Server Error\r\n";
     print "Connection: close\r\n";
     print "\r\n";
 }

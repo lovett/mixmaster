@@ -1,18 +1,19 @@
 #!/usr/bin/env rakudo
 
-use Test;
 use File::Temp;
+use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $buildroot = tempdir;
-
 my $home = tempdir;
 
 symlink(%*ENV<HOME>.IO.add(".raku"), $home.IO.add(".raku"));
 
 %*ENV<HOME> = $home;
 
-my $proc = run $mixmaster, qqw{--buildroot $buildroot service};
+my $proc = run $mixmaster, qqw{--buildroot $buildroot service}, :out, :err;
+my $out = $proc.out.slurp: :close;
+my $err = $proc.err.slurp: :close;
 
 my @filenames := <
     mixmaster.service
@@ -21,26 +22,27 @@ my @filenames := <
     mixmaster.path
 >;
 
-plan 9;
+plan 10;
 
 indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
     my $target = "mixmaster.service".IO;
-    is $target.f, True, "Creates mixmaster.service";
+    ok $target.f, "Creates mixmaster.service";
     is $target.lines.grep("WorkingDirectory=$buildroot").elems, 1, "Service file sets WorkingDirectory to buildroot";
 
     $target = "mixmaster-bridge.socket".IO;
-    is $target.f, True, "Creates bridge socket";
-    is $target.lines.grep("ListenStream=8585").elems, 1, "Socket listen on port 8585";
+    ok $target.f, "Creates bridge socket";
+    is $target.lines.grep("ListenStream=8585").elems, 1, "Socket listens on port 8585";
 
     $target = "mixmaster-bridge\@.service".IO;
-    is $target.f, True, "Creates bridge service";
+    ok $target.f, "Creates bridge service";
     is $target.lines.grep(/ExecStart.*\-\-buildroot\s$buildroot.*bridge/).elems, 1, "Bridge service invokes bridge command in buildroot";
 
     $target = "mixmaster.path".IO;
-    is $target.f, True, "Creates path service";
+    ok $target.f, "Creates path service";
     is $target.lines.grep("DirectoryNotEmpty=$buildroot/INBOX").elems, 1, "Path service watches INBOX";
 });
 
-ok $proc.exitcode == 0, "Command exits zero";
+is $err, "", "Stderr is empty";
+is $proc.exitcode, 0, "Clean exit";
 
 done-testing;

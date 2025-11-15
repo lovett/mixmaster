@@ -1,35 +1,34 @@
 #!/usr/bin/env rakudo
 
-use Test;
 use File::Temp;
+use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $recipe-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.recipe');
 my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
-
 my $buildroot = tempdir;
 my $job-file = $buildroot.IO.add("INBOX").add($job-fixture.basename);
 my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo.git";
 
-plan 4;
-
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
-
 copy($job-fixture, $job-file);
-
 copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
 
-my $proc = run $mixmaster, qqw{--job $job-file recipe}, :out;
-my $recipe = $proc.out.slurp: :close;
+my $proc = run $mixmaster, qqw{--job $job-file recipe}, :out, :err;
+my $stdout = $proc.out.slurp: :close;
+my $stderr = $proc.out.slurp: :close;
 
 my $expected-recipe = $recipe-fixture.IO.slurp;
 
+plan 5;
+
 for $expected-recipe.lines.kv -> $i, $_ {
-    is $recipe.lines[$i] eq $_, True, "Line {$i+1} of recipe matches fixture";
+    is $stdout.lines[$i], $_, "Line {$i+1} of output matches fixture";
 }
 
-ok $proc.exitcode == 0, "Command exits zero";
+is $proc.exitcode, 0, "Clean exit";
+is $stderr, "", "Stderr is empty";
 
 done-testing;

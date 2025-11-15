@@ -4,22 +4,21 @@ use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 
+my $proc1 = run $mixmaster, qqw{--job recipe}, :out, :err;
+my $stdout1 = $proc1.out.slurp(:close);
+my $stderr1 = $proc1.err.slurp: :close;
+my $proc2 = run $mixmaster, "recipe", :out, :err;
+my $stdout2 = $proc2.out.slurp(:close);
+my $stderr2 = $proc2.err.slurp: :close;
+
 plan 6;
 
-my $proc = run $mixmaster, qqw{--job recipe}, :out, :err;
-my $out = $proc.out.slurp(:close);
-my $err = $proc.err.slurp: :close;
+is $stdout1, "", "Bare flag stdout is empty";
+like $stderr1.lines[0], / Usage: /, "Bare flag stderr shows usage message";
+is $proc1.exitcode, 2, "Bare flag exits with error status";
 
-is $out, "", "Bare flag stdout is empty";
-like $err.lines[0], / Usage: /, "Bare flag stderr shows usage message";
-is $proc.exitcode, 2, "Bare flag exits with error status";
-
-$proc = run $mixmaster, "recipe", :out, :err;
-$out = $proc.out.slurp(:close);
-$err = $proc.err.slurp: :close;
-
-is $out, "", "Missing flag stdout is empty";
-like $err.lines[0], / Usage: /, "Missing flag shows usage message";
-is $proc.exitcode, 2, "Missing flag exits with error status";
+is $stdout2, "", "Missing flag stdout is empty";
+like $stderr2.lines[0], / Usage: /, "Missing flag shows usage message";
+is $proc2.exitcode, 2, "Missing flag exits with error status";
 
 done-testing;

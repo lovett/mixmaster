@@ -1,7 +1,7 @@
 #!/usr/bin/env rakudo
 
-use Test;
 use File::Temp;
+use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
@@ -10,8 +10,6 @@ my $log-name = "gitea.log";
 my $buildroot = tempdir;
 my $workspace = $buildroot.IO.add("test-org-test-repo");
 my $test-repo = "/tmp/test-repo";
-
-plan 11;
 
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
@@ -32,21 +30,21 @@ unless ($test-repo.IO.d) {
 my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out;
 $proc.out.close();
 
-is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
-is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
-is $workspace.d, True, "Workspace was created";
-is $workspace.add("ARCHIVE").d, True, "Workspace archive was created";
-is $workspace.add("production").d, True, "Workspace target directory was created";
-
 my $log = $workspace.add("ARCHIVE/{$log-name}");
-is $log.f, True, "Workspace log was created";
-
 my @log-lines = $log.IO.slurp;
 
+plan 11;
+
+is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
+is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
+ok $workspace.d, "Workspace was created";
+ok $workspace.add("ARCHIVE").d, "Workspace archive was created";
+ok $workspace.add("production").d, "Workspace target directory was created";
+ok $log.f, "Workspace log was created";
 is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Git clone appeared in log";
 is @log-lines.grep(rx:s/\$ git checkout/).elems, 1, "Git checkout appeared in log";
 is @log-lines.grep(rx:s/\$ echo Stub command for building production branch/).elems, 1, "Build command was logged";
 is @log-lines.grep(rx:s/O Stub command for building production branch/).elems, 1, "Build command output was logged";
-ok $proc.exitcode == 0, "Command exits zero";
+is $proc.exitcode, 0, "Command exits zero";
 
 done-testing;

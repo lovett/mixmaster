@@ -3,16 +3,15 @@
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+my $proc = run $mixmaster, "--version", :out, :err;
+my $stdout = $proc.out.slurp(:close);
+my $stderr = $proc.err.slurp(:close);
 
 plan 4;
 
-my $proc = run $mixmaster, "--version", :out, :err;
-my $out = $proc.out.slurp(:close);
-my $err = $proc.err.slurp(:close);
-
-is $out.lines[0], "dev", "Version constant is written to stdout";
-is $out.lines.elems, 1, "No additional output";
-is $err, "", "Stderr is empty";
+is $stdout.lines[0], "dev", "Version constant is written to stdout";
+is $stdout.lines.elems, 1, "No additional output";
+is $stderr, "", "Stderr is empty";
 is $proc.exitcode, 0, "Clean exit";
 
 done-testing;

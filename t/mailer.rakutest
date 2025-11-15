@@ -1,15 +1,14 @@
 #!/usr/bin/env rakudo
 
-use Test;
 use File::Temp;
+use Test;
 
 use lib $*PROGRAM.parent(2).add("lib");
 
-use Mailer;
 use Job;
+use Mailer;
 
 my $testdir = tempdir;
-
 my %fixtures;
 my %files;
 

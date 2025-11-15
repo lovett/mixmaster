@@ -10,7 +10,7 @@ use Job;
 
 my sub make-it-so(IO::Path $path) is export {
     unless $path.r {
-        die "Job path '$path' is not readable";
+        die "Job path $path is not readable";
     }
 
     my %job;

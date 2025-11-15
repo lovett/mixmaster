@@ -1,14 +1,12 @@
 #!/usr/bin/env rakudo
 
-use Test;
-use JSON::Fast;
 use File::Temp;
+use JSON::Fast;
+use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $buildroot = tempdir;
-
-plan 4;
 
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
@@ -25,18 +23,15 @@ Content-Length: {$job.chars}
 {$job}
 REQUEST
 
-$proc.in.close();
-
-my $stderr = $proc.err.slurp(:close).trim;
+my $err = $proc.err.slurp: :close;
 
 my IO::Path @files = $buildroot.IO.add("INBOX").dir(test => /'.' json $/);
 
+plan 4;
+
 is @files.elems, 1, "Creates job file in inbox";
-
 is @files[0].slurp.chars, $job.chars, "Job file matches fixture";
-
-is $stderr, "", "Does not write to stderr";
-
-ok $proc.exitcode == 0, "Command exits zero";
+is $err, "", "Stderr is empty";
+is $proc.exitcode, 0, "Clean exit";
 
 done-testing;

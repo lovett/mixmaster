@@ -1,27 +1,20 @@
 #!/usr/bin/env rakudo
 
-use Test;
-use File::Temp;
 use Data::Generators;
+use File::Temp;
+use Test;
 
 use lib $*PROGRAM.parent(2).add("lib");
 
 use Broadcast;
 use Job;
 
-
 my $testdir = tempdir;
 my ($log-file, $log-handle) = tempfile;
-
-
 my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $job-file = $testdir.IO.add($job-fixture.basename);
-
 my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
 my $config-file = $testdir.IO.add($config-fixture.basename);
-
-
-plan 9;
 
 copy($job-fixture, $job-file);
 copy($config-fixture, $config-file);
@@ -43,6 +36,8 @@ broadcast-end(%job);
 broadcast-fail(%job, $fail-phrase);
 
 my @log-lines = $log-file.IO.slurp.lines;
+
+plan 9;
 
 ok @log-lines[0].contains("# Build started for"), "Build start message was logged";
 ok @log-lines[1].contains("# Building in"), "Build workspace was logged";

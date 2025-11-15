@@ -5,16 +5,16 @@ use JSON::Fast;
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $buildroot = tempdir;
-my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in, :out, :err;
 
+my $proc = run $mixmaster, qqw[--buildroot {~tempdir} bridge], :in, :out, :err;
 $proc.in.print: qq:to/REQUEST/;
-GET / HTTP/1.0
+POST / HTTP/1.0
 Content-Type: application/json
 Remote-Addr: 127.0.0.1
 Connection: close
-Content-Length: 0
+Content-Length: 1
 
+\{
 REQUEST
 
 my $stdout = $proc.out.slurp;
@@ -22,8 +22,8 @@ my $stderr = $proc.err.slurp;
 
 plan 3;
 
-like $stdout, /'405 Method Not Allowed'/, "Returns HTTP 405";
-like $stderr, /'was not POST or PUT'/, "Error message is written to stderr";
+like $stdout, / '400 Bad Request' /, "Returns HTTP 400";
+like $stderr, / 'Build request rejected'/ , "Error message is written to stderr";
 is $proc.exitcode, 3, "Exits with error status";
 
 done-testing;

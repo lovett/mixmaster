@@ -1,22 +1,21 @@
 #!/usr/bin/env rakudo
 
-use Test;
-use File::Temp;
 use Data::Generators;
+use File::Temp;
+use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-
-plan 3;
-
 my ($job-file, $job-handle) = tempfile;
 spurt $job-handle,  ~random-string;
 
 my $proc = run $mixmaster, qqw[--job {$job-file} recipe], :out, :err;
-my $out = $proc.out.slurp(:close);
-my $err = $proc.err.slurp: :close;
+my $stdout = $proc.out.slurp(:close);
+my $stderr = $proc.err.slurp: :close;
 
-is $out, "", "Stdout is empty";
-like $err.lines[0], / 'could not be parsed' /, "Custom error message is shown";
+plan 3;
+
+is $stdout, "", "Stdout is empty";
+like $stderr.lines[0], / 'could not be parsed' /, "Error message is written to stderr";
 is $proc.exitcode, 3, "Exits with error status";
 
 done-testing;

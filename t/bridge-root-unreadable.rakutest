@@ -1,15 +1,15 @@
 #!/usr/bin/env rakudo
 
+use Data::Generators;
 use File::Temp;
 use JSON::Fast;
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $buildroot = tempdir;
-my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in, :out, :err;
+my $proc = run $mixmaster, qqw[--buildroot {~random-string} bridge], :in, :out, :err;
 
 $proc.in.print: qq:to/REQUEST/;
-GET / HTTP/1.0
+POST / HTTP/1.0
 Content-Type: application/json
 Remote-Addr: 127.0.0.1
 Connection: close
@@ -22,8 +22,8 @@ my $stderr = $proc.err.slurp;
 
 plan 3;
 
-like $stdout, /'405 Method Not Allowed'/, "Returns HTTP 405";
-like $stderr, /'was not POST or PUT'/, "Error message is written to stderr";
+ok $stdout.contains("500 Internal Server Error"), "Returns HTTP 500";
+like $stderr, / 'not a directory' /, "Error message is written to stderr";
 is $proc.exitcode, 3, "Exits with error status";
 
 done-testing;
