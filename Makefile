@@ -8,7 +8,7 @@ setup:
 	zef --to=home --deps-only install .
 
 test:
-	prove6 --lib t/
+	prove6 --jobs 8 --lib t/
 
 mirror:
 	git push --force git@github.com:lovett/mixmaster.git master:master
