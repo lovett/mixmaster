@@ -5,24 +5,18 @@ use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $buildroot = tempdir;
-my $home = tempdir;
 
-symlink(%*ENV<HOME>.IO.add(".raku"), $home.IO.add(".raku"));
-
-%*ENV<HOME> = $home;
+%*ENV<HOME> = tempdir;
 
 my $proc = run $mixmaster, qqw{--buildroot $buildroot service}, :out, :err;
 my $out = $proc.out.slurp: :close;
 my $err = $proc.err.slurp: :close;
 
-my @filenames := <
-    mixmaster.service
-    mixmaster-bridge.socket
-    mixmaster-bridge@.service
-    mixmaster.path
->;
-
 plan 10;
+
+indir(%*ENV<HOME>, {
+    mkdir ".config/systemd/user"
+});
 
 indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
     my $target = "mixmaster.service".IO;
@@ -32,7 +26,6 @@ indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
     $target = "mixmaster-bridge.socket".IO;
     ok $target.f, "Creates bridge socket";
     is $target.lines.grep("ListenStream=8585").elems, 1, "Socket listens on port 8585";
-
     $target = "mixmaster-bridge\@.service".IO;
     ok $target.f, "Creates bridge service";
     is $target.lines.grep(/ExecStart.*\-\-buildroot\s$buildroot.*bridge/).elems, 1, "Bridge service invokes bridge command in buildroot";
