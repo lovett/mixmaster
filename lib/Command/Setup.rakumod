@@ -1,5 +1,16 @@
 unit module Command::Setup;
 
+=begin pod
+
+The setup command creates a build root in the specified location.
+
+A build root contains:
+  - An inbox directory for build requests
+  - An archive directory for completed requests
+  - A configuration file
+
+=end pod
+
 use Filesystem;
 use Console;
 
