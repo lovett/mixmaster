@@ -1,7 +1,6 @@
 #!/usr/bin/env rakudo
 
 use File::Temp;
-use JSON::Fast;
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
