@@ -1,7 +1,6 @@
 unit module Command::Service;
 
 use Filesystem;
-use Console;
 
 my sub make-it-so(IO::Path $buildroot) is export {
     my @files := <
@@ -18,7 +17,7 @@ my sub make-it-so(IO::Path $buildroot) is export {
     for @files {
         my $path = $dir.add($_);
         create-systemd-service($path, $buildroot);
-        success-message("Created {$path}");
+        say "Created {$path}";
     }
 }
 

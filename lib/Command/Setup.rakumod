@@ -12,24 +12,23 @@ A build root contains:
 =end pod
 
 use Filesystem;
-use Console;
 
 my sub make-it-so(IO::Path $path) is export {
     my $buildroot = resolve-tilde($path);
     for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
         .mkdir;
         my $tildePath = with-tilde($_);
-        success-message("Created $tildePath");
+        say "Created $tildePath";
     }
 
     my $config = config-path($buildroot);
 
     if ($config.f) {
         my $tildePath = with-tilde($config);
-        info-message("$tildePath already exists, leaving as-is");
+        say "$tildePath already exists, leaving as-is";
     } else {
         create-config($config);
-        success-message("Populated {$config} with  default configuration.")
+        say "Populated {$config} with  default configuration.";
     }
 }
 
