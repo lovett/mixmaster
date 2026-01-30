@@ -4,18 +4,19 @@ use Filesystem;
 use Console;
 
 my sub make-it-so(IO::Path $buildroot) is export {
-    for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
+    my $path = $buildroot.subst(/^ '~'/, $*HOME).IO;
+    for $path, inbox-path($path), archive-path($path) {
         .mkdir;
         success-message("Created $_");
     }
 
-    my $path = config-path($buildroot);
+    my $config = config-path($path);
 
-    if ($path.f) {
-        info-message("$path already exists, leaving as-is");
+    if ($config.f) {
+        info-message("$config already exists, leaving as-is");
     } else {
-        create-config($path);
-        success-message("Populated {$path} with  default configuration.")
+        create-config($config);
+        success-message("Populated {$config} with  default configuration.")
     }
 }
 
