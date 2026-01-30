@@ -14,7 +14,7 @@ mkdir($subdir);
 
 my $buildroot2 = tempdir.IO;
 
-plan 8;
+plan 12;
 
 is inbox-path($buildroot), $buildroot.add("INBOX"), "Inbox resides in buildroot";
 is archive-path($buildroot), $buildroot.add("ARCHIVE"), "Archive resides in buildroot";
@@ -24,5 +24,10 @@ is nearest-root($subdir.add("myfile.txt")), $buildroot, "Buildroot is identified
 is nearest-root($buildroot2), Nil, "Buildroot identification terminates";
 is filesystem-friendly("hello world/and again"), "hello-world-and-again", "Filename normalization handles spaces and slashes";
 is filesystem-friendly("hello/////world"), "hello-world", "Filename normalization collapses multiple nonword characters";
+
+is resolve-tilde("~/mypath".IO), $*HOME.IO.add("mypath"), "Tilde is resolved to HOME";
+is resolve-tilde("mypath".IO), "mypath".IO, "resolve-tilde ignores non-home path";
+is with-tilde($*HOME.IO.add("mypath")), "~/mypath".IO, "with-tilde applies tilde to path under HOME";
+is with-tilde("not-a-tilde-path".IO), "not-a-tilde-path".IO, "with-tilde ignores non-home path";
 
 done-testing;

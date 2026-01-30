@@ -23,3 +23,11 @@ sub nearest-root(IO::Path $path --> IO::Path) is export {
 sub filesystem-friendly(Str $value) is export {
     return $value.lc.subst(/\W+/, "-", :g);
 }
+
+sub resolve-tilde(IO::Path $path --> IO::Path) is export {
+    return $path.subst(/^ '~'/, $*HOME).IO;
+}
+
+sub with-tilde(IO::Path $path --> IO::Path) is export {
+    return $path.subst(/^ $*HOME /, "~").IO;
+}

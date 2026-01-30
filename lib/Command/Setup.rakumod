@@ -14,17 +14,19 @@ A build root contains:
 use Filesystem;
 use Console;
 
-my sub make-it-so(IO::Path $buildroot) is export {
-    my $path = $buildroot.subst(/^ '~'/, $*HOME).IO;
-    for $path, inbox-path($path), archive-path($path) {
+my sub make-it-so(IO::Path $path) is export {
+    my $buildroot = resolve-tilde($path);
+    for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
         .mkdir;
-        success-message("Created $_");
+        my $tildePath = with-tilde($_);
+        success-message("Created $tildePath");
     }
 
-    my $config = config-path($path);
+    my $config = config-path($buildroot);
 
     if ($config.f) {
-        info-message("$config already exists, leaving as-is");
+        my $tildePath = with-tilde($config);
+        info-message("$tildePath already exists, leaving as-is");
     } else {
         create-config($config);
         success-message("Populated {$config} with  default configuration.")
