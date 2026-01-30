@@ -2,7 +2,9 @@ unit module Command::Service;
 
 use Filesystem;
 
-my sub make-it-so(IO::Path $buildroot) is export {
+my sub make-it-so(IO::Path $path) is export {
+    my $buildroot = resolve-tilde($path);
+
     my @files := <
         mixmaster.service
         mixmaster-bridge.socket
@@ -17,7 +19,9 @@ my sub make-it-so(IO::Path $buildroot) is export {
     for @files {
         my $path = $dir.add($_);
         create-systemd-service($path, $buildroot);
-        say "Created {$path}";
+
+        my $tildePath = with-tilde($path);
+        say "Created {$tildePath}";
     }
 }
 
