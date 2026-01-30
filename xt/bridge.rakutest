@@ -4,7 +4,7 @@ use File::Temp;
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
+my $fixture = $*PROGRAM.IO.parent(2).add('t/fixture/gitea.json');
 my $buildroot = tempdir;
 
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;

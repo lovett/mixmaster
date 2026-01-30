@@ -4,8 +4,8 @@ use File::Temp;
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
-my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
-my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
+my $job-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/gitea.json');
+my $config-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/mixmaster.ini');
 my $log-name = "gitea.log";
 my $buildroot = tempdir;
 my $workspace = $buildroot.IO.add("test-org-test-repo");
