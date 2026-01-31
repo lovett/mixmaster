@@ -39,7 +39,7 @@ multi sub create-systemd-service(
 
     [Service]
     WorkingDirectory={$buildroot}
-    ExecStart={$sshAgent} {$*PROGRAM.absolute} --buildroot {$buildroot.absolute} build
+    ExecStart={$sshAgent} {$*EXECUTABLE} {$*PROGRAM} --buildroot {$buildroot.absolute} build
 
     # Local Variables:
     # mode: conf
@@ -82,7 +82,7 @@ multi sub create-systemd-service(
     [Service]
     StandardInput=socket
     StandardError=journal
-    ExecStart={$*PROGRAM.absolute} --buildroot {$buildroot.absolute} bridge
+    ExecStart={$*EXECUTABLE} {$*PROGRAM} --buildroot {$buildroot.absolute} bridge
 
     # Local Variables:
     # mode: conf
