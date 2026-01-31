@@ -21,13 +21,13 @@ multi sub MAIN("service", Str :$buildroot = DEFAULT_BUILDROOT) {
     run-command("service", $buildroot.IO);
 }
 
-#| Receive build requests over HTTP. Normally invoked by mixmaster-bridge systemd service.
-multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) is hidden-from-USAGE {
+#| Receive build requests over HTTP. Usually invoked via systemd socket service.
+multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) {
     run-command("bridge", $buildroot.IO);
 }
 
-#| Start a build. Usually invoked by the mixmaster systemd service.
-multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) is hidden-from-USAGE {
+#| Start a build. Usually invoked via systemd path service.
+multi sub MAIN("build", Str :$buildroot = DEFAULT_BUILDROOT) {
     run-command("build", $buildroot.IO);
 }
 
