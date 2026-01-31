@@ -34,12 +34,14 @@ multi sub make-it-so(IO::Path $path where *.f) is export {
 
     unless %job<context><known> {
         my IO::Path $trash = trash-path(%job<context><buildroot>);
+        $trash.mkdir;
         rename($path, $trash.add($path.basename));
         note "Trashed {$path.basename} because %job<context><project> project is not configured for builds";
         return
     }
 
     my IO::Path $archive = archive-path(%job<context><buildroot>);
+    $archive.mkdir;
     rename($path, $archive.add($path.basename));
 
     broadcast-start(%job);
