@@ -15,7 +15,7 @@ use Filesystem;
 
 my sub make-it-so(IO::Path $path) is export {
     my $buildroot = resolve-tilde($path);
-    for $buildroot, inbox-path($buildroot), archive-path($buildroot) {
+    for $buildroot, inbox-path($buildroot), archive-path($buildroot), trash-path($buildroot) {
         .mkdir;
         my $tildePath = with-tilde($_);
         say "Created $tildePath";

@@ -21,6 +21,12 @@ sub load-job(IO::Path $path --> Hash) is export {
 
     %job<context><project> = job-project(%job);
 
+    %job<context><known> = is-known-project(%job);
+
+    unless %job<context><known> {
+        return %job;
+    }
+
     %job<context><project-dir> = filesystem-friendly(%job<context><project>);
 
     %job<context><workspace> = %job<context><buildroot>.add(%job<context><project-dir>).mkdir;
@@ -49,6 +55,11 @@ sub load-config(IO::Path $buildroot --> Hash) {
     my $ini = Config::INI::parse_file($path.absolute);
     return $ini if $ini;
     return %{};
+}
+
+sub is-known-project(%job --> Bool) {
+    my $project = %job<context><project>;
+    return %job<context><config>{$project}:exists;
 }
 
 sub job-type(%job --> JobType) {

@@ -24,6 +24,11 @@ my sub make-it-so(IO::Path $path) is export {
         }
     }
 
+    unless %job<context><known> {
+        note "%job<context><project> project is not configured for builds";
+        exit
+    }
+
     for %job<context><recipe>.list {
         .say;
     }

@@ -8,6 +8,10 @@ sub archive-path(IO::Path $path --> IO::Path) is export {
     return $path.add("ARCHIVE");
 }
 
+sub trash-path(IO::Path $path --> IO::Path) is export {
+    return $path.add("TRASH");
+}
+
 sub config-path(IO::Path $buildroot --> IO::Path) is export {
     return $buildroot.add("mixmaster.ini");
 }

@@ -61,8 +61,11 @@ my sub make-it-so(IO::Path $path) is export {
                 }
             );
 
-            spurt $inbox.add($filename), $body;
+            my $path = $inbox.add($filename);
+            spurt $path, $body;
             respond-success("job received\n");
+
+            note "New job received: $path";
 
             CATCH {
                 default {
