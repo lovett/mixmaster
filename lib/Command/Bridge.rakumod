@@ -20,7 +20,8 @@ use JSON::Fast;
 
 use Filesystem;
 
-my sub make-it-so(IO::Path $buildroot) is export {
+my sub make-it-so(IO::Path $path) is export {
+    my $buildroot = resolve-tilde($path);
     unless ($buildroot.d) {
         respond-internal-error();
         die "Build request rejected because $buildroot is not a directory.";
