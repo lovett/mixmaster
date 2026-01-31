@@ -72,6 +72,20 @@ my sub make-it-so(IO::Path $path) is export {
             }
         }
 
+        when "GET" {
+            given %headers<uri>  {
+                when "/hello" {
+                    respond-success("world\n");
+                    exit;
+                }
+
+                default {
+                    respond-notfound();
+                    exit;
+                }
+            }
+        }
+
         default {
             respond-notallowed();
             die "Build request rejected because HTTP request was not POST or PUT";
@@ -103,4 +117,10 @@ sub respond-internal-error() {
 sub respond-notallowed() {
     print "HTTP/1.1 405 Method Not Allowed\r\n";
     print "Connection: close\r\n";
+}
+
+sub respond-notfound() {
+    print "HTTP/1.1 404 Not Found\r\n";
+    print "Connection: close\r\n";
+    print "\r\n";
 }
