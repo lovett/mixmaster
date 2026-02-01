@@ -20,7 +20,7 @@ my sub make-it-so(IO::Path $path) is export {
     try {
         %job = load-job($resolvedPath);
         CATCH {
-            die "Job file could not be parsed";
+            die .message;
         }
     }
 
