@@ -16,19 +16,23 @@ use Filesystem;
 my sub Setup(IO::Path $path) is export {
     my $buildroot = resolve-tilde($path);
     for $buildroot, inbox-path($buildroot), archive-path($buildroot), trash-path($buildroot) {
-        .mkdir;
         my $tildePath = with-tilde($_);
+        if .d {
+            say "$tildePath already exists";
+            next;
+        }
+
+        .mkdir;
         say "Created $tildePath";
     }
 
     my $config = config-path($buildroot);
-
+    my $tildePath = with-tilde($config);
     if ($config.f) {
-        my $tildePath = with-tilde($config);
-        say "$tildePath already exists, leaving as-is";
+        say "$tildePath already exists";
     } else {
         create-config($config);
-        say "Populated {$config} with  default configuration.";
+        say "Populated {$tildePath} with default configuration.";
     }
 }
 
