@@ -20,7 +20,7 @@ use JSON::Fast;
 
 use Filesystem;
 
-my sub make-it-so(IO::Path $path) is export {
+my sub Bridge(IO::Path $path) is export {
     my $buildroot = resolve-tilde($path);
     unless ($buildroot.d) {
         respond-internal-error();

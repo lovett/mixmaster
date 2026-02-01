@@ -25,9 +25,9 @@ use Broadcast;
 # }
 
 
-our proto make-it-so(IO::Path $path) {*}
+our proto Build(IO::Path $path) {*}
 
-multi sub make-it-so(IO::Path $path where *.f) is export {
+multi sub Build(IO::Path $path where *.f) is export {
     note "Working on {$path.basename}";
 
     my %job = load-job($path);
@@ -90,12 +90,12 @@ multi sub make-it-so(IO::Path $path where *.f) is export {
     }
 }
 
-multi sub make-it-so(IO::Path $buildroot where *.d) is export {
+multi sub Build(IO::Path $buildroot where *.d) is export {
     my $inbox = inbox-path($buildroot);
     my IO::Path $job = $inbox.dir(test => /'.' json $/).first();
 
     return unless $job;
 
-    make-it-so($job);
-    make-it-so($buildroot);
+    Build($job);
+    Build($buildroot);
 }

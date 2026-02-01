@@ -2,7 +2,7 @@ unit module Command::Service;
 
 use Filesystem;
 
-my sub make-it-so(IO::Path $path) is export {
+my sub Service(IO::Path $path) is export {
     my $buildroot = resolve-tilde($path);
 
     my @files := <

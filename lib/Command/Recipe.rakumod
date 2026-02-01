@@ -9,7 +9,7 @@ The recipe command shows the commands that would run during a build.
 use Filesystem;
 use Job;
 
-my sub make-it-so(IO::Path $path) is export {
+my sub Recipe(IO::Path $path) is export {
     my $resolvedPath = resolve-tilde($path);
     unless $resolvedPath.r {
         die "Job path $path is not readable";

@@ -43,10 +43,10 @@ multi sub MAIN("recipe", Str :$job #= Path of a job file
 }
 
 sub run-command(Str $command, *@args) {
-    require ::("Command::{$command.tc}") <&make-it-so>;
+    require ::("Command::{$command.tc}");
 
     try {
-        make-it-so(|@args);
+        ::("Command::{$command.tc}::EXPORT::DEFAULT::&{$command.tc}")(|@args);
 
         CATCH {
             note "ERROR: " ~ .message;
