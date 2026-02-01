@@ -9,6 +9,7 @@ case "${1:-default}" in
         echo "Run unit and integration tests"
         ;;
     default)
+        echo "Running prove6 in quiet mode"
         prove6 -q --jobs 8  --lib t/ xt/
         ;;
     *)
