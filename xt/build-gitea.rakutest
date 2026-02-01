@@ -27,7 +27,7 @@ unless ($test-repo.IO.d) {
     };
 }
 
-my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out;
+my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out, :err;
 $proc.out.close();
 
 my $log = $workspace.add("ARCHIVE/{$log-name}");

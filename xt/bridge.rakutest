@@ -22,7 +22,7 @@ Content-Length: {$job.chars}
 {$job}
 REQUEST
 
-my $err = $proc.err.slurp: :close;
+my $stderr = $proc.err.slurp;
 
 my IO::Path @files = $buildroot.IO.add("INBOX").dir(test => /'.' json $/);
 
@@ -30,7 +30,7 @@ plan 4;
 
 is @files.elems, 1, "Creates job file in inbox";
 is @files[0].slurp.chars, $job.chars, "Job file matches fixture";
-is $err, "", "Stderr is empty";
+like $stderr, /'New job received'/, "Logs job received to stderr";
 is $proc.exitcode, 0, "Clean exit";
 
 done-testing;

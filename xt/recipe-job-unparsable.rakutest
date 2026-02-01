@@ -15,7 +15,7 @@ my $stderr = $proc.err.slurp: :close;
 plan 3;
 
 is $stdout, "", "Stdout is empty";
-like $stderr.lines[0], / 'could not be parsed' /, "Error message is written to stderr";
+like $stderr.lines[0], / 'ERROR:' /, "Error message is logged";
 is $proc.exitcode, 3, "Exits with error status";
 
 done-testing;

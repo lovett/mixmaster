@@ -91,7 +91,8 @@ my sub Bridge(IO::Path $path) is export {
 
         default {
             respond-notallowed();
-            die "Build request rejected because HTTP request was not POST or PUT";
+            note "Build request rejected. {$%headers<method>} requests are not supported.";
+            exit;
         }
     }
 }

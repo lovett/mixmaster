@@ -9,7 +9,7 @@ case "${1:-default}" in
         echo "Run unit and integration tests"
         ;;
     default)
-        prove6 --jobs 8 --lib t/ xt/
+        prove6 -q --jobs 8  --lib t/ xt/
         ;;
     *)
         echo "Unknown argument." >&2
