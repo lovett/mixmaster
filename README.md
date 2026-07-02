@@ -1,11 +1,17 @@
 # Mixmaster
 
-Mixmaster is a lightweight build service that you self-host. It's a
-replacement for something like Jenkins when your needs are minimal,
-your hardware resources are modest, and your patience is limited.
+Mixmaster is a lightweight build service. It's a replacement for things like Jenkins and GitHub Actions when your needs are minimal and your hardware is modest.
 
-Everything runs on-demand. Builds are initiated by HTTP requests
-brokered by systemd.
+It runs on-demand via systemd. Builds are triggered by HTTP requests.
+
+
+## Architecture
+Builds are kicked off by HTTP requests. A systemd socket service runs `mixmaster bridge` and transforms the request into a job file.
+
+Job files are written to the filesystem and picked up by a systemd path service that runs `mixmaster build`.
+
+Build commands are stored in a configuration file. Builds occur in a designated directory.
+
 
 ## Installation
 
@@ -15,36 +21,52 @@ Mixmaster needs:
 2. [Raku](https://docs.raku.org) and some third-party libraries.
 3. Whatever is used to build whatever you're building.
 
-At the moment, the best option for installation is to clone the repository and run `make install`.
+To install:
+  - Clone the repository
+  - Run `scripts/install.sh`. The application installs to `$*HOME/.raku`.
+
+If installation is successful, running `mixmaster --version` should work.
 
 ## Setup
+Run `mixmaster setup` to establish a build root where builds will occur. The default location is `~/Builds`. Override with the `--buildroot` flag.
 
-First run `mixmaster setup` to establish a build root where builds will occur. It defaults to `~/Builds`.
+Next run `mixmaster service` (also with `--buildroot` if needed) to install systemd user services:
+  - A socket service listening on port 8585 to receive build requests.
+  - A path service to pick up jobs created by the socket service.
 
-The build root also houses the configuration file, `mixmaster.ini`.
+__Services are populated, but not enabled.__ To enable them:
+```
+systemctl --user enable --now mixmaster-bridge.socket
+systemctl --user enable --now mixmaster.path
+```
 
-Next run `mixmaster service` to install some systemd user services. These include:
+__Services should be customized.__ The path to the Raku executable might not be ideal. Edit the `ExecStart` lines in `mixmaster-bridge@.service` and `mixmaster.service` if they refer to a location that won't be long-term stable.
 
-- A systemd socket service listening on port 8585.
-- A systemd path service.
+### External Access
+The socket service is the application's HTTP entry point. If accessing directly, a firewall adjustment may be needed to allow access to port `8585`.
 
-Both of these commands are a starting point for further customization. The
-configuration and service files are very much meant to be edited to taste.
+Reverse proxying through a web server is another option, in which case port `8585` can remain closed.
 
-## Architecture
-Builds are kicked off by HTTP requests that arrive on port 8585. A web server acting as a reverse proxy is a nice option for this and would allow for HTTPS.
+If you can run `curl http://localhost:8585/hello` and get back a response, it's working. If not, check the systemd journal for errors:
 
-Something needs to initiate the build request. The primary use case right now involves webhooks sent from Gitea.
+```
+journalctl --user -g mixmaster-bridge --since today
+```
 
-The systemd socket created during `mixmaster setup` invokes `mixmaster bridge` and pipes in the JSON body of the HTTP request, which is then dropped into the inbox directory within the build root.
+### Webhooks
+To connect Mixmaster to Forgejo or similar, set up a Webhook in that system:
+  - URL: The the root URL (for example, `http://example.com:8585` or `https://mixmaster.example.com`)
+  - HTTP Method: POST or PUT
+  - Content Type: application/json
+  - Trigger on: Push events
+  - Branch filter: * (Mixmaster will ignore requests about unfamiliar branches)
 
-The systemd path service watches the inbox and uses the JSON payload to kick off a build by checking out the appropriate repository and running the designated build command. Both of these are drawn from the configuration file.
-The configuration file dictates what projects Mixmaster can build and how it goes about doing so.
+### Projects
+Each section of the configuration file (by default, `~/Builds/mixmaster.ini`) defines a project.
 
-A project consists of one or more key-value pairs. The key is the name
-of a branch within the project repository (the "what" of the
-build). The value is the command that Mixmaster should execute to
-perform the build (the "how). For example:
+The section name is the repository in the typical "organization-name/repo-name" format.
+
+Each entry within a section maps a branch name to a build command. For example:
 
 ```
 [example-org/example-repo]
@@ -52,56 +74,20 @@ production = make deploy
 staging = make deploy-to-staging
 ```
 
-If a build request came in for the production branch of the
-`example-org/example-repo` repository, Mixmaster would check out the
-repository specified in the JSON payload and then run `make deploy`.
+If a build request arrives for the `production` branch of the `example-org/example-repo` repository, Mixmaster should run `make deploy`.
 
-If the request was for the staging branch, it would instead run
-`make deploy-to-staging`.
+For the staging branch, it should run `make deploy-to-staging`.
 
-Branches are picked using simple matching. If Mixmaster was
-asked to build a branch named `staging/my-feature` it would check out
-that branch from the repository but still run `make deploy-to-staging`.
+Branches are matched by prefix, so a `staging/my-feature` branch would run the build command for `staging`.
 
-## Task Builds
-
-If the JSON payload has a field named `task`, Mixmaster will use its
-value to decide what build command to run. This can be useful for
-ad-hoc jobs.
-
-A task build is defined in the configruration by appending the target
-branch with a slash:
-
-```
-[example-org/example-repo]
-master/update-libraries = make update
-master/docs = make docs
-```
-
-If the JSON payload contains `"target": "master"` and `"task":
-"update-libraries"` then `make update`  will be run from
-the master branch. If it has `"task": "docs"` then the master
-branch will still be checked out, but `make docs` will be run instead.
-
-In order for this to be useful, the build command needs to either
-commit its changes back to the repository or publish them
-somewhere. As with regular builds, the build command is the driver of what happens, not Mixmaster.
 
 ## Notifications
+Build progress is conveyed via email sent to the address specified in the configuration file. Messages are sent when a job is started, when it finishes, and when an error occurs.
 
-Mixmaster conveys build progress via email sent to the address
-specified in the application config. A notification is sent when a job
-is started, when it finishes, and when an error occurs.
-
-To turn off these notifications, leave the value of `mailto`
-in the application config blank.
+To turn off these notifications, leave the value of `mailto` in the application config blank.
 
 ## SSH Keys
 
-When a build is started, `mixmaster` is invoked within an `ssh-agent`
-session. This per-job instance that will be stopped when the build is
-finished, and is separate from any other agent processes.
+Builds are invoked within a dedicated `ssh-agent` session that is per-job and separate from any other agent processes.
 
-If the application config defines a value for `sshKey` it will be added
-to the agent. This can be useful for jobs that interact with remote
-servers.
+If the configuration file defines a value for `sshKey` it will be loaded into to the agent.
