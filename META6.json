@@ -20,6 +20,7 @@
   "depends" : [
     "Config::INI",
     "Email::Simple",
+    "File::Which",
     "JSON::Fast"
   ],
   "test-depends" : [

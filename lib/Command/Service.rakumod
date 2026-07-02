@@ -1,5 +1,6 @@
 unit module Command::Service;
 
+use File::Which;
 use Filesystem;
 
 my sub Service(IO::Path $path) is export {
@@ -29,6 +30,9 @@ multi sub create-systemd-service(
     IO::Path $path where *.basename eq "mixmaster.service",
     IO::Path $buildroot
 ) is export {
+    # Not using $*EXECUTABLE directly because it is too specific.
+    my $exePath = which($*EXECUTABLE.IO.basename);
+
     my $proc = run <which ssh-agent>, :out;
     my $sshAgent = $proc.out.get;
     $proc.out.close();
@@ -39,7 +43,7 @@ multi sub create-systemd-service(
 
     [Service]
     WorkingDirectory={$buildroot}
-    ExecStart={$sshAgent} {$*EXECUTABLE} {$*PROGRAM} --buildroot {$buildroot.absolute} build
+    ExecStart={$sshAgent} {$exePath} {$*PROGRAM} --buildroot {$buildroot.absolute} build
 
     # Local Variables:
     # mode: conf
@@ -75,6 +79,9 @@ multi sub create-systemd-service(
     IO::Path $path where *.basename eq 'mixmaster-bridge@.service',
     IO::Path $buildroot
 ) is export {
+    # Not using $*EXECUTABLE directly because it is too specific.
+    my $exePath = which($*EXECUTABLE.IO.basename);
+
     spurt $path, qq:to/END/;
     [Unit]
     Description=Mixmaster Bridge
@@ -82,7 +89,7 @@ multi sub create-systemd-service(
     [Service]
     StandardInput=socket
     StandardError=journal
-    ExecStart={$*EXECUTABLE} {$*PROGRAM} --buildroot {$buildroot.absolute} bridge
+    ExecStart={$exePath} {$*PROGRAM} --buildroot {$buildroot.absolute} bridge
 
     # Local Variables:
     # mode: conf
