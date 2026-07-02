@@ -45,10 +45,6 @@ multi sub create-systemd-service(
     WorkingDirectory={$buildroot}
     ExecStart={$sshAgent} {$exePath} {$*PROGRAM} --buildroot {$buildroot.absolute} build
 
-    # Local Variables:
-    # mode: conf
-    # End:
-
     END
 }
 
@@ -67,10 +63,6 @@ multi sub create-systemd-service(
 
     [Install]
     WantedBy = sockets.target
-
-    # Local Variables:
-    # mode: conf
-    # End:
 
     END
 }
@@ -91,10 +83,6 @@ multi sub create-systemd-service(
     StandardError=journal
     ExecStart={$exePath} {$*PROGRAM} --buildroot {$buildroot.absolute} bridge
 
-    # Local Variables:
-    # mode: conf
-    # End:
-
     END
 }
 
@@ -114,13 +102,5 @@ multi sub create-systemd-service(
     [Install]
     WantedBy=default.target
 
-    # Local Variables:
-    # mode: conf
-    # End:
-
     END
 }
-
-# Local Variables:
-# mode: raku
-# End:
