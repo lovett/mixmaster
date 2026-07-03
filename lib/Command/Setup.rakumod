@@ -38,21 +38,18 @@ my sub Setup(IO::Path $path) is export {
 
 sub create-config(IO::Path $path) {
     spurt $path, qq:to/END/;
-    ; This is the configuration file for mixmaster. It maps project repositories
-    ; to build commands and defines application settings.
-
     [_]
 
     ; The SSH key that should be loaded at the start of each build.
     sshKey =
 
-    ; The email address that should receive build updates.
+    ; The email address that should receive build notifications.
     mailto =
 
     ; The command for sending email.
     mailcommand = /usr/sbin/sendmail -t
 
-    ; Sample project configuration.
+    ; Repository configuration
     [example-org/example-repo]
     production = make deploy
     staging = make deploy-to-staging
