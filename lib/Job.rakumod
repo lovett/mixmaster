@@ -168,17 +168,19 @@ sub git-recipe(%job) {
     my IO::Path $checkout = %job<context><checkout>;
     my Str $clone-url = %job<repository><clone_url>;
     my Str $commit = %job<after>;
+    my $existingCheckout = $checkout.add(".git").d;
 
-    if ($checkout.add(".git").d) {
-        @recipe.push: "git reset --quiet --hard";
-        @recipe.push: "git checkout --quiet {$branch}";
-        @recipe.push: "git pull --ff-only";
-    } else {
+    if (!$existingCheckout) {
         @recipe.push: "git clone --quiet --branch {$branch} {$clone-url} .";
+    } else {
+        @recipe.push: "git fetch --quiet";
+        @recipe.push: "git reset --quiet --hard";
+        @recipe.push: "git clean --quiet -f -d";
+        @recipe.push: "git rebase --quiet";
     }
 
     if ($commit) {
-        @recipe.push: "git checkout --quiet {$commit}";
+        @recipe.push: "git reset --quiet --hard {$commit}";
     }
 
     return @recipe;
