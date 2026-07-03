@@ -38,7 +38,7 @@ my sub Setup(IO::Path $path) is export {
 
 sub create-config(IO::Path $path) {
     spurt $path, qq:to/END/;
-    [_]
+    ; This is the configuration file for mixmaster.
 
     ; The SSH key that should be loaded at the start of each build.
     sshKey =
