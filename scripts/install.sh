@@ -9,7 +9,13 @@ case "${1:-default}" in
         echo "Installs the application to ~/.raku/bin"
         ;;
     default)
+        VERSION=$(date +"%Y%m.%d.%H%M")
+
+        sed -i "s/\"version-placeholder\"/\"$VERSION\"/" META6.json
+
         zef --to=home install .
+
+        git restore META6.json
         ;;
     *)
         echo "Unknown argument." >&2

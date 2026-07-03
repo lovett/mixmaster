@@ -1,7 +1,7 @@
 {
   "raku" : "6.d",
   "name" : "Mixmaster",
-  "version" : "dev",
+  "version" : "version-placeholder",
   "auth" : "github:lovett",
   "description" : "A lightweight build service.",
   "authors" : [ "Bill Lovett" ],
