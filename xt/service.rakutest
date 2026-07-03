@@ -1,12 +1,17 @@
 #!/usr/bin/env rakudo
 
+# This test can't overwrite $HOME because it would prevent
+# Service.rakumod from being able to load modules installed to
+# ~/.raku. The SYSTEMD_USER_OVERRIDE environment variable is a
+# workaround.
+
 use File::Temp;
 use Test;
 
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $buildroot = tempdir;
 
-%*ENV<HOME> = tempdir;
+%*ENV<SYSTEMD_USER_OVERRIDE> = tempdir;
 
 my $proc = run $mixmaster, qqw{--buildroot $buildroot service}, :out, :err;
 my $out = $proc.out.slurp: :close;
@@ -14,11 +19,10 @@ my $err = $proc.err.slurp: :close;
 
 plan 10;
 
-indir(%*ENV<HOME>, {
-    mkdir ".config/systemd/user"
-});
+is $err, "", "Stderr is empty";
+is $proc.exitcode, 0, "Clean exit";
 
-indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
+indir(%*ENV<SYSTEMD_USER_OVERRIDE>, {
     my $target = "mixmaster.service".IO;
     ok $target.f, "Creates mixmaster.service";
     is $target.lines.grep("WorkingDirectory=$buildroot").elems, 1, "Service file sets WorkingDirectory to buildroot";
@@ -34,8 +38,5 @@ indir(%*ENV<HOME>.IO.add(".config/systemd/user"), {
     ok $target.f, "Creates path service";
     is $target.lines.grep("DirectoryNotEmpty=$buildroot/INBOX").elems, 1, "Path service watches INBOX";
 });
-
-is $err, "", "Stderr is empty";
-is $proc.exitcode, 0, "Clean exit";
 
 done-testing;

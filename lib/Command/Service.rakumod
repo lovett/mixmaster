@@ -14,6 +14,9 @@ my sub Service(IO::Path $path) is export {
     >;
 
     my $dir = "{$*HOME}/.config/systemd/user".IO;
+    if %*ENV<SYSTEMD_USER_OVERRIDE>:exists {
+        $dir = %*ENV<SYSTEMD_USER_OVERRIDE>.IO;
+    }
 
     mkdir($dir);
 
