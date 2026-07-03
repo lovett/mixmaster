@@ -13,7 +13,7 @@ sub trash-path(IO::Path $path --> IO::Path) is export {
 }
 
 sub config-path(IO::Path $buildroot --> IO::Path) is export {
-    return $buildroot.add("mixmaster.ini");
+    return $buildroot.add("config.ini");
 }
 
 sub nearest-root(IO::Path $path --> IO::Path) is export {

@@ -62,7 +62,7 @@ To connect Mixmaster to Forgejo or similar, set up a Webhook in that system:
   - Branch filter: * (Mixmaster will ignore requests about unfamiliar branches)
 
 ### Projects
-Each section of the configuration file (by default, `~/Builds/mixmaster.ini`) defines a project.
+Each section of the configuration file (by default, `~/Builds/config.ini`) defines a project.
 
 The section name is the repository in the typical "organization-name/repo-name" format.
 

@@ -13,7 +13,7 @@ my $testdir = tempdir;
 my ($log-file, $log-handle) = tempfile;
 my $job-fixture = $*PROGRAM.IO.parent().add('fixture/gitea.json');
 my $job-file = $testdir.IO.add($job-fixture.basename);
-my $config-fixture = $*PROGRAM.IO.parent().add('fixture/mixmaster.ini');
+my $config-fixture = $*PROGRAM.IO.parent().add('fixture/config.ini');
 my $config-file = $testdir.IO.add($config-fixture.basename);
 
 copy($job-fixture, $job-file);

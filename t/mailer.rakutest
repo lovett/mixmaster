@@ -14,7 +14,7 @@ my %files;
 
 indir $*PROGRAM.IO.parent().add('fixture'), {
     %fixtures<job> = "gitea.json".IO;
-    %fixtures<config> = "mixmaster.ini".IO;
+    %fixtures<config> = "config.ini".IO;
     %fixtures<start> = "start.email".IO;
     %fixtures<success> = "success.email".IO;
     %fixtures<successLog> = "success.log".IO;

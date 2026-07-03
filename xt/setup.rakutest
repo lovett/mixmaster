@@ -17,7 +17,7 @@ is $stderr, "", "Stderr is empty";
 ok $buildroot.IO.d, "Creates buildroot";
 ok $buildroot.IO.add("INBOX").d, "Creates INBOX directory in buildroot";
 ok $buildroot.IO.add("ARCHIVE").d, "Creates ARCHIVE directory in buildroot";
-ok $buildroot.IO.add("mixmaster.ini").f, "Creates mixmaster.ini in buildroot";
+ok $buildroot.IO.add("config.ini").f, "Creates config.ini in buildroot";
 is $proc.exitcode, 0, "Clean exit";
 
 done-testing;

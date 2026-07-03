@@ -6,7 +6,7 @@ use Test;
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $recipe-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/gitea.recipe');
 my $job-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/gitea.json');
-my $config-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/mixmaster.ini');
+my $config-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/config.ini');
 my $buildroot = tempdir;
 my $job-file = $buildroot.IO.add("INBOX").add($job-fixture.basename);
 my $workspace = $buildroot.IO.add("test-org-test-repo");
