@@ -151,10 +151,6 @@ sub job-recipe(%job --> Array[Str]) is export {
 
     @recipe.push: %job<context><build-command>;
 
-    if (%job<context><config><mode> ~~ "dryrun") {
-        @recipe = ("echo $_" for @recipe);
-    }
-
     return @recipe;
 }
 

@@ -46,10 +46,6 @@ sub create-config(IO::Path $path) {
     ; The SSH key that should be loaded at the start of each build.
     sshKey =
 
-    ; Use "dryrun" to echo build commands for testing purposes.
-    ; Use "normal" to have build commands executed.
-    mode = normal
-
     ; The email address that should receive build updates.
     mailto =
 
