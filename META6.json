@@ -13,6 +13,7 @@
     "Command::Recipe": "lib/Command/Recipe.rakumod",
     "Command::Service": "lib/Command/Service.rakumod",
     "Command::Setup": "lib/Command/Setup.rakumod",
+    "Command::Version": "lib/Command/Version.rakumod",
     "Filesystem": "lib/Filesystem.rakumod",
     "Job": "lib/Job.rakumod",
     "Mailer": "lib/Mailer.rakumod"
