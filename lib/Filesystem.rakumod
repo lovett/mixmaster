@@ -28,8 +28,12 @@ sub filesystem-friendly(Str $value) is export {
     return $value.lc.subst(/\W+/, "-", :g);
 }
 
-sub resolve-tilde(IO::Path $path --> IO::Path) is export {
+multi sub resolve-tilde(IO::Path $path --> IO::Path) is export {
     return $path.subst(/^ '~'/, $*HOME).IO;
+}
+
+multi sub resolve-tilde(Str $path --> Str) is export {
+    return $path.subst(/'~'/, $*HOME, :g);
 }
 
 sub with-tilde(IO::Path $path --> IO::Path) is export {

@@ -112,7 +112,7 @@ sub build-command(%job --> Str) {
 
     given @matches.elems {
         when 1 {
-            return @matches.first.value;
+            return resolve-tilde(@matches.first.value);
         }
 
         when 0 {
