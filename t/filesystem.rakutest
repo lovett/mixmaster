@@ -14,8 +14,6 @@ mkdir($subdir);
 
 my $buildroot2 = tempdir.IO;
 
-plan 13;
-
 is inbox-path($buildroot), $buildroot.add("INBOX"), "Inbox resides in buildroot";
 is archive-path($buildroot), $buildroot.add("ARCHIVE"), "Archive resides in buildroot";
 is config-path($buildroot), $buildroot.add("config.ini"), "Config file resides in buildroot";

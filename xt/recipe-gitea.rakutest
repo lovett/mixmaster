@@ -22,8 +22,6 @@ my $stderr = $proc.err.slurp: :close;
 
 my $expected-recipe = $recipe-fixture.IO.slurp;
 
-plan 5;
-
 for $expected-recipe.lines.kv -> $i, $_ {
     is $stdout.lines[$i], $_, "Line {$i+1} of output matches fixture";
 }

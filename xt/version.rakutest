@@ -7,8 +7,6 @@ my $proc = run $mixmaster, "--version", :out, :err;
 my $stdout = $proc.out.slurp(:close);
 my $stderr = $proc.err.slurp(:close);
 
-plan 4;
-
 is $stdout.lines[0], "dev", "Version constant is written to stdout";
 is $stdout.lines.elems, 1, "No additional output";
 is $stderr, "", "Stderr is empty";

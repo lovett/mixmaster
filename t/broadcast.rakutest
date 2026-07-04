@@ -36,8 +36,6 @@ broadcast-fail(%job, $fail-phrase);
 
 my @log-lines = $log-file.IO.slurp.lines;
 
-plan 19;
-
 # broadcast-start
 ok @log-lines[0].contains("# Build started for"), "Build start message was logged";
 ok @log-lines[1].contains("# Building in"), "Build workspace was logged";

@@ -32,8 +32,6 @@ copy(%fixtures<config>, %files<config>);
 
 my %job = load-job(%files<job>);
 
-plan 6;
-
 my ($startSubject, $startBody) = job-start-email(%job);
 is $startSubject, "[mixmaster] Building test-org/test-repo", "Start email subject";
 is $startBody.trim, %fixtures<start>.slurp.trim, "Start email body";

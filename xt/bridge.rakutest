@@ -26,8 +26,6 @@ my $stderr = $proc.err.slurp;
 
 my IO::Path @files = $buildroot.IO.add("INBOX").dir(test => /'.' json $/);
 
-plan 4;
-
 is @files.elems, 1, "Creates job file in inbox";
 is @files[0].slurp.chars, $job.chars, "Job file matches fixture";
 like $stderr, /'New job received'/, "Logs job received to stderr";

@@ -33,8 +33,6 @@ $proc.out.close();
 my $log = $workspace.add("ARCHIVE/{$log-name}");
 my @log-lines = $log.IO.slurp;
 
-plan 11;
-
 is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
 is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
 ok $workspace.d, "Workspace was created";

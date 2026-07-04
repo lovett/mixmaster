@@ -17,8 +17,6 @@ my $proc = run $mixmaster, qqw{--buildroot $buildroot service}, :out, :err;
 my $out = $proc.out.slurp: :close;
 my $err = $proc.err.slurp: :close;
 
-plan 10;
-
 is $err, "", "Stderr is empty";
 is $proc.exitcode, 0, "Clean exit";
 

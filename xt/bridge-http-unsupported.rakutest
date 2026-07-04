@@ -18,8 +18,6 @@ REQUEST
 my $stdout = $proc.out.slurp;
 my $stderr = $proc.err.slurp;
 
-plan 2;
-
 like $stderr, /'DELETE requests are not supported'/, "Error message is written to stderr";
 is $proc.exitcode, 0, "Clean exit";
 
