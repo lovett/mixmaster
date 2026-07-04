@@ -32,12 +32,13 @@ multi sub Build(IO::Path $path where *.f) is export {
 
     my %job = load-job($path);
 
-    unless %job<context><known> {
+    unless %job<context><can-build> {
         my IO::Path $trash = trash-path(%job<context><buildroot>);
         $trash.mkdir;
         rename($path, $trash.add($path.basename));
-        note "Trashed {$path.basename} because %job<context><project> project is not configured for builds";
-        return
+
+        note "Trashed {$path.basename} because it is not buildable";
+        return;
     }
 
     my IO::Path $archive = archive-path(%job<context><buildroot>);

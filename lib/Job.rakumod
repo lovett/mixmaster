@@ -11,6 +11,8 @@ sub load-job(IO::Path $path --> Hash) is export {
     my %job = from-json($path.slurp // "\{}");
 
     %job<context> = Hash.new;
+    %job<context><can-build> = True;
+
     %job<context><buildroot> = nearest-root($path);
     %job<context><config> = load-config(%job<context><buildroot>);
 
@@ -24,6 +26,7 @@ sub load-job(IO::Path $path --> Hash) is export {
     %job<context><known> = is-known-project(%job);
 
     unless %job<context><known> {
+        %job<context><can-build> = False;
         return %job;
     }
 
@@ -40,6 +43,11 @@ sub load-job(IO::Path $path --> Hash) is export {
     %job<context><checkout> = %job<context><workspace>.add(%job<context><branch-dir>).mkdir;
 
     %job<context><build-command> = build-command(%job);
+
+    unless %job<context><build-command> {
+        %job<context><can-build> = False;
+        return %job;
+    }
 
     %job<context><recipe> = job-recipe(%job);
 
