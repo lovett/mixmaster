@@ -31,12 +31,12 @@ sub broadcast-hook(%job, HookEvent $hook) {
         }
     }
 
-    my $command = %job<context><config><hooks>{$hookName};
-    return unless $command;
+    my $hookScript = %job<context><config><_><hook>;
+    return unless $hookScript;
 
-    log(%job, 'H', "Calling $hookName hook");
+    log(%job, 'H', "Calling hook script for $hookName event");
 
-    my $proc = run $command, :in, :out, :err;
+    my $proc = run $hookScript, :in, :out, :err;
 
     my $project = %job<context><project>;
     my $log-path = %job<context><log-path>;
@@ -52,15 +52,15 @@ sub broadcast-hook(%job, HookEvent $hook) {
 
     my $stdout = $proc.out.slurp: :close;
     for $stdout.lines {
-        log(%job, 'H', "$hookName out: $_");
+        log(%job, 'H', "out: $_");
     }
 
     my $stderr = $proc.err.slurp: :close;
     if $stderr {
-        log(%job, 'H', "$hookName err: $stdout");
+        log(%job, 'H', "err: $stdout");
     }
 
-    log(%job, 'H', "$hookName exit: {$proc.exitcode}");
+    log(%job, 'H', "exit: {$proc.exitcode}");
 }
 
 
