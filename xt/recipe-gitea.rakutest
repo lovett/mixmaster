@@ -18,7 +18,7 @@ copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
 
 my $proc = run $mixmaster, qqw{--job $job-file recipe}, :out, :err;
 my $stdout = $proc.out.slurp: :close;
-my $stderr = $proc.out.slurp: :close;
+my $stderr = $proc.err.slurp: :close;
 
 my $expected-recipe = $recipe-fixture.IO.slurp;
 
