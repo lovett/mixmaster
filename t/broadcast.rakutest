@@ -25,7 +25,6 @@ my $stdout-phrase = ~random-word 4;
 my $stderr-phrase = ~random-word 5;
 my $fail-phrase = ~random-word 5;
 
-%job<config><mailto> = Nil;
 %job<context><log> = $log-handle;
 
 broadcast-start(%job);
