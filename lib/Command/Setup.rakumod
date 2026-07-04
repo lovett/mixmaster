@@ -49,6 +49,9 @@ sub create-config(IO::Path $path) {
     ; The command for sending email.
     mailcommand = /usr/sbin/sendmail -t
 
+    ; A script to receive hook events.
+    hook =
+
     ; Repository configuration
     [example-org/example-repo]
     production = make deploy
