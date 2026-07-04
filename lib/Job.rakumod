@@ -176,9 +176,9 @@ sub git-recipe(%job) {
     my IO::Path $checkout = %job<context><checkout>;
     my Str $clone-url = %job<repository><clone_url>;
     my Str $commit = %job<after>;
-    my $existingCheckout = $checkout.add(".git").d;
+    my $gitDir = $checkout.add(".git");
 
-    if (!$existingCheckout) {
+    if $gitDir !~~ :d {
         @recipe.push: "git clone --quiet --branch {$branch} {$clone-url} .";
     } else {
         @recipe.push: "git fetch --quiet";
