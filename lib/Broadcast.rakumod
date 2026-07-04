@@ -2,18 +2,67 @@ unit module Broadcast;
 
 use Mailer;
 
+enum HookEvent <Start End>;
+
 sub broadcast-start(%job) is export {
     log(%job, '#', "Build started for {%job<context><jobfile>}");
     log(%job, '#', "Building in {%job<context><workspace>}");
     log(%job, '#', "Logging to {%job<context><log-path>}");
 
-    if (%job<context><mailable>) {
+    if %job<context><mailable> {
         my ($subject, $body) = job-start-email(%job);
         mail(%job<config>, $subject, $body);
     } else {
         log(%job, '#', "Email notifications will not be sent");
     }
+
+    broadcast-hook(%job, Start);
 }
+
+sub broadcast-hook(%job, HookEvent $hook) {
+    my Str $hookName;
+    given $hook {
+        when Start {
+            $hookName = "job-start";
+        }
+
+        when End {
+            $hookName = "job-end";
+        }
+    }
+
+    my $command = %job<context><config><hooks>{$hookName};
+    return unless $command;
+
+    log(%job, 'H', "Calling $hookName hook");
+
+    my $proc = run $command, :in, :out, :err;
+
+    my $project = %job<context><project>;
+    my $log-path = %job<context><log-path>;
+    my $job-file = %job<context><jobfile>;
+
+    $proc.in.print: qq:to/END/;
+    MixmasterEvent: $hookName
+    MixmasterProject: $project
+    MixmasterLog: $log-path;
+    END
+
+    $proc.in.close;
+
+    my $stdout = $proc.out.slurp: :close;
+    for $stdout.lines {
+        log(%job, 'H', "$hookName out: $_");
+    }
+
+    my $stderr = $proc.err.slurp: :close;
+    if $stderr {
+        log(%job, 'H', "$hookName err: $stdout");
+    }
+
+    log(%job, 'H', "$hookName exit: {$proc.exitcode}");
+}
+
 
 sub broadcast-command(%job, Str $message) is export {
     log(%job, '$', $message);
@@ -33,6 +82,9 @@ sub broadcast-end(%job) is export {
         my ($subject, $body) = job-end-email(%job);
         mail(%job<config>, $subject, $body);
     }
+
+    broadcast-hook(%job, End);
+
 }
 
 sub broadcast-fail(%job, Str $message) is export {
