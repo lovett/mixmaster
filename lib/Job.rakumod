@@ -16,7 +16,7 @@ sub load-job(IO::Path $path --> Hash) is export {
     %job<context><buildroot> = nearest-root($path);
     %job<context><config> = load-config(%job<context><buildroot>);
 
-    %job<context><mailable> = %job<config><mailto> ~~ Str && %job<config><mailcommand> ~~ Str;
+    %job<context><mailable> = %job<context><config><_><mailto>.Bool && %job<context><config><_><mailcommand>.Bool;
 
     %job<context><jobfile> = $path;
     %job<context><jobtype> = job-type(%job);
