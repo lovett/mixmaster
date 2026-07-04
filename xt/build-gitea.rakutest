@@ -42,7 +42,7 @@ ok $workspace.add("ARCHIVE").d, "Workspace archive was created";
 ok $workspace.add("production").d, "Workspace target directory was created";
 ok $log.f, "Workspace log was created";
 is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Git clone appeared in log";
-is @log-lines.grep(rx:s/\$ git checkout/).elems, 1, "Git checkout appeared in log";
+is @log-lines.grep(rx:s/\$ git reset/).elems, 1, "Git reset appeared in log";
 is @log-lines.grep(rx:s/\$ echo Stub command for building production branch/).elems, 1, "Build command was logged";
 is @log-lines.grep(rx:s/O Stub command for building production branch/).elems, 1, "Build command output was logged";
 is $proc.exitcode, 0, "Command exits zero";
