@@ -1,6 +1,7 @@
 unit module Broadcast;
 
 use Mailer;
+use Filesystem;
 
 enum HookEvent <Start End>;
 
@@ -33,6 +34,8 @@ sub broadcast-hook(%job, HookEvent $hook) {
 
     my $hookScript = %job<context><config><_><hook>;
     return unless $hookScript;
+
+    $hookScript = resolve-tilde($hookScript);
 
     log(%job, 'H', "Calling hook script for $hookName event");
 
