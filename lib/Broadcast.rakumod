@@ -3,7 +3,7 @@ unit module Broadcast;
 use Mailer;
 use Filesystem;
 
-enum HookEvent <Start End>;
+enum HookEvent <Start End Fail>;
 
 sub broadcast-start(%job) is export {
     log(%job, '#', "Build started for {%job<context><jobfile>}");
@@ -25,6 +25,10 @@ sub broadcast-hook(%job, HookEvent $hook) {
     given $hook {
         when Start {
             $hookName = "job-start";
+        }
+
+        when Fail {
+            $hookName = "job-fail";
         }
 
         when End {
@@ -97,6 +101,8 @@ sub broadcast-fail(%job, Str $message) is export {
         my ($subject, $body) = job-end-email(%job);
         mail(%job<config>, $subject, $body);
     }
+
+    broadcast-hook(%job, Fail);
 }
 
 sub log(%job, Str $prefix, Str $message) {

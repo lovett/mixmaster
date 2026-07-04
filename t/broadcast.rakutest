@@ -66,5 +66,9 @@ ok @log-lines[17].contains("H exit: 0"), "Hook script end exit was logged";
 
 # broadcast-fail
 ok @log-lines[18].contains("# Build failed: $fail-phrase"), "Build failure message was logged";
+ok @log-lines[19].contains("H Calling hook script for job-fail event"), "Hook script was called for job-fail";
+ok @log-lines[20].contains("H out: MixmasterEvent: job-fail"), "Hook script fail stdout was logged";
+ok @log-lines[21].contains("H out: MixmasterProject: test-org/test-repo"), "Hook script fail receives project";
+ok @log-lines[22].contains("H out: MixmasterLog:"), "Hook script fail receives log";
 
 done-testing;
