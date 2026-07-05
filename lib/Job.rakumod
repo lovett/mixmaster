@@ -183,7 +183,7 @@ sub git-recipe(%job) {
     } else {
         @recipe.push: "git fetch --quiet";
         @recipe.push: "git clean --quiet -f -d";
-        @recipe.push: "git checkout -f {$branch}";
+        @recipe.push: "git checkout -f HEAD";
     }
 
     if ($commit) {
