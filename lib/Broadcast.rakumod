@@ -6,9 +6,13 @@ use Filesystem;
 enum HookEvent <Start End Fail>;
 
 sub broadcast-start(%job) is export {
-    log(%job, '#', "Build started for {%job<context><jobfile>}");
-    log(%job, '#', "Building in {%job<context><workspace>}");
-    log(%job, '#', "Logging to {%job<context><log-path>}");
+    my $jobfile = with-tilde(%job<context><jobfile>);
+    my $workspace = with-tilde(%job<context><workspace>);
+    my $log = with-tilde(%job<context><log-path>);
+
+    log(%job, '#', "Build started for $jobfile");
+    log(%job, '#', "Building in $workspace");
+    log(%job, '#', "Logging to $log");
 
     if %job<context><mailable> {
         my ($subject, $body) = job-start-email(%job);
@@ -46,13 +50,12 @@ sub broadcast-hook(%job, HookEvent $hook) {
     my $proc = run $hookScript, :in, :out, :err;
 
     my $project = %job<context><project>;
-    my $log-path = %job<context><log-path>;
-    my $job-file = %job<context><jobfile>;
+    my $log = with-tilde(%job<context><log-path>);
 
     $proc.in.print: qq:to/END/;
     MixmasterEvent: $hookName
     MixmasterProject: $project
-    MixmasterLog: $log-path;
+    MixmasterLog: $log;
     END
 
     $proc.in.close;
