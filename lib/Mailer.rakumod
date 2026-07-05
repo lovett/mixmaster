@@ -59,8 +59,8 @@ sub job-end-email(%job) is export {
 }
 
 sub mail(%config, Str $subject, Str $body) is export {
-    my $recipient = %config<mailto>;
-    my @mailcommand = %config<mailcommand>.split(" ");
+    my $recipient = %config<_><mailto>;
+    my @mailcommand = %config<_><mailcommand>.split(" ");
 
     my $message = Email::Simple.create(
         :header[
