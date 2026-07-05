@@ -182,13 +182,12 @@ sub git-recipe(%job) {
         @recipe.push: "git clone --quiet --branch {$branch} {$clone-url} .";
     } else {
         @recipe.push: "git fetch --quiet";
-        @recipe.push: "git reset --quiet --hard";
         @recipe.push: "git clean --quiet -f -d";
-        @recipe.push: "git rebase --quiet";
+        @recipe.push: "git checkout -f {$branch}";
     }
 
     if ($commit) {
-        @recipe.push: "git reset --quiet --hard {$commit}";
+        @recipe.push: "git checkout -f {$commit}";
     }
 
     return @recipe;
