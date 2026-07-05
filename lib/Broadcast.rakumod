@@ -70,7 +70,9 @@ sub broadcast-hook(%job, HookEvent $hook) {
         log(%job, 'H', "err: $stdout");
     }
 
-    log(%job, 'H', "exit: {$proc.exitcode}");
+    if $proc.exitcode != 0 {
+        log(%job, 'H', "Hook exited non-zero ({$proc.exitcode})");
+    }
 }
 
 
