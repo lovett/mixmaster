@@ -11,7 +11,6 @@ sub load-job(IO::Path $path --> Hash) is export {
     my %job = from-json($path.slurp // "\{}");
 
     %job<context> = Hash.new;
-    %job<context><can-build> = True;
 
     %job<context><buildroot> = nearest-root($path);
     %job<context><config> = load-config(%job<context><buildroot>);
@@ -23,12 +22,11 @@ sub load-job(IO::Path $path --> Hash) is export {
 
     %job<context><project> = job-project(%job);
 
-    %job<context><known> = is-known-project(%job);
+    %job<context><branch> = job-branch(%job);
 
-    unless %job<context><known> {
-        %job<context><can-build> = False;
-        return %job;
-    }
+    %job<context><build-command> = build-command(%job);
+
+    return %job unless %job<context><build-command>;
 
     %job<context><project-dir> = filesystem-friendly(%job<context><project>);
 
@@ -36,18 +34,10 @@ sub load-job(IO::Path $path --> Hash) is export {
 
     %job<context><archive> = %job<context><workspace>.add("ARCHIVE").mkdir;
 
-    %job<context><branch> = job-branch(%job);
 
     %job<context><branch-dir> = filesystem-friendly(%job<context><branch>);
 
     %job<context><checkout> = %job<context><workspace>.add(%job<context><branch-dir>).mkdir;
-
-    %job<context><build-command> = build-command(%job);
-
-    unless %job<context><build-command> {
-        %job<context><can-build> = False;
-        return %job;
-    }
 
     %job<context><recipe> = job-recipe(%job);
 
@@ -63,11 +53,6 @@ sub load-config(IO::Path $buildroot --> Hash) {
     my $ini = Config::INI::parse_file($path.absolute);
     return $ini if $ini;
     return %{};
-}
-
-sub is-known-project(%job --> Bool) {
-    my $project = %job<context><project>;
-    return %job<context><config>{$project}:exists;
 }
 
 sub job-type(%job --> JobType) {
@@ -109,6 +94,9 @@ sub build-command(%job --> Str) {
     my $project = %job<context><project>;
     my $branch = %job<context><branch>;
 
+    return unless $branch;
+    return unless %job<context><config>{$project}.defined;
+
     my $matcher = $branch;
     if %job<context><jobtype> ~~ task {
         $matcher ~= "/{%job<task>}";
@@ -118,20 +106,9 @@ sub build-command(%job --> Str) {
         .key.starts-with($matcher);
     }
 
-    given @matches.elems {
-        when 1 {
-            return resolve-tilde(@matches.first.value);
-        }
+    return unless @matches.elems == 1;
 
-        when 0 {
-            return "# Build command not found for {$branch}";
-        }
-
-        default {
-            my @keys = (.key for @matches);
-            return "# Configuration for {$branch} is ambiguous. Could be {@keys.join(' or ')}.";
-        }
-    }
+    return resolve-tilde(@matches.first.value);
 }
 
 sub job-recipe(%job --> Array[Str]) is export {

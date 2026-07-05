@@ -24,7 +24,7 @@ my sub Recipe(IO::Path $path) is export {
         }
     }
 
-    unless %job<context><known> {
+    unless %job<context><build-command> {
         note "%job<context><project> project is not configured for builds";
         exit
     }

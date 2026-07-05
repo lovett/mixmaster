@@ -32,7 +32,7 @@ multi sub Build(IO::Path $path where *.f) is export {
 
     my %job = load-job($path);
 
-    unless %job<context><can-build> {
+    unless %job<context><build-command> {
         my IO::Path $trash = trash-path(%job<context><buildroot>);
         $trash.mkdir;
         rename($path, $trash.add($path.basename));
