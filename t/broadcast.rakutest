@@ -39,37 +39,36 @@ my @log-lines = $log-file.IO.slurp.lines;
 # broadcast-start
 ok @log-lines[0].contains("# Build started for"), "Build start message was logged";
 ok @log-lines[1].contains("# Building in"), "Build workspace was logged";
-ok @log-lines[2].contains(rx:s/Logging to .* gitea.log/), "Log path was logged";
-ok @log-lines[3].contains("Email notifications will not be sent"), "Unmailable message was logged";
-ok @log-lines[4].contains("H Calling hook script for job-start event"), "Hook script was called for job-start";
-ok @log-lines[5].contains("H out: MixmasterEvent: job-start"), "Hook script start stdout was logged";
-ok @log-lines[6].contains("H out: MixmasterProject: test-org/test-repo"), "Hook script start receives project";
-ok @log-lines[7].contains("H out: MixmasterBranch: production"), "Hook script start receives branch";
-ok @log-lines[8].contains("H out: MixmasterLog:"), "Hook script start receives log";
+ok @log-lines[2].contains("Email notifications will not be sent"), "Unmailable message was logged";
+ok @log-lines[3].contains("H Calling hook script for job-start event"), "Hook script was called for job-start";
+ok @log-lines[4].contains("H out: MixmasterEvent: job-start"), "Hook script start stdout was logged";
+ok @log-lines[5].contains("H out: MixmasterProject: test-org/test-repo"), "Hook script start receives project";
+ok @log-lines[6].contains("H out: MixmasterBranch: production"), "Hook script start receives branch";
+ok @log-lines[7].contains("H out: MixmasterLog:"), "Hook script start receives log";
 
 # broadcast-command
-ok @log-lines[9].contains("\$ $command-phrase"), "Command message was logged";
+ok @log-lines[8].contains("\$ $command-phrase"), "Command message was logged";
 
 # broadcast-stdout
-ok @log-lines[10].contains("O $stdout-phrase"), "Stdout message was logged";
+ok @log-lines[9].contains("O $stdout-phrase"), "Stdout message was logged";
 
 # broacast-stderr
-ok @log-lines[11].contains("! $stderr-phrase"), "Stderr message was logged";
+ok @log-lines[10].contains("! $stderr-phrase"), "Stderr message was logged";
 
 # broadcast-end
-ok @log-lines[12].contains("# End of build"), "Build end message was logged";
-ok @log-lines[13].contains("H Calling hook script for job-end event"), "Hook script was called for job-end";
-ok @log-lines[14].contains("H out: MixmasterEvent: job-end"), "Hook script end stdout was logged";
-ok @log-lines[15].contains("H out: MixmasterProject: test-org/test-repo"), "Hook script end receives project";
-ok @log-lines[16].contains("H out: MixmasterBranch: production"), "Hook script end receives branch";
-ok @log-lines[17].contains("H out: MixmasterLog:"), "Hook script end receives log";
+ok @log-lines[11].contains("# End of build"), "Build end message was logged";
+ok @log-lines[12].contains("H Calling hook script for job-end event"), "Hook script was called for job-end";
+ok @log-lines[13].contains("H out: MixmasterEvent: job-end"), "Hook script end stdout was logged";
+ok @log-lines[14].contains("H out: MixmasterProject: test-org/test-repo"), "Hook script end receives project";
+ok @log-lines[15].contains("H out: MixmasterBranch: production"), "Hook script end receives branch";
+ok @log-lines[16].contains("H out: MixmasterLog:"), "Hook script end receives log";
 
 # broadcast-fail
-ok @log-lines[18].contains("# Build failed: $fail-phrase"), "Build failure message was logged";
-ok @log-lines[19].contains("H Calling hook script for job-fail event"), "Hook script was called for job-fail";
-ok @log-lines[20].contains("H out: MixmasterEvent: job-fail"), "Hook script fail stdout was logged";
-ok @log-lines[21].contains("H out: MixmasterProject: test-org/test-repo"), "Hook script fail receives project";
-ok @log-lines[22].contains("H out: MixmasterBranch: production"), "Hook script fail receives branch";
-ok @log-lines[23].contains("H out: MixmasterLog:"), "Hook script fail receives log";
+ok @log-lines[17].contains("# Build failed: $fail-phrase"), "Build failure message was logged";
+ok @log-lines[18].contains("H Calling hook script for job-fail event"), "Hook script was called for job-fail";
+ok @log-lines[19].contains("H out: MixmasterEvent: job-fail"), "Hook script fail stdout was logged";
+ok @log-lines[20].contains("H out: MixmasterProject: test-org/test-repo"), "Hook script fail receives project";
+ok @log-lines[21].contains("H out: MixmasterBranch: production"), "Hook script fail receives branch";
+ok @log-lines[22].contains("H out: MixmasterLog:"), "Hook script fail receives log";
 
 done-testing;

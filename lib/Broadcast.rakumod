@@ -6,13 +6,12 @@ use Filesystem;
 enum HookEvent <Start End Fail>;
 
 sub broadcast-start(%job) is export {
-    my $jobfile = with-tilde(%job<context><jobfile>);
+    my $jobfile = %job<context><jobfile>.IO.basename;
     my $workspace = with-tilde(%job<context><workspace>);
     my $log = with-tilde(%job<context><log-path>);
 
     log(%job, '#', "Build started for $jobfile");
     log(%job, '#', "Building in $workspace");
-    log(%job, '#', "Logging to $log");
 
     if %job<context><mailable> {
         my ($subject, $body) = job-start-email(%job);
