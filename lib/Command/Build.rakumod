@@ -86,7 +86,7 @@ multi sub Build(IO::Path $path where *.f) is export {
         }
     }
 
-    LEAVE {
+    KEEP {
         broadcast-end(%job);
     }
 }
