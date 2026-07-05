@@ -158,9 +158,8 @@ sub git-recipe(%job) {
     if $gitDir !~~ :d {
         @recipe.push: "git clone --quiet --branch {$branch} {$clone-url} .";
     } else {
-        @recipe.push: "git fetch --quiet";
         @recipe.push: "git clean --quiet -f -d";
-        @recipe.push: "git checkout -f HEAD";
+        @recipe.push: "git pull --quiet --prune --force origin {$branch}";
     }
 
     if ($commit) {
