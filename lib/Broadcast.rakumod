@@ -12,7 +12,7 @@ sub broadcast-start(%job) is export {
 
     if %job<context><mailable> {
         my ($subject, $body) = job-start-email(%job);
-        mail(%job<config>, $subject, $body);
+        mail(%job<context><config>, $subject, $body);
     } else {
         log(%job, '#', "Email notifications will not be sent");
     }
@@ -87,7 +87,7 @@ sub broadcast-end(%job) is export {
     log(%job, '#', "End of build");
     if (%job<context><mailable>) {
         my ($subject, $body) = job-end-email(%job);
-        mail(%job<config>, $subject, $body);
+        mail(%job<context><config>, $subject, $body);
     }
 
     broadcast-hook(%job, End);
@@ -99,7 +99,7 @@ sub broadcast-fail(%job, Str $message) is export {
 
     if (%job<context><mailable>) {
         my ($subject, $body) = job-end-email(%job);
-        mail(%job<config>, $subject, $body);
+        mail(%job<context><config>, $subject, $body);
     }
 
     broadcast-hook(%job, Fail);
