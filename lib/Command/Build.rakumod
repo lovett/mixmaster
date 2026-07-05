@@ -72,6 +72,8 @@ multi sub Build(IO::Path $path where *.f) is export {
                 }
             }
         }
+
+        broadcast-end(%job);
     });
 
     CATCH {
@@ -84,10 +86,6 @@ multi sub Build(IO::Path $path where *.f) is export {
             %job<context><failed> = True;
             broadcast-fail(%job, .Str);
         }
-    }
-
-    KEEP {
-        broadcast-end(%job);
     }
 }
 
