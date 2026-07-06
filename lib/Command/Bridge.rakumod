@@ -78,7 +78,19 @@ my sub Bridge(IO::Path $path) is export {
         when "GET" {
             given %headers<uri>  {
                 when "/hello" {
-                    respond-success("world\n");
+                    respond-success("world");
+                    exit;
+                }
+
+                when /^ '/log/' (.*) '/' (.*) '.log' $/ {
+                    my $path = log-path($buildroot, ~$0, ~$1);
+
+                    unless $path.f {
+                        respond-notfound();
+                        exit;
+                    }
+
+                    respond-success($path.slurp);
                     exit;
                 }
 
@@ -104,6 +116,7 @@ sub respond-success(Str $body='') {
     print "Content-Type: text/plain; charset=utf-8\r\n";
     print "\r\n";
     print $body;
+    print "\n";
 }
 
 sub respond-failure() {

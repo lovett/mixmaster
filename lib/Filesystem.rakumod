@@ -39,3 +39,9 @@ multi sub resolve-tilde(Str $path --> Str) is export {
 sub with-tilde(IO::Path $path --> IO::Path) is export {
     return $path.subst(/^ $*HOME /, "~").IO;
 }
+
+sub log-path(IO::Path $path, Str $project, Str $log --> IO::Path) is export {
+    my $repo = $path.add($project);
+    my $archive = archive-path($repo);
+    return $archive.add($log ~ '.log');
+}

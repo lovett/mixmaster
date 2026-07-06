@@ -1,0 +1,26 @@
+#!/usr/bin/env rakudo
+
+use File::Temp;
+use Test;
+
+my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+my $buildroot = tempdir;
+my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in, :out, :err;
+
+$proc.in.print: qq:to/REQUEST/;
+GET /hello HTTP/1.0
+Content-Type: application/json
+Remote-Addr: 127.0.0.1
+Connection: close
+Content-Length: 0
+
+REQUEST
+
+my $stdout = $proc.out.slurp;
+my $stderr = $proc.err.slurp;
+
+like $stdout, /'200 OK'/, "Returns HTTP 200";
+like $stdout, /'world'/, "Returns expected body";
+is $proc.exitcode, 0, "Clean exit";
+
+done-testing;

@@ -20,7 +20,7 @@ multi sub MAIN("service", Str :$buildroot = DEFAULT_BUILDROOT) {
     run-command("service", $buildroot.IO);
 }
 
-#| Receive build requests over HTTP. Usually invoked by the systemd socket service.
+#| Receive HTTP requests. Usually invoked by the systemd socket service.
 multi sub MAIN("bridge", Str :$buildroot = DEFAULT_BUILDROOT) {
     run-command("bridge", $buildroot.IO);
 }

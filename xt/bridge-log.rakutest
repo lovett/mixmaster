@@ -1,0 +1,39 @@
+#!/usr/bin/env rakudo
+
+use File::Temp;
+use Test;
+
+my $buildroot = tempdir;
+my $config-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/config.ini');
+my $config-file = $buildroot.IO.add("config.ini");
+
+my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+
+copy($config-fixture, $buildroot.IO.add("config.ini"));
+
+my $archive = $buildroot.IO.add("test-org-test-repo/ARCHIVE");
+mkdir($archive);
+spurt $archive.add("mylog.log"), "log file contents";
+
+my $proc = run $mixmaster, qqw{--buildroot $buildroot bridge}, :in, :out, :err;
+
+$proc.in.print: qq:to/REQUEST/;
+GET /log/test-org-test-repo/mylog.log HTTP/1.0
+Content-Type: application/json
+Remote-Addr: 127.0.0.1
+Connection: close
+Content-Length: 0
+
+REQUEST
+
+my $stdout = $proc.out.slurp;
+my $stderr = $proc.err.slurp;
+
+# say $stdout;
+# say $stderr;
+
+like $stdout, /'200 OK'/, "Returns HTTP 200";
+like $stdout, /'log file contents'/, "Returns expected body";
+is $proc.exitcode, 0, "Clean exit";
+
+done-testing;
