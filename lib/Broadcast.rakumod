@@ -58,7 +58,7 @@ sub broadcast-hook(%job, HookEvent $hook) {
     MixmasterProject: $project
     MixmasterProjectDirectory: $projectDirectory
     MixmasterBranch: $branch
-    MixmasterLog: $log;
+    MixmasterLog: $log
     END
 
     $proc.in.close;
