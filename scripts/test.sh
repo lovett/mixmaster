@@ -2,9 +2,11 @@
 
 set -eu
 
+PATH="$HOME/.raku/bin:$PATH"
+
 cd "$(dirname "$0")/../"
 
-if [ ! -f "$HOME/.raku/bin/prove6" ]; then
+if ! command -v prove6 >/dev/null 2>&1; then
     zef install App::Prove6
 fi
 
