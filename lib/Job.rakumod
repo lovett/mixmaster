@@ -159,7 +159,7 @@ sub git-recipe(%job) {
         @recipe.push: "git clone --quiet --branch {$branch} {$clone-url} .";
     } else {
         @recipe.push: "git clean --quiet -f -d";
-        @recipe.push: "git pull --quiet --prune --force origin {$branch}";
+        @recipe.push: "git pull --quiet --prune --force --ff-only origin {$branch}";
     }
 
     if ($commit) {
