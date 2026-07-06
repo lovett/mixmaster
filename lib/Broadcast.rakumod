@@ -49,12 +49,14 @@ sub broadcast-hook(%job, HookEvent $hook) {
     my $proc = run $hookScript, :in, :out, :err;
 
     my $project = %job<context><project>;
+    my $projectDirectory = %job<context><project-dir>;
     my $branch = %job<context><branch>;
     my $log = with-tilde(%job<context><log-path>);
 
     $proc.in.print: qq:to/END/;
     MixmasterEvent: $hookName
     MixmasterProject: $project
+    MixmasterProjectDirectory: $projectDirectory
     MixmasterBranch: $branch
     MixmasterLog: $log;
     END
