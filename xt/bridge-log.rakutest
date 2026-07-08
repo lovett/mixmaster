@@ -33,6 +33,7 @@ my $stderr = $proc.err.slurp;
 # say $stderr;
 
 like $stdout, /'200 OK'/, "Returns HTTP 200";
+like $stdout, /'Content-Type: text/html'/, "Returns text/html";
 like $stdout, /'log file contents'/, "Returns expected body";
 is $proc.exitcode, 0, "Clean exit";
 

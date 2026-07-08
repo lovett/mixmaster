@@ -90,7 +90,12 @@ my sub Bridge(IO::Path $path) is export {
                         exit;
                     }
 
-                    respond-success($path.slurp);
+                    my $template = %?RESOURCES<log.template.html>.IO.slurp;
+
+                    my @lines = $path.slurp.lines.map: { '<div class="line">' ~ $_ ~ '</div>' };
+
+                    my $html = $template.subst('@@TITLE@@', $path.basename).subst('@@LOG@@', @lines.join("\n"));
+                    respond-success($html);
                     exit;
                 }
 
@@ -110,10 +115,16 @@ my sub Bridge(IO::Path $path) is export {
 }
 
 sub respond-success(Str $body='') {
+    my $contentType = "text/plain";
+
+    if $body.contains("<html") {
+       $contentType = "text/html";
+    }
+
     print "HTTP/1.1 200 OK\r\n";
     print "Connection: close\r\n";
     print "Content-Length: {$body.chars}\r\n";
-    print "Content-Type: text/plain; charset=utf-8\r\n";
+    print "Content-Type: $contentType; charset=utf-8\r\n";
     print "\r\n";
     print $body;
     print "\n";
