@@ -11,6 +11,7 @@ sub load-job(IO::Path $path --> Hash) is export {
     my %job = from-json($path.slurp // "\{}");
 
     %job<context> = Hash.new;
+    %job<context><start> = DateTime.now;
 
     %job<context><buildroot> = nearest-root($path);
     %job<context><config> = load-config(%job<context><buildroot>);

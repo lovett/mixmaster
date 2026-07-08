@@ -6,11 +6,12 @@ use Filesystem;
 enum HookEvent <Start End Fail>;
 
 sub broadcast-start(%job) is export {
+    my $start = %job<context><start>.now.hh-mm-ss;
     my $jobfile = %job<context><jobfile>.IO.basename;
     my $workspace = with-tilde(%job<context><workspace>);
     my $log = with-tilde(%job<context><log-path>);
 
-    log(%job, '#', "Build started for $jobfile");
+    log(%job, '#', "Build started at $start for $jobfile");
     log(%job, '#', "Building in $workspace");
 
     if %job<context><mailable> {
@@ -92,7 +93,7 @@ sub broadcast-stderr(%job, Str $message) is export {
 }
 
 sub broadcast-end(%job) is export {
-    log(%job, '#', "End of build");
+    log(%job, '#', "Build ended at {DateTime.now.hh-mm-ss}");
     if (%job<context><mailable>) {
         my ($subject, $body) = job-end-email(%job);
         mail(%job<context><config>, $subject, $body);
@@ -103,7 +104,8 @@ sub broadcast-end(%job) is export {
 }
 
 sub broadcast-fail(%job, Str $message) is export {
-    log(%job, '#', "Build failed: {$message}");
+    log(%job, '#', "Build failed at {DateTime.now.hh-mm-ss}");
+    log(%job, '#', $message);
 
     if (%job<context><mailable>) {
         my ($subject, $body) = job-end-email(%job);
