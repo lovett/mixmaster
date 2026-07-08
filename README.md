@@ -91,3 +91,7 @@ To turn off these notifications, leave the value of `mailto` in the application 
 Builds are invoked within a dedicated `ssh-agent` session that is per-job and separate from any other agent processes.
 
 If the configuration file defines a value for `sshKey` it will be loaded into to the agent.
+
+## Attribution
+
+This project uses icons from [Streamline](http://streamlinehq.com/)

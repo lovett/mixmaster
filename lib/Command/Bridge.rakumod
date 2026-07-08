@@ -82,6 +82,16 @@ my sub Bridge(IO::Path $path) is export {
                     exit;
                 }
 
+                when "/favicon.ico" {
+                    respond-no-content();
+                    exit;
+                }
+
+                when "/mixmaster.svg" {
+                    respond-success(%?RESOURCES<mixmaster.svg>.IO.slurp);
+                    exit;
+                }
+
                 when /^ '/log/' (.*) '/' (.*) '.log' $/ {
                     my $path = log-path($buildroot, ~$0, ~$1);
 
@@ -119,6 +129,8 @@ sub respond-success(Str $body='') {
 
     if $body.contains("<html") {
        $contentType = "text/html";
+    } elsif $body.contains("<svg") {
+        $contentType = "image/svg+xml";
     }
 
     print "HTTP/1.1 200 OK\r\n";
@@ -149,6 +161,12 @@ sub respond-notallowed() {
 
 sub respond-notfound() {
     print "HTTP/1.1 404 Not Found\r\n";
+    print "Connection: close\r\n";
+    print "\r\n";
+}
+
+sub respond-no-content() {
+    print "HTTP/1.1 204 No Content\r\n";
     print "Connection: close\r\n";
     print "\r\n";
 }
