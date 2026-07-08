@@ -116,7 +116,7 @@ sub broadcast-fail(%job, Str $message) is export {
 sub log(%job, Str $prefix, Str $message) {
     my $handle = %job<context><log>;
     for $message.trim.split("\n") {
-        try $handle.say("{DateTime.now.hh-mm-ss} {$prefix} $_");
+        try $handle.say("{$prefix} $_");
     }
     try $handle.flush();
 }
