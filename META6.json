@@ -18,6 +18,10 @@
     "Job": "lib/Job.rakumod",
     "Mailer": "lib/Mailer.rakumod"
   },
+  "resources": [
+    "log.template.html",
+    "mixmaster.svg"
+  ],
   "depends" : [
     "Config::INI",
     "Email::Simple",
