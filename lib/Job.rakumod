@@ -164,7 +164,7 @@ sub git-recipe(%job) {
     }
 
     if ($commit) {
-        @recipe.push: "git checkout -c advice.detachedHead=false -f {$commit}";
+        @recipe.push: "git -c advice.detachedHead=false checkout -f {$commit}";
     }
 
     return @recipe;
