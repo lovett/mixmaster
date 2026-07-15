@@ -4,4 +4,4 @@ set -eu
 
 cd "$(dirname "$0")/../"
 
-zef uninstall Mixmaster
+zef uninstall Mixmaster || true
