@@ -1,6 +1,5 @@
 unit module Broadcast;
 
-use Mailer;
 use Filesystem;
 
 enum HookEvent <Start End Fail>;
@@ -13,13 +12,6 @@ sub broadcast-start(%job) is export {
 
     log(%job, '#', "Build started at $start for $jobfile");
     log(%job, '#', "Building in $workspace");
-
-    if %job<context><mailable> {
-        my ($subject, $body) = job-start-email(%job);
-        mail(%job<context><config>, $subject, $body);
-    } else {
-        log(%job, '#', "Email notifications will not be sent");
-    }
 
     broadcast-hook(%job, Start);
 }
@@ -94,11 +86,6 @@ sub broadcast-stderr(%job, Str $message) is export {
 
 sub broadcast-end(%job) is export {
     log(%job, '#', "Build ended at {DateTime.now.hh-mm-ss}");
-    if (%job<context><mailable>) {
-        my ($subject, $body) = job-end-email(%job);
-        mail(%job<context><config>, $subject, $body);
-    }
-
     broadcast-hook(%job, End);
 
 }
@@ -106,11 +93,6 @@ sub broadcast-end(%job) is export {
 sub broadcast-fail(%job, Str $message) is export {
     log(%job, '#', "Build failed at {DateTime.now.hh-mm-ss}");
     log(%job, '#', $message);
-
-    if (%job<context><mailable>) {
-        my ($subject, $body) = job-end-email(%job);
-        mail(%job<context><config>, $subject, $body);
-    }
 
     broadcast-hook(%job, Fail);
 }

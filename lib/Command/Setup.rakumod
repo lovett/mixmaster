@@ -43,12 +43,6 @@ sub create-config(IO::Path $path) {
     ; The SSH key that should be loaded at the start of each build.
     sshKey =
 
-    ; The email address that should receive build notifications.
-    mailto =
-
-    ; The command for sending email.
-    mailcommand = /usr/sbin/sendmail -t
-
     ; A script to receive hook events.
     hook =
 

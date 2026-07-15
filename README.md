@@ -82,9 +82,7 @@ Branches are matched by prefix, so a `staging/my-feature` branch would run the b
 
 
 ## Notifications
-Build progress is conveyed via email sent to the address specified in the configuration file. Messages are sent when a job is started, when it finishes, and when an error occurs.
-
-To turn off these notifications, leave the value of `mailto` in the application config blank.
+Build progress is conveyed via a hook script specified in the configuration file that is called when a job is started, when it finishes, and when an error occurs.
 
 ## SSH Keys
 

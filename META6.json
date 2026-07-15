@@ -9,14 +9,12 @@
     "Broadcast": "lib/Broadcast.rakumod",
     "Command::Bridge": "lib/Command/Bridge.rakumod",
     "Command::Build": "lib/Command/Build.rakumod",
-    "Command::Mailer": "lib/Mailer.rakumod",
     "Command::Recipe": "lib/Command/Recipe.rakumod",
     "Command::Service": "lib/Command/Service.rakumod",
     "Command::Setup": "lib/Command/Setup.rakumod",
     "Command::Version": "lib/Command/Version.rakumod",
     "Filesystem": "lib/Filesystem.rakumod",
     "Job": "lib/Job.rakumod",
-    "Mailer": "lib/Mailer.rakumod"
   },
   "resources": [
     "log.template.html",
@@ -24,7 +22,6 @@
   ],
   "depends" : [
     "Config::INI",
-    "Email::Simple",
     "File::Which",
     "JSON::Fast"
   ],
