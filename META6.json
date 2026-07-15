@@ -14,7 +14,7 @@
     "Command::Setup": "lib/Command/Setup.rakumod",
     "Command::Version": "lib/Command/Version.rakumod",
     "Filesystem": "lib/Filesystem.rakumod",
-    "Job": "lib/Job.rakumod",
+    "Job": "lib/Job.rakumod"
   },
   "resources": [
     "log.template.html",
