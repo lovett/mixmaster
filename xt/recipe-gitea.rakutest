@@ -14,7 +14,7 @@ my $test-repo = "/tmp/test-repo.git";
 
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 copy($job-fixture, $job-file);
-copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
+copy($config-fixture, $buildroot.IO.add("config.ini"));
 
 my $proc = run $mixmaster, qqw{--job $job-file recipe}, :out, :err;
 my $stdout = $proc.out.slurp: :close;

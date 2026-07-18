@@ -15,7 +15,7 @@ run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
 copy($job-fixture, $buildroot.IO.add("INBOX").add($job-fixture.basename));
 
-copy($config-fixture, $buildroot.IO.add($config-fixture.basename));
+copy($config-fixture, $buildroot.IO.add("config.ini"));
 
 unless ($test-repo.IO.d) {
     run "git", qqw{init -q $test-repo};
