@@ -1,0 +1,52 @@
+#!/usr/bin/env rakudo
+
+use File::Temp;
+use Test;
+
+my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
+my $job-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/gitea.json');
+my $config-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/config-failing-hook.ini');
+my $log-name = "gitea.log";
+my $buildroot = tempdir;
+my $workspace = $buildroot.IO.add("test-org-test-repo");
+my $test-repo = "/tmp/test-repo";
+
+run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
+
+copy($job-fixture, $buildroot.IO.add("INBOX").add($job-fixture.basename));
+
+copy($config-fixture, $buildroot.IO.add("config.ini"));
+
+unless ($test-repo.IO.d) {
+    run "git", qqw{init -q $test-repo};
+    indir $test-repo, {
+        run "git", <checkout -q -b production>;
+        spurt $test-repo.IO.add("hello.txt"),  "hello world";
+        run "git", <add hello.txt>;
+        run "git", <commit -q -m Hello>;
+    };
+}
+
+my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out, :err;
+
+my @stderr-lines = $proc.err.slurp.lines;
+
+my $log = $workspace.add("ARCHIVE/{$log-name}");
+my @log-lines = $log.IO.slurp.lines;
+
+is @stderr-lines.elems, 0, "Stderr is empty";
+
+is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
+is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
+ok $log.f, "Workspace log was created";
+ok @log-lines[2].contains("H Calling hook script for job-start event"), "Hook start script was called";
+ok @log-lines[3].contains("H Hook failed (exit code: 1)"), "Hook failure was logged";
+
+is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Build continued despite hook failure";
+
+ok @log-lines[*-2].contains("H Calling hook script for job-end event"), "Hook end script was called";
+
+is $proc.exitcode, 0, "Command exits zero";
+
+
+done-testing;

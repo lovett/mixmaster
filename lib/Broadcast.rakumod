@@ -61,13 +61,13 @@ sub broadcast-hook(%job, HookEvent $hook) {
         log(%job, 'H', "out: $_");
     }
 
-    my $stderr = $proc.err.slurp: :close;
-    if $stderr {
-        log(%job, 'H', "err: $stdout");
-    }
-
-    if $proc.exitcode != 0 {
-        log(%job, 'H', "Hook exited non-zero ({$proc.exitcode})");
+    CATCH {
+        log(%job, 'H', "Hook failed (exit code: {$proc.exitcode})");
+        my $stderr = $proc.err.slurp: :close;
+        if $stderr {
+            log(%job, 'H', "err: $stderr");
+        }
+        .resume;
     }
 }
 
