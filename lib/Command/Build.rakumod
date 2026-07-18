@@ -28,8 +28,6 @@ use Broadcast;
 our proto Build(IO::Path $path) {*}
 
 multi sub Build(IO::Path $path where *.f) is export {
-    note "Working on {$path.basename}";
-
     my %job = load-job($path);
 
     unless %job<context><build-command> {

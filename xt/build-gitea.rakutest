@@ -30,9 +30,12 @@ unless ($test-repo.IO.d) {
 my $proc = run $mixmaster, qqw{--buildroot $buildroot build}, :out, :err;
 $proc.out.close();
 
+my @stderr-lines = $proc.err.slurp.lines;
+
 my $log = $workspace.add("ARCHIVE/{$log-name}");
 my @log-lines = $log.IO.slurp;
 
+is @stderr-lines.elems, 0, "Stderr is empty";
 is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
 is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
 ok $workspace.d, "Workspace was created";
