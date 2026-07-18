@@ -6,6 +6,7 @@ use Test;
 my $mixmaster = $*PROGRAM.IO.parent(2).add('bin/mixmaster');
 my $job-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/gitea.json');
 my $config-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/config-failing-hook.ini');
+my $hook-fixture = $*PROGRAM.IO.parent(2).add('t/fixture/fail.sh');
 my $log-name = "gitea.log";
 my $buildroot = tempdir;
 my $workspace = $buildroot.IO.add("test-org-test-repo");
@@ -14,6 +15,7 @@ my $test-repo = "/tmp/test-repo";
 run $mixmaster, qqw{--buildroot $buildroot setup}, :out;
 
 copy($job-fixture, $buildroot.IO.add("INBOX").add($job-fixture.basename));
+copy($hook-fixture, "/tmp/fail.sh");
 
 copy($config-fixture, $buildroot.IO.add("config.ini"));
 
@@ -40,11 +42,11 @@ is dir($buildroot.IO.add("INBOX")).elems, 0, "Job file was moved out of INBOX";
 is dir($buildroot.IO.add("ARCHIVE")).elems, 1, "Job file was moved into ARCHIVE";
 ok $log.f, "Workspace log was created";
 ok @log-lines[2].contains("H Calling hook script for job-start event"), "Hook start script was called";
-ok @log-lines[3].contains("H Hook failed (exit code: 1)"), "Hook failure was logged";
+ok @log-lines[3].contains("H Hook failed (exit code 3)"), "Hook failure was logged";
 
 is @log-lines.grep(rx:s/\$ git clone/).elems, 1, "Build continued despite hook failure";
 
-ok @log-lines[*-2].contains("H Calling hook script for job-end event"), "Hook end script was called";
+ok @log-lines[*-3].contains("H Calling hook script for job-end event"), "Hook end script was called";
 
 is $proc.exitcode, 0, "Command exits zero";
 
