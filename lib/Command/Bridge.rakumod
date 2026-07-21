@@ -19,6 +19,7 @@ The JSON body is not processed here.
 use JSON::Fast;
 
 use Filesystem;
+use Job;
 
 my sub Bridge(IO::Path $path) is export {
     my $buildroot = resolve-tilde($path);
@@ -100,11 +101,27 @@ my sub Bridge(IO::Path $path) is export {
                         exit;
                     }
 
+
                     my $template = %?RESOURCES<log.template.html>.IO.slurp;
 
                     my @lines = $path.slurp.lines.map: { '<div class="line">' ~ $_ ~ '</div>' };
 
-                    my $html = $template.subst('@@TITLE@@', $path.basename).subst('@@LOG@@', @lines.join("\n"));
+                    my $html = $template.subst('@@TITLE@@', $path.basename);
+                    $html = $html.subst('@@LOG@@', @lines.join("\n"));
+
+                    my $job-file = job-path($buildroot, ~$1);
+
+                    my Str $diff-link;
+                    if $job-file.f {
+                        my %job = load-job($job-file);
+                        my $url = job-diff-url(%job);
+                        if $url {
+                            $diff-link = qq|<a target="_blank" href="$url">View Diff</a>|;
+                        }
+                    }
+
+                    $html = $html.subst('@@DIFF_LINK@@', $diff-link);
+
                     respond-success($html);
                     exit;
                 }

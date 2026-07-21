@@ -29,4 +29,8 @@ is resolve-tilde("the file path is ~/myfile.txt"), "the file path is " ~ $*HOME.
 is with-tilde($*HOME.IO.add("mypath")), "~/mypath".IO, "with-tilde applies tilde to path under HOME";
 is with-tilde("not-a-tilde-path".IO), "not-a-tilde-path".IO, "with-tilde ignores non-home path";
 
+is job-path($buildroot, "myjob.log"), $buildroot.add("ARCHIVE").add("myjob.json"), "Job path is assembed from log filename";
+is job-path($buildroot, "myjob"), $buildroot.add("ARCHIVE").add("myjob.json"), "Job path is assembed from bare filename";
+is job-path($buildroot, "my-test/myjob.mytextension"), $buildroot.add("ARCHIVE").add("myjob.json"), "Job path is assembed from log path";
+
 done-testing;

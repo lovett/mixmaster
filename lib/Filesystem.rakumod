@@ -45,3 +45,8 @@ sub log-path(IO::Path $path, Str $project, Str $log --> IO::Path) is export {
     my $archive = archive-path($repo);
     return $archive.add($log ~ '.log');
 }
+
+sub job-path(IO::Path $buildroot, Str $path --> IO::Path) is export {
+    my $archive = archive-path($buildroot);
+    return $archive.add($path.IO.basename).extension("json");
+}

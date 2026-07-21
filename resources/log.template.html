@@ -6,11 +6,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="icon" href="/mixmaster.svg" />
         <style type="text/css">
-            BODY {
+            body {
                 margin: 0;
                 padding: 0.5em;
                 line-height: 1.5;
             }
+
+            header {
+                display: flex;
+                flex-flow: row wrap;
+                gap: 1em;
+                padding: 0 0.5em 0.5em 0.5em;
+            }
+
+            header a {
+                text-decoration: none;
+                font-family: sans-serif;
+                padding: 0.25em 1.5em;
+                display: block;
+                color: #fff;
+                border-radius: .5em;
+                background-color: #CD7D3C;
+            }
+
+            header a:hover {
+                background-color: #DDA77B;
+            }
+
 
             @media (min-width: 576px) {
                 body {
@@ -26,6 +48,7 @@
         </style>
     </head>
     <body>
+        <header>@@DIFF_LINK@@</header>
         @@LOG@@
     </body>
 </html>

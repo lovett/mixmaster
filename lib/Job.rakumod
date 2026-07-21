@@ -110,6 +110,10 @@ sub build-command(%job --> Str) {
     return resolve-tilde(@matches.first.value);
 }
 
+sub job-diff-url(%job --> Str) is export {
+    return %job<compare_url> || '';
+}
+
 sub job-recipe(%job --> Array[Str]) is export {
     my Str @recipe = [];
 

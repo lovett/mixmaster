@@ -29,8 +29,8 @@ REQUEST
 my $stdout = $proc.out.slurp;
 my $stderr = $proc.err.slurp;
 
-# say $stdout;
-# say $stderr;
+say $stdout;
+say $stderr;
 
 like $stdout, /'200 OK'/, "Returns HTTP 200";
 like $stdout, /'Content-Type: text/html'/, "Returns text/html";
