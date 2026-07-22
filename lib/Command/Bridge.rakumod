@@ -64,7 +64,7 @@ my sub Bridge(IO::Path $path) is export {
 
             my $path = $inbox.add($filename);
             spurt $path, $body;
-            respond-success("job received\n");
+            respond-success("job received");
 
             note "New job received: $path";
 
@@ -89,7 +89,19 @@ my sub Bridge(IO::Path $path) is export {
                 }
 
                 when "/mixmaster.svg" {
-                    respond-success(%?RESOURCES<mixmaster.svg>.IO.slurp);
+                    respond-success(%?RESOURCES<mixmaster.svg>.IO.slurp, "svg");
+                    exit;
+                }
+
+                when /^ '/job/' (.*) '.json' $/ {
+                    my $path = job-path($buildroot, ~$0);
+
+                    unless $path.f {
+                        respond-notfound();
+                        exit;
+                    }
+
+                    respond-success($path.slurp, "json");
                     exit;
                 }
 
@@ -111,18 +123,24 @@ my sub Bridge(IO::Path $path) is export {
 
                     my $job-file = job-path($buildroot, ~$1);
 
-                    my Str $diff-link;
+                    my $diff-link = "";
+                    my $job-link = "";
+
                     if $job-file.f {
                         my %job = load-job($job-file);
-                        my $url = job-diff-url(%job);
-                        if $url {
-                            $diff-link = qq|<a target="_blank" href="$url">View Diff</a>|;
+                        my $diff-url = job-diff-url(%job);
+                        if $diff-url {
+                            $diff-link = qq|<a target="_blank" href="$diff-url">View Diff</a>|;
                         }
+
+                        my $job-url = "/job/{$job-file.basename}";
+                        $job-link = qq|<a target="_blank" href="$job-url">View Job</a>|;
                     }
 
                     $html = $html.subst('@@DIFF_LINK@@', $diff-link);
+                    $html = $html.subst('@@JOB_LINK@@', $job-link);
 
-                    respond-success($html);
+                    respond-success($html, "html");
                     exit;
                 }
 
@@ -141,19 +159,28 @@ my sub Bridge(IO::Path $path) is export {
     }
 }
 
-sub respond-success(Str $body='') {
-    my $contentType = "text/plain";
+sub respond-success(Str $body="", Str $type = "text") {
+    print "HTTP/1.1 200 OK\r\n";
 
-    if $body.contains("<html") {
-       $contentType = "text/html";
-    } elsif $body.contains("<svg") {
-        $contentType = "image/svg+xml";
+    given $type {
+        when "html" {
+            print "Content-Type: text/html; charset=utf-8\r\n";
+        }
+        when "svg" {
+            print "Content-Type: image/svg+xml; charset=utf-8\r\n";
+        }
+        when "json" {
+            print "Content-Type: application/json\r\n";
+        }
+
+        default {
+            print "Content-Type: text/plain; charset=utf-8\r\n";
+        }
     }
 
-    print "HTTP/1.1 200 OK\r\n";
     print "Connection: close\r\n";
     print "Content-Length: {$body.chars}\r\n";
-    print "Content-Type: $contentType; charset=utf-8\r\n";
+
     print "\r\n";
     print $body;
     print "\n";
