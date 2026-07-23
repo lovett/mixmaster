@@ -19,6 +19,7 @@ The JSON body is not processed here.
 use JSON::Fast;
 
 use Filesystem;
+use Format;
 use Job;
 
 my sub Bridge(IO::Path $path) is export {
@@ -93,6 +94,11 @@ my sub Bridge(IO::Path $path) is export {
                     exit;
                 }
 
+                when "/mixmaster.css" {
+                    respond-success(%?RESOURCES<mixmaster.css>.IO.slurp, "css");
+                    exit;
+                }
+
                 when /^ '/job/' (.*) '.json' $/ {
                     my $path = job-path($buildroot, ~$0);
 
@@ -105,8 +111,29 @@ my sub Bridge(IO::Path $path) is export {
                     exit;
                 }
 
+                when /^ '/project/' (<-[\/]>+) .* $/ {
+                    my $project = ~$0;
+
+                    my $logs = "";
+                    for reverse logs($buildroot, $project) {
+                        my $date = job-date-from-log($_);
+                        my $formatted-date = format-datetime($date);
+
+                        $logs ~= qq|<p><a href="/log/$project/{.basename}">{$formatted-date}</a></p>|;
+                    }
+
+                    my $template = %?RESOURCES<index.template.html>.IO.slurp;
+                    my $html = $template.subst('@@LOGS@@', $logs);
+                    $html = $html.subst('@@PROJECT@@', $project, :g);
+
+                    respond-success($html, 'html');
+                    exit;
+                }
+
                 when /^ '/log/' (.*) '/' (.*) '.log' $/ {
-                    my $path = log-path($buildroot, ~$0, ~$1);
+                    my $project = ~$0;
+                    my $log = ~$1;
+                    my $path = log-path($buildroot, $project, $log);
 
                     unless $path.f {
                         respond-notfound();
@@ -121,7 +148,7 @@ my sub Bridge(IO::Path $path) is export {
                     my $html = $template.subst('@@TITLE@@', $path.basename);
                     $html = $html.subst('@@LOG@@', @lines.join("\n"));
 
-                    my $job-file = job-path($buildroot, ~$1);
+                    my $job-file = job-path($buildroot, $log);
 
                     my $diff-link = "";
                     my $job-link = "";
@@ -137,8 +164,12 @@ my sub Bridge(IO::Path $path) is export {
                         $job-link = qq|<a target="_blank" href="$job-url">View Job</a>|;
                     }
 
+                    my $history-link = qq|<a href="/project/{$project}">Build History</a>|;
+
+
                     $html = $html.subst('@@DIFF_LINK@@', $diff-link);
                     $html = $html.subst('@@JOB_LINK@@', $job-link);
+                    $html = $html.subst('@@HISTORY_LINK@@', $history-link);
 
                     respond-success($html, "html");
                     exit;
@@ -168,6 +199,9 @@ sub respond-success(Str $body="", Str $type = "text") {
         }
         when "svg" {
             print "Content-Type: image/svg+xml; charset=utf-8\r\n";
+        }
+        when "css" {
+            print "Content-Type: text/css; charset=utf-8\r\n";
         }
         when "json" {
             print "Content-Type: application/json\r\n";

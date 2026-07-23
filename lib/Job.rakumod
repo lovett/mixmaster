@@ -114,6 +114,19 @@ sub job-diff-url(%job --> Str) is export {
     return %job<compare_url> || '';
 }
 
+sub job-date-from-log(IO::Path $path --> DateTime) is export {
+    $path.basename ~~ m/ (\d**4) (\d**2) (\d**2) '-' (\d**2) (\d**2) (\d**2) /;
+
+    return DateTime.new(
+        year   => ~$0,
+        month  => ~$1,
+        day    => ~$2,
+        hour   => ~$3,
+        minute => ~$4,
+        second => ~$5,
+    );
+}
+
 sub job-recipe(%job --> Array[Str]) is export {
     my Str @recipe = [];
 

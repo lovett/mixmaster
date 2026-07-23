@@ -14,10 +14,13 @@
     "Command::Setup": "lib/Command/Setup.rakumod",
     "Command::Version": "lib/Command/Version.rakumod",
     "Filesystem": "lib/Filesystem.rakumod",
+    "Format": "lib/Format.rakumod",
     "Job": "lib/Job.rakumod"
   },
   "resources": [
+    "mixmaster.css",
     "log.template.html",
+    "index.template.html",
     "mixmaster.svg"
   ],
   "depends" : [

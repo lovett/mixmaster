@@ -50,3 +50,10 @@ sub job-path(IO::Path $buildroot, Str $path --> IO::Path) is export {
     my $archive = archive-path($buildroot);
     return $archive.add($path.IO.basename).extension("json");
 }
+
+sub logs(IO::Path $buildroot, Str $project --> Seq) is export {
+    my $projectDir = $buildroot.add($project);
+    my $archiveDir = archive-path($projectDir);
+
+    return dir($archiveDir).grep(*.extension eq 'log');
+}
